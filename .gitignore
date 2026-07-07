@@ -1,0 +1,31 @@
+# 规划与本地工作产物 —— 全部不纳入仓库
+规划/
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# 日志
+*.log
+
+# 构建产物
+target/
+build/
+dist/
+*.class
+
+# 依赖
+node_modules/
+
+# 环境与密钥（绝不提交）
+.env
+.env.*
+application-local.yml
+application-local.properties
+
+# docx 临时解包
+unpacked/
