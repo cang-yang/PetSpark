@@ -48,6 +48,9 @@ public enum ErrorCode {
 
     // 业务规则 422
     BUSINESS_RULE_001(422, "BUSINESS_RULE_001", "业务规则校验未通过"),
+    PET_BREED_001(422, "PET_BREED_001", "宠物品种不可用"),
+    BREED_DUPLICATE_001(422, "BREED_DUPLICATE_001", "品种名称已存在"),
+    PET_REFERENCED_001(422, "PET_REFERENCED_001", "宠物已被业务引用，不能删除"),
     PET_STATE_001(422, "PET_STATE_001", "宠物状态迁移非法"),
     USER_DUPLICATE_001(422, "USER_DUPLICATE_001", "账号或邮箱已存在"),
 
