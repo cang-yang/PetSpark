@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petspark.audit.AuditLogMapper">
+
+    <resultMap id="auditLogMap" type="com.petspark.audit.AuditLog">
+        <id property="id" column="id"/>
+        <result property="requestId" column="request_id"/>
+        <result property="actorId" column="actor_id"/>
+        <result property="actorRole" column="actor_role"/>
+        <result property="module" column="module"/>
+        <result property="action" column="action"/>
+        <result property="objectType" column="object_type"/>
+        <result property="objectId" column="object_id"/>
+        <result property="result" column="result"/>
+        <result property="reasonCode" column="reason_code"/>
+        <result property="ipHash" column="ip_hash"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.petspark.audit.AuditLog">
+        INSERT INTO audit_log
+            (id, request_id, actor_id, actor_role, module, action, object_type,
+             object_id, result, reason_code, ip_hash, created_at)
+        VALUES
+            (#{id}, #{requestId}, #{actorId}, #{actorRole}, #{module}, #{action},
+             #{objectType}, #{objectId}, #{result}, #{reasonCode}, #{ipHash}, #{createdAt})
+    </insert>
+
+</mapper>

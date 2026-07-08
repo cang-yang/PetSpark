@@ -1,0 +1,14 @@
+# 测试 profile：禁用 AI，复用本机 MySQL 8.0.40。
+# DataSource 连接信息由进程环境变量注入（scripts/load-local-env.ps1 从 .env.local 读取）：
+#   DB_URL / DB_USERNAME / DB_PASSWORD
+# 不在本文件写入任何账号密码，禁止提交 .env.local。
+spring:
+  flyway:
+    enabled: true
+    clean-disabled: false
+  ai:
+    enabled: false
+
+petspark:
+  ai:
+    enabled: false
