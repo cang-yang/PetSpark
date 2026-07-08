@@ -38,6 +38,11 @@ public enum ErrorCode {
     // 文件大小 413
     FILE_SIZE_001(413, "FILE_SIZE_001", "文件大小超过上限"),
 
+    // 文件校验 400/404
+    FILE_TYPE_001(400, "FILE_TYPE_001", "文件类型或文件名不合法"),
+    FILE_CONTENT_001(400, "FILE_CONTENT_001", "文件内容与声明类型不一致"),
+    FILE_NOT_FOUND_001(404, "FILE_NOT_FOUND_001", "文件不存在或不可用"),
+
     // 业务规则 422
     BUSINESS_RULE_001(422, "BUSINESS_RULE_001", "业务规则校验未通过"),
     PET_STATE_001(422, "PET_STATE_001", "宠物状态迁移非法"),

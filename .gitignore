@@ -21,6 +21,7 @@ target/
 build/
 dist/
 *.class
+data/
 
 # 依赖
 node_modules/
