@@ -57,6 +57,14 @@ public class UserRepository {
         }, principal, principal);
     }
 
+    public Optional<SysUser> findById(String id) {
+        return findOne("id = ?", id);
+    }
+
+    public Optional<SysUser> findByEmail(String email) {
+        return findOne("email = ?", email);
+    }
+
     public List<String> findAuthorities(String userId) {
         return jdbcTemplate.queryForList("""
                 SELECT p.code
@@ -71,6 +79,26 @@ public class UserRepository {
     public void markLogin(String userId) {
         jdbcTemplate.update("UPDATE sys_user SET last_login_at = ? WHERE id = ?",
                 Timestamp.from(java.time.Instant.now()), userId);
+    }
+
+    public void incrementTokenVersion(String userId) {
+        jdbcTemplate.update("UPDATE sys_user SET token_version = token_version + 1 WHERE id = ?", userId);
+    }
+
+    public void updatePasswordAndIncrementTokenVersion(String userId, String passwordHash) {
+        jdbcTemplate.update("""
+                UPDATE sys_user
+                SET password_hash = ?, token_version = token_version + 1
+                WHERE id = ?
+                """, passwordHash, userId);
+    }
+
+    private Optional<SysUser> findOne(String predicate, String value) {
+        return jdbcTemplate.query("""
+                SELECT id, username, email, password_hash, nickname, status, token_version
+                FROM sys_user
+                WHERE %s
+                """.formatted(predicate), rs -> rs.next() ? Optional.of(map(rs)) : Optional.empty(), value);
     }
 
     private SysUser map(java.sql.ResultSet rs) throws java.sql.SQLException {

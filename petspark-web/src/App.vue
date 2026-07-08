@@ -7,8 +7,14 @@
       </div>
       <nav class="app-nav">
         <router-link to="/">首页</router-link>
-        <router-link to="/login">登录</router-link>
-        <router-link to="/register">注册</router-link>
+        <template v-if="$store && $store.getters.isAuthenticated">
+          <span>{{ $store.state.user && $store.state.user.nickname }}</span>
+          <button type="button" class="nav-button" @click="signOut">退出</button>
+        </template>
+        <template v-else>
+          <router-link to="/login">登录</router-link>
+          <router-link to="/register">注册</router-link>
+        </template>
       </nav>
     </header>
     <main>
@@ -16,6 +22,26 @@
     </main>
   </div>
 </template>
+
+<script>
+import { logout } from '@/api/auth'
+
+export default {
+  name: 'App',
+  methods: {
+    async signOut() {
+      try {
+        await logout()
+      } finally {
+        await this.$store.dispatch('logout')
+        if (this.$route.path !== '/login') {
+          this.$router.push('/login')
+        }
+      }
+    }
+  }
+}
+</script>
 
 <style>
 body {
@@ -57,5 +83,15 @@ body {
 
 .app-nav a.router-link-exact-active {
   text-decoration: underline;
+}
+
+.nav-button {
+  padding: 0;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 </style>

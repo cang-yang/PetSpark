@@ -79,7 +79,8 @@ public class JwtService {
             return new AuthenticatedToken(
                     String.valueOf(payload.get("sub")),
                     String.valueOf(payload.get("username")),
-                    authorities);
+                    authorities,
+                    ((Number) payload.get("tokenVersion")).intValue());
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -115,7 +116,12 @@ public class JwtService {
 
     public record IssuedToken(String value, long expiresInSeconds, Instant expiresAt) {}
 
-    public record AuthenticatedToken(String userId, String username, List<String> authorities) {}
+    public record AuthenticatedToken(
+            String userId,
+            String username,
+            List<String> authorities,
+            int tokenVersion
+    ) {}
 
     private static final class MessageDigestUtil {
         private static boolean equals(byte[] a, byte[] b) {
