@@ -11,6 +11,7 @@
           <router-link to="/profile">个人资料</router-link>
           <router-link to="/notifications">通知中心</router-link>
           <router-link to="/admin/users">用户管理</router-link>
+          <router-link to="/admin/system">系统管理</router-link>
           <span>{{ $store.state.user && $store.state.user.nickname }}</span>
           <button type="button" class="nav-button" @click="signOut">退出</button>
         </template>

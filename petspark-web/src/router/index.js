@@ -45,6 +45,11 @@ export default new VueRouter({
       path: '/admin/users',
       name: 'admin-users',
       component: () => import('../views/AdminUsersView.vue')
+    },
+    {
+      path: '/admin/system',
+      name: 'admin-system',
+      component: () => import('../views/SystemAdminView.vue')
     }
   ]
 })
