@@ -32,6 +32,10 @@ jobs:
           java-version: "17"
           cache: maven
       - name: Verify backend
+        env:
+          DB_URL: jdbc:mysql://127.0.0.1:3306/petspark?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+          DB_USERNAME: petspark
+          DB_PASSWORD: petspark_local
         run: ./mvnw --batch-mode --no-transfer-progress verify
 
   frontend:
