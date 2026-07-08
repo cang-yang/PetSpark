@@ -1,8 +1,15 @@
 <template>
   <div id="app">
     <header class="app-header">
-      <h1 data-testid="app-title">PetSpark</h1>
-      <p>派宠 · 智慧宠物管理平台</p>
+      <div>
+        <h1 data-testid="app-title">PetSpark</h1>
+        <p>派宠 · 智慧 AI 宠物管理平台</p>
+      </div>
+      <nav class="app-nav">
+        <router-link to="/">首页</router-link>
+        <router-link to="/login">登录</router-link>
+        <router-link to="/register">注册</router-link>
+      </nav>
     </header>
     <main>
       <router-view />
@@ -22,6 +29,10 @@ body {
   padding: 24px;
   color: #fff;
   background: #409eff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
 }
 
 .app-header h1,
@@ -31,5 +42,20 @@ body {
 
 .app-header p {
   margin-top: 8px;
+}
+
+.app-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.app-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.app-nav a.router-link-exact-active {
+  text-decoration: underline;
 }
 </style>

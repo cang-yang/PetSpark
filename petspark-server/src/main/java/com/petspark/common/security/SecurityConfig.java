@@ -8,6 +8,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.petspark.auth.JwtAuthenticationFilter;
 import com.petspark.common.web.RequestIdFilter;
 
 /**
@@ -30,10 +31,14 @@ public class SecurityConfig {
 
     private final SecurityErrorHandlers errorHandlers;
     private final RequestIdFilter requestIdFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(SecurityErrorHandlers errorHandlers, RequestIdFilter requestIdFilter) {
+    public SecurityConfig(SecurityErrorHandlers errorHandlers,
+            RequestIdFilter requestIdFilter,
+            JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.errorHandlers = errorHandlers;
         this.requestIdFilter = requestIdFilter;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -55,7 +60,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(errorHandlers)
                         .accessDeniedHandler(errorHandlers))
                 // requestId 必须先于认证过滤链，确保 401/403 响应也带 requestId。
-                .addFilterBefore(requestIdFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(requestIdFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
