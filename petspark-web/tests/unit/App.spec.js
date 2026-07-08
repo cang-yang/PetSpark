@@ -2,13 +2,22 @@ import { createLocalVue, shallowMount } from '@vue/test-utils'
 import VueRouter from 'vue-router'
 import App from '@/App.vue'
 
+jest.mock('@/api/auth', () => ({ logout: jest.fn() }))
+
 describe('App', () => {
   it('renders the PetSpark application shell', () => {
     const localVue = createLocalVue()
     localVue.use(VueRouter)
     const wrapper = shallowMount(App, {
       localVue,
-      router: new VueRouter()
+      router: new VueRouter(),
+      mocks: {
+        $store: {
+          getters: { isAuthenticated: false },
+          state: { user: null },
+          dispatch: jest.fn()
+        }
+      }
     })
 
     expect(wrapper.get('[data-testid="app-title"]').text()).toBe('PetSpark')

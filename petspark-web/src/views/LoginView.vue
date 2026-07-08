@@ -25,6 +25,7 @@
       />
       <el-button type="primary" :loading="submitting" @click="submit">登录</el-button>
       <router-link class="auth-link" to="/register">还没有账号？去注册</router-link>
+      <router-link class="auth-link" to="/forgot-password">忘记密码</router-link>
     </el-form>
   </section>
 </template>

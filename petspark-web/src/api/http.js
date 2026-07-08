@@ -3,8 +3,17 @@ import store from '@/store'
 
 const http = axios.create({
   baseURL: process.env.VUE_APP_API_BASE_URL || '',
-  timeout: 10000
+  timeout: 10000,
+  withCredentials: true
 })
+
+const refreshClient = axios.create({
+  baseURL: process.env.VUE_APP_API_BASE_URL || '',
+  timeout: 10000,
+  withCredentials: true
+})
+
+let refreshPromise = null
 
 http.interceptors.request.use((config) => {
   const token = store.state.accessToken
@@ -16,7 +25,25 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
   (response) => response.data,
-  (error) => {
+  async (error) => {
+    const original = error.config
+    const canRefresh = error.response && error.response.status === 401 &&
+      original && !original._petsparkRetried &&
+      !original.url.startsWith('/api/v1/auth/') && store.state.accessToken
+    if (canRefresh) {
+      original._petsparkRetried = true
+      try {
+        if (!refreshPromise) {
+          refreshPromise = refreshClient.post('/api/v1/auth/refresh')
+            .then((response) => store.dispatch('saveLogin', response.data.data))
+            .finally(() => { refreshPromise = null })
+        }
+        await refreshPromise
+        return http(original)
+      } catch (refreshError) {
+        await store.dispatch('logout')
+      }
+    }
     const body = error.response && error.response.data
     const message = body && body.message ? body.message : '请求失败，请稍后重试'
     return Promise.reject(new Error(message))

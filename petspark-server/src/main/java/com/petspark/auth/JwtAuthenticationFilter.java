@@ -19,10 +19,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final SecurityErrorHandlers errorHandlers;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, SecurityErrorHandlers errorHandlers) {
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            SecurityErrorHandlers errorHandlers,
+            UserRepository userRepository) {
         this.jwtService = jwtService;
         this.errorHandlers = errorHandlers;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -33,6 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             JwtService.AuthenticatedToken token;
             try {
                 token = jwtService.verify(header.substring("Bearer ".length()).trim());
+                SysUser current = userRepository.findById(token.userId())
+                        .filter(user -> "ACTIVE".equals(user.status()))
+                        .filter(user -> user.tokenVersion() == token.tokenVersion())
+                        .orElseThrow(() -> new IllegalArgumentException("stale access token"));
             } catch (RuntimeException ex) {
                 SecurityContextHolder.clearContext();
                 errorHandlers.commence(request, response, new BadCredentialsException("invalid access token", ex));
