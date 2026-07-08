@@ -7,6 +7,10 @@ jest.mock('@/api/catalog', () => ({
   getGoods: jest.fn(),
   listGoods: jest.fn()
 }))
+jest.mock('@/api/orders', () => ({
+  createOrder: jest.fn(),
+  previewOrder: jest.fn()
+}))
 
 describe('Goods views', () => {
   beforeEach(() => jest.clearAllMocks())
@@ -29,7 +33,7 @@ describe('Goods views', () => {
     getGoods.mockResolvedValue({ data: { id: 'g-1', name: '猫抓板', sku: 'CAT-BOARD', stock: 3, price: 29.9 } })
     const wrapper = shallowMount(GoodsDetailView, {
       mocks: { $route: { params: { id: 'g-1' } }, $message: { error: jest.fn() } },
-      stubs: ['el-card']
+      stubs: ['el-card', 'el-form', 'el-form-item', 'el-input-number', 'el-input', 'el-button']
     })
     await flush()
 

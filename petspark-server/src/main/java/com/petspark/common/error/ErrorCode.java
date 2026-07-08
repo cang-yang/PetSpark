@@ -34,9 +34,12 @@ public enum ErrorCode {
     VERSION_CONFLICT_001(409, "VERSION_CONFLICT_001", "对象已被他人修改，请刷新后重试"),
     BOOKING_CONFLICT_001(409, "BOOKING_CONFLICT_001", "所选资源已被预约"),
     ORDER_STOCK_001(409, "ORDER_STOCK_001", "库存不足"),
+    ORDER_IDEMPOTENCY_001(409, "ORDER_IDEMPOTENCY_001", "幂等键已关联不同请求"),
     GOODS_NOT_FOUND_001(404, "GOODS_NOT_FOUND", "商品不存在或不可见"),
     GOODS_SKU_001(422, "GOODS_SKU_001", "商品 SKU 已存在"),
     GOODS_STATE_001(422, "GOODS_STATE_001", "商品状态不允许该操作"),
+    ORDER_NOT_FOUND_001(404, "ORDER_NOT_FOUND_001", "订单不存在或不可见"),
+    ORDER_STATE_001(422, "ORDER_STATE_001", "订单状态不允许该操作"),
 
     // 文件大小 413
     FILE_SIZE_001(413, "FILE_SIZE_001", "文件大小超过上限"),

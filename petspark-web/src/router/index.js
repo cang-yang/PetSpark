@@ -18,6 +18,7 @@ export default new VueRouter({
     { path: '/notifications', name: 'notifications', component: NotificationsView },
     { path: '/goods', name: 'goods', component: () => import('../views/GoodsListView.vue') },
     { path: '/goods/:id', name: 'goods-detail', component: () => import('../views/GoodsDetailView.vue') },
+    { path: '/my/orders', name: 'my-orders', component: () => import('../views/MyOrdersView.vue') },
     { path: '/pets', name: 'pets', component: () => import('../views/PetsView.vue') },
     { path: '/my/pets', name: 'my-pets', component: () => import('../views/MyPetsView.vue') },
     { path: '/my/pets/:id/health', name: 'pet-health', component: () => import('../views/PetHealthView.vue') },
@@ -25,6 +26,7 @@ export default new VueRouter({
     { path: '/admin/users', name: 'admin-users', component: () => import('../views/AdminUsersView.vue') },
     { path: '/admin/system', name: 'admin-system', component: () => import('../views/SystemAdminView.vue') },
     { path: '/admin/goods', name: 'admin-goods', component: () => import('../views/AdminGoodsView.vue') },
-    { path: '/admin/pets', name: 'admin-pets', component: () => import('../views/AdminPetsView.vue') }
+    { path: '/admin/pets', name: 'admin-pets', component: () => import('../views/AdminPetsView.vue') },
+    { path: '/admin/orders', name: 'admin-orders', component: () => import('../views/AdminOrdersView.vue') }
   ]
 })
