@@ -1,8 +1,6 @@
 package com.petspark.auth;
 
 import com.petspark.common.api.ApiResponse;
-import com.petspark.common.error.BusinessException;
-import com.petspark.common.error.ErrorCode;
 import com.petspark.common.security.AuthenticatedUser;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -62,10 +60,7 @@ public class AuthController {
             @AuthenticationPrincipal AuthenticatedUser user,
             @CookieValue(name = AuthCookieService.REFRESH_COOKIE, required = false) String refreshToken,
             HttpServletResponse response) {
-        if (user == null) {
-            throw new BusinessException(ErrorCode.AUTH_TOKEN_001);
-        }
-        authService.logout(user.getId(), refreshToken);
+        authService.logout(user == null ? null : user.getId(), refreshToken);
         response.addHeader(HttpHeaders.SET_COOKIE, cookieService.clearRefreshCookie().toString());
         return ApiResponse.ok();
     }

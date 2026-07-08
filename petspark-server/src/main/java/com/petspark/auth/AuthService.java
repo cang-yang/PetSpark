@@ -76,8 +76,8 @@ public class AuthService {
 
     @Transactional
     public void logout(String userId, String rawRefreshToken) {
-        refreshTokenService.revokeFamily(rawRefreshToken, userId);
-        userRepository.incrementTokenVersion(userId);
+        String sessionUserId = refreshTokenService.revokeFamily(rawRefreshToken, userId);
+        userRepository.incrementTokenVersion(sessionUserId);
     }
 
     private AuthLoginResult issueSession(SysUser user, String rawRefreshToken) {

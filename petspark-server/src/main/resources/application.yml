@@ -49,6 +49,9 @@ petspark:
       expires-in-seconds: ${REFRESH_TOKEN_EXPIRES_IN_SECONDS:604800}
     password-reset:
       ttl-seconds: ${PASSWORD_RESET_TTL_SECONDS:600}
+      mail:
+        enabled: ${PASSWORD_RESET_MAIL_ENABLED:false}
+        from: ${PASSWORD_RESET_MAIL_FROM:}
   ai:
     enabled: ${SPARK_ENABLED:false}
     base-url: ${SPARK_BASE_URL:https://spark-api-open.xf-yun.com/v2}

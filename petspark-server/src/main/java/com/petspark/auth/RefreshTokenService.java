@@ -63,12 +63,13 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public void revokeFamily(String rawToken, String expectedUserId) {
+    public String revokeFamily(String rawToken, String expectedUserId) {
         RefreshTokenRecord current = find(rawToken);
-        if (!current.userId().equals(expectedUserId)) {
+        if (expectedUserId != null && !current.userId().equals(expectedUserId)) {
             throw invalid();
         }
         repository.revokeFamily(current.familyId());
+        return current.userId();
     }
 
     public void revokeAllForUser(String userId) {

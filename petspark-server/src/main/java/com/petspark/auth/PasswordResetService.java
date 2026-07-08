@@ -46,6 +46,9 @@ public class PasswordResetService {
 
     public void requestCode(PasswordResetCodeRequest request) {
         captchaService.verify(request.captchaId(), request.captchaAnswer());
+        if (!notifier.isAvailable()) {
+            throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_001, "密码重置邮件服务暂不可用");
+        }
         userRepository.findByEmail(request.email()).ifPresent(user -> {
             String code = "%06d".formatted(random.nextInt(1_000_000));
             codeRepository.insert(UUID.randomUUID().toString(), request.email(), passwordEncoder.encode(code),

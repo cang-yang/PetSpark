@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -25,6 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.BDDMockito.given;
 
 class AuthSessionFlowIT extends AbstractControllerTest {
 
@@ -36,6 +38,11 @@ class AuthSessionFlowIT extends AbstractControllerTest {
 
     @MockitoBean
     private PasswordResetNotifier passwordResetNotifier;
+
+    @BeforeEach
+    void configurePasswordResetNotifier() {
+        given(passwordResetNotifier.isAvailable()).willReturn(true);
+    }
 
     @AfterEach
     void cleanup() {
@@ -98,6 +105,18 @@ class AuthSessionFlowIT extends AbstractControllerTest {
                         .header("Authorization", "Bearer " + login.accessToken()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(ErrorCode.AUTH_TOKEN_001.code()));
+    }
+
+    @Test
+    void logoutCanRevokeSessionUsingRefreshCookieAfterAccessTokenExpires() throws Exception {
+        LoginResult login = login(registerUser());
+
+        mockMvc.perform(post("/api/v1/auth/logout").cookie(login.refreshCookie()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/refresh").cookie(login.refreshCookie()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.AUTH_REFRESH_001.code()));
     }
 
     @Test
