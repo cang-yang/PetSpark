@@ -16,6 +16,11 @@ public record NotificationPayload(
         String businessType,
         String businessId
 ) {
+    /** 与 notification 表列长对齐，防止超长载荷落库时被 MySQL 截断（严格模式下会抛错）。 */
+    private static final int TITLE_MAX = 128;
+    private static final int CONTENT_MAX = 512;
+    private static final int TYPE_MAX = 32;
+
     public NotificationPayload {
         if (recipientId == null || recipientId.isBlank()) {
             throw new IllegalArgumentException("recipientId is required");
@@ -28,6 +33,15 @@ public record NotificationPayload(
         }
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("content is required");
+        }
+        if (type.length() > TYPE_MAX) {
+            throw new IllegalArgumentException("type exceeds " + TYPE_MAX + " chars");
+        }
+        if (title.length() > TITLE_MAX) {
+            throw new IllegalArgumentException("title exceeds " + TITLE_MAX + " chars");
+        }
+        if (content.length() > CONTENT_MAX) {
+            throw new IllegalArgumentException("content exceeds " + CONTENT_MAX + " chars");
         }
     }
 }

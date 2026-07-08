@@ -123,6 +123,54 @@ class NotificationDeliveryIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void alreadyDeliveredEventIsNotDeadLetteredOnRedelivery() {
+        // 守护 Standards #3：若状态机因僵死回收把一个已投递的事件重投，
+        // INSERT IGNORE 使 notification 主键冲突返回 0（不抛 DuplicateKeyException），
+        // 事件仍推进 SENT，不会被误判失败并死信化。
+        String userId = createUser("notif_ign");
+        String eventId = notificationService.send(new NotificationPayload(
+                userId, "SYSTEM", "幂等重投", "已投递过", null, null));
+        eventIds.add(eventId);
+
+        // 正常投递一次：notification 落库，事件 SENT。
+        dispatcher.dispatchOnce();
+        assertThat(notificationRepository.findByIdAndRecipient(eventId, userId)).isPresent();
+
+        // 人为把事件回退到 PENDING，模拟僵死回收后的重投场景。
+        jdbcTemplate.update("UPDATE outbox_event SET status = 'PENDING', next_attempt_at = NULL WHERE id = ?", eventId);
+        // 再次投递：INSERT IGNORE 命中已存在 notification，不应抛异常、不应死信。
+        dispatcher.dispatchOnce();
+
+        OutboxEvent reloaded = outboxRepository.findById(eventId).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(OutboxEvent.Status.SENT);
+        Long notifCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM notification WHERE id = ?", Long.class, eventId);
+        assertThat(notifCount).isEqualTo(1L);
+    }
+
+    @Test
+    void stuckProcessingEventIsReclaimedAndRedelivered() {
+        // 守护 Standards #2 / Spec #2：认领后未及 markSent 即崩溃的事件卡在 PROCESSING，
+        // 下一轮 dispatchOnce 应回收回 PENDING 并重新投递成功。
+        String userId = createUser("notif_stuck");
+        String eventId = notificationService.send(new NotificationPayload(
+                userId, "SYSTEM", "僵死回收", "重投成功", null, null));
+        eventIds.add(eventId);
+
+        // 模拟认领后崩溃：直接把事件置 PROCESSING，不落库 notification、不 markSent。
+        jdbcTemplate.update("UPDATE outbox_event SET status = 'PROCESSING' WHERE id = ?", eventId);
+        assertThat(outboxRepository.findById(eventId).orElseThrow().getStatus())
+                .isEqualTo(OutboxEvent.Status.PROCESSING);
+
+        // 下一轮：stuck-processing-seconds=0（测试配置），created_at 已早于 cutoff，被回收回 PENDING 并投递。
+        dispatcher.dispatchOnce();
+
+        OutboxEvent reloaded = outboxRepository.findById(eventId).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(OutboxEvent.Status.SENT);
+        assertThat(notificationRepository.findByIdAndRecipient(eventId, userId)).isPresent();
+    }
+
+    @Test
     void failedDispatchRetriesThenDeadLetters() {
         String userId = createUser("notif_fail");
         // 直接追加一条载荷非法的事件（content 缺失），dispatcher 解析失败应重试/死信。

@@ -49,6 +49,16 @@ public interface OutboxEventMapper {
     int claimPending(@Param("id") String id);
 
     /**
+     * 回收僵死事件：将 PROCESSING 且超过 {@code staleBefore} 时刻仍卡住的事件
+     * 重置回 PENDING（清空 nextAttemptAt 表示立即可重投），返回回收条数。
+     * 用于消费者在认领后崩溃、重启后恢复待投递事件，满足验收「Outbox 保留待恢复事件」。
+     * 不回收 attemptCount，避免无限重投——由 markFailed 的 maxAttempts 死信兜底。
+     */
+    @Update("UPDATE outbox_event SET status = 'PENDING', next_attempt_at = NULL "
+            + "WHERE status = 'PROCESSING' AND created_at < #{staleBefore}")
+    int reclaimStaleProcessing(@Param("staleBefore") Instant staleBefore);
+
+    /**
      * 投递成功：状态置 SENT，记录处理时间，清空下次尝试时间。
      */
     @Update("UPDATE outbox_event SET status = 'SENT', processed_at = #{at}, next_attempt_at = NULL "

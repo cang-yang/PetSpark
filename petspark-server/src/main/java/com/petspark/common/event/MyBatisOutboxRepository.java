@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
  * {@link OutboxRepository} 的 MyBatis 实现。{@link #save} 依赖调用方已开启事务，
  * 与业务写操作在同一事务提交/回滚；这是同事务 Outbox 的核心保证。
  *
- * <p>状态机方法（claimPending / markSent / markFailed / countByStatus）由
- * {@link com.petspark.notification.OutboxDispatcher} 在调度线程调用，使用各自的
- * 自动提交事务，与业务事务解耦——投递失败只推进事件状态，不回滚已提交业务。
+ * <p>状态机方法（claimPending / markSent / markFailed / reclaimStaleProcessing /
+ * countByStatus）由 {@link com.petspark.notification.OutboxDispatcher} 在调度线程调用，
+ * 使用各自的自动提交事务，与业务事务解耦——投递失败只推进事件状态，不回滚已提交业务。
  */
 @Repository
 public class MyBatisOutboxRepository implements OutboxRepository {
@@ -40,6 +40,11 @@ public class MyBatisOutboxRepository implements OutboxRepository {
     @Override
     public int claimPending(String id) {
         return mapper.claimPending(id);
+    }
+
+    @Override
+    public int reclaimStaleProcessing(Instant staleBefore) {
+        return mapper.reclaimStaleProcessing(staleBefore);
     }
 
     @Override

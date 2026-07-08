@@ -21,3 +21,6 @@ petspark:
       backoff-seconds: 0
       max-attempts: 5
       batch-size: 20
+      # 僵死回收阈值：测试用 0 秒，使任何卡在 PROCESSING 的事件在下一轮 dispatchOnce
+      # 立即被回收回 PENDING，便于同步断言回收行为（生产默认 120s）。
+      stuck-processing-seconds: 0

@@ -41,8 +41,9 @@ public class NotificationQueryService {
         List<Notification> rows = repository.findByRecipient(
                 recipientId, onlyUnread, query.offset(), query.getSize());
         List<NotificationView> items = rows.stream().map(NotificationView::new).toList();
-        long total = onlyUnread ? repository.countUnread(recipientId) : repository.countTotal(recipientId);
+        // 未读计数在两种筛选下都需要；total 仅在"仅未读"时与未读数相同，避免重复查询。
         long unreadCount = repository.countUnread(recipientId);
+        long total = onlyUnread ? unreadCount : repository.countTotal(recipientId);
         PageResult<NotificationView> page = new PageResult<>(items, query.getPage(), query.getSize(), total);
         return NotificationPageView.from(page, unreadCount);
     }

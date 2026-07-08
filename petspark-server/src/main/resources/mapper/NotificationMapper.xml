@@ -3,8 +3,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.petspark.notification.NotificationMapper">
 
+    <!--
+        幂等落库：用 INSERT IGNORE，使主键冲突（重复投递同一 outbox 事件 id）返回 0 行，
+        而非抛 DuplicateKeyException。调用方据此区分"新插入"与"幂等命中"。
+        非 NULL 列约束由 NotificationPayload 构造校验保证，故 IGNORE 只用于吞主键冲突，
+        不会掩盖其他因字段缺失导致的约束失败。
+    -->
     <insert id="insert" parameterType="com.petspark.notification.Notification">
-        INSERT INTO notification
+        INSERT IGNORE INTO notification
             (id, recipient_id, type, title, content, business_type, business_id, read_at, created_at)
         VALUES
             (#{id}, #{recipientId}, #{type}, #{title}, #{content},
