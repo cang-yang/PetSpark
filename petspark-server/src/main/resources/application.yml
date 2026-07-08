@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: petspark-server
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/petspark?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+petspark:
+  ai:
+    enabled: ${SPARK_ENABLED:false}
+    base-url: ${SPARK_BASE_URL:https://spark-api-open.xf-yun.com/v2}
+    model: ${SPARK_MODEL:spark-x}
