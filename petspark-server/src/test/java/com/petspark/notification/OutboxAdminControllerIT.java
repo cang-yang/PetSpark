@@ -75,7 +75,7 @@ class OutboxAdminControllerIT extends AbstractControllerTest {
     @Test
     void observerSeesFourStatusCountersReflectingOutboxState() throws Exception {
         // 投递两条并置不同状态，构造一个非平凡的分布。
-        String observerToken = createUserToken(List.of("system:observe"));
+        String observerToken = createUserToken(List.of("system:observe"), "00000000-0000-0000-0000-000000000102");
         insertOutboxEvent(OutboxEvent.Status.PENDING, "{}");
         insertOutboxEvent(OutboxEvent.Status.DEAD, "{}");
 
@@ -99,6 +99,10 @@ class OutboxAdminControllerIT extends AbstractControllerTest {
     }
 
     private String createUserToken(List<String> authorities) {
+        return createUserToken(authorities, "00000000-0000-0000-0000-000000000101");
+    }
+
+    private String createUserToken(List<String> authorities, String roleId) {
         String id = UUID.randomUUID().toString();
         String username = "outbox_obs_" + System.nanoTime();
         jdbcTemplate.update("""
@@ -106,7 +110,7 @@ class OutboxAdminControllerIT extends AbstractControllerTest {
                 VALUES (?, ?, ?, ?, ?, 'ACTIVE', 0)
                 """, id, username, username + "@example.com", "$2a$10$test", "obs");
         jdbcTemplate.update("INSERT INTO sys_user_role (user_id, role_id) VALUES (?, ?)",
-                id, "00000000-0000-0000-0000-000000000101");
+                id, roleId);
         userIds.add(id);
         SysUser user = new SysUser(id, username, username + "@example.com", "$2a$10$test", "obs", "ACTIVE", 0);
         return jwtService.issue(user, authorities).value();

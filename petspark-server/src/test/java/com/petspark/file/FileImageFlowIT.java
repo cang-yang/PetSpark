@@ -182,6 +182,8 @@ class FileImageFlowIT extends AbstractControllerTest {
                 INSERT INTO sys_user (id, username, email, password_hash, nickname, status, token_version)
                 VALUES (?, ?, ?, ?, ?, 'ACTIVE', 0)
                 """, id, username, username + "@example.com", "$2a$10$test", prefix);
+        jdbcTemplate.update("INSERT INTO sys_user_role (user_id, role_id) VALUES (?, ?)",
+                id, "00000000-0000-0000-0000-000000000101");
         userIds.add(id);
         SysUser user = new SysUser(id, username, username + "@example.com", "$2a$10$test", prefix, "ACTIVE", 0);
         return jwtService.issue(user, List.of("file:upload")).value();
