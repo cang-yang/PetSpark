@@ -3,6 +3,11 @@ jest.mock('@/api/auth', () => ({
   login: jest.fn(),
   register: jest.fn()
 }))
+jest.mock('@/api/notifications', () => ({
+  listNotifications: jest.fn(),
+  markNotificationRead: jest.fn(),
+  markAllNotificationsRead: jest.fn()
+}))
 
 import router from '@/router'
 

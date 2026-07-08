@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petspark.notification.NotificationMapper">
+
+    <insert id="insert" parameterType="com.petspark.notification.Notification">
+        INSERT INTO notification
+            (id, recipient_id, type, title, content, business_type, business_id, read_at, created_at)
+        VALUES
+            (#{id}, #{recipientId}, #{type}, #{title}, #{content},
+             #{businessType}, #{businessId},
+             <choose>
+                 <when test="readAt != null">#{readAt}</when>
+                 <otherwise>NULL</otherwise>
+             </choose>,
+             #{createdAt})
+    </insert>
+
+</mapper>

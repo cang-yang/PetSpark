@@ -12,3 +12,12 @@ spring:
 petspark:
   ai:
     enabled: false
+  notification:
+    dispatcher:
+      # 测试中禁用后台轮询（间隔拉到 1 小时，相当于不在短测试内触发），
+      # 由测试同步调用 dispatchOnce() 控制投递时机，避免与断言竞争。
+      poll-interval-seconds: 3600
+      # 退避设为 0，使失败事件可被连续 dispatchOnce 立即重试，便于死信测试。
+      backoff-seconds: 0
+      max-attempts: 5
+      batch-size: 20
