@@ -52,6 +52,8 @@ public enum ErrorCode {
     BREED_DUPLICATE_001(422, "BREED_DUPLICATE_001", "品种名称已存在"),
     PET_REFERENCED_001(422, "PET_REFERENCED_001", "宠物已被业务引用，不能删除"),
     PET_STATE_001(422, "PET_STATE_001", "宠物状态迁移非法"),
+    HEALTH_SCOPE_001(422, "HEALTH_SCOPE_001", "不在健康记录授权范围"),
+    HEALTH_RETENTION_001(422, "HEALTH_RETENTION_001", "健康记录保留策略不允许该操作"),
     USER_DUPLICATE_001(422, "USER_DUPLICATE_001", "账号或邮箱已存在"),
 
     // 限流 429

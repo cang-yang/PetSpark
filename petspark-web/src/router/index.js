@@ -20,6 +20,7 @@ export default new VueRouter({
     { path: '/goods/:id', name: 'goods-detail', component: () => import('../views/GoodsDetailView.vue') },
     { path: '/pets', name: 'pets', component: () => import('../views/PetsView.vue') },
     { path: '/my/pets', name: 'my-pets', component: () => import('../views/MyPetsView.vue') },
+    { path: '/my/pets/:id/health', name: 'pet-health', component: () => import('../views/PetHealthView.vue') },
     { path: '/profile', name: 'profile', component: () => import('../views/ProfileView.vue') },
     { path: '/admin/users', name: 'admin-users', component: () => import('../views/AdminUsersView.vue') },
     { path: '/admin/system', name: 'admin-system', component: () => import('../views/SystemAdminView.vue') },
