@@ -35,6 +35,11 @@ export default new VueRouter({
       path: '/notifications',
       name: 'notifications',
       component: NotificationsView
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('../views/ProfileView.vue')
     }
   ]
 })
