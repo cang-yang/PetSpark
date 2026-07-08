@@ -37,11 +37,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             JwtService.AuthenticatedToken token;
             try {
-                token = jwtService.verify(header.substring("Bearer ".length()).trim());
-                SysUser current = userRepository.findById(token.userId())
+                JwtService.AuthenticatedToken verifiedToken = jwtService.verify(header.substring("Bearer ".length()).trim());
+                SysUser current = userRepository.findById(verifiedToken.userId())
                         .filter(user -> "ACTIVE".equals(user.status()))
-                        .filter(user -> user.tokenVersion() == token.tokenVersion())
+                        .filter(user -> user.tokenVersion() == verifiedToken.tokenVersion())
                         .orElseThrow(() -> new IllegalArgumentException("stale access token"));
+                token = new JwtService.AuthenticatedToken(
+                        verifiedToken.userId(),
+                        verifiedToken.username(),
+                        userRepository.findAuthorities(current.id()),
+                        verifiedToken.tokenVersion());
             } catch (RuntimeException ex) {
                 SecurityContextHolder.clearContext();
                 errorHandlers.commence(request, response, new BadCredentialsException("invalid access token", ex));
