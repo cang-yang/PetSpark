@@ -1,0 +1,111 @@
+package com.petspark.ai.chat;
+
+import com.petspark.ai.chat.AiChatDtos.AiChatReplyView;
+import com.petspark.ai.chat.AiChatDtos.AiConsentRequest;
+import com.petspark.ai.chat.AiChatDtos.AiConversationCreateRequest;
+import com.petspark.ai.chat.AiChatDtos.AiConversationView;
+import com.petspark.ai.chat.AiChatDtos.AiMessageRequest;
+import com.petspark.ai.chat.AiChatDtos.AiMessageView;
+import com.petspark.ai.chat.AiChatDtos.AiStatusView;
+import com.petspark.common.api.ApiResponse;
+import com.petspark.common.security.AuthenticatedUser;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+/**
+ * AI 对话接口（API-AI-001~006）。
+ *
+ * <ul>
+ *   <li>API-AI-001 {@code GET /ai/status}：开关/同意状态/降级原因（登录自服务）；</li>
+ *   <li>API-AI-002 {@code PUT /ai/consent}：同意 AI 服务协议；</li>
+ *   <li>API-AI-002b {@code DELETE /ai/consent}：撤回同意，撤回后阻止新会话；</li>
+ *   <li>API-AI-003 {@code POST /ai/conversations}：创建会话（场景+可选 petId+标题）；</li>
+ *   <li>API-AI-004 {@code POST /ai/conversations/{id}/messages}：非流式发送消息；</li>
+ *   <li>API-AI-005 {@code POST /ai/conversations/{id}/messages:stream}：SSE 流式发送；</li>
+ *   <li>API-AI-006 {@code DELETE /ai/conversations/{id}}：软删会话与消息；</li>
+ *   <li>API-AI-006b {@code GET /ai/conversations/{id}/messages}：列出会话历史消息。</li>
+ * </ul>
+ *
+ * <p>所有端点权限=登录（无 @RequirePermission）；资源归属在 {@link AiChatService} 内按
+ * userId 校验。健康检查 {@code GET /ai/health} 仍由 {@code AiHealthController} 提供。
+ */
+@Validated
+@RestController
+@RequestMapping("/api/v1/ai")
+public class AiChatController {
+
+    private final AiChatService service;
+
+    public AiChatController(AiChatService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/status")
+    public ApiResponse<AiStatusView> status(@AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.status(user.getId()));
+    }
+
+    @PutMapping("/consent")
+    public ApiResponse<AiChatDtos.AiConsentView> grantConsent(
+            @Valid @RequestBody AiConsentRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.grantConsent(user.getId(), request));
+    }
+
+    @DeleteMapping("/consent")
+    public ApiResponse<AiChatDtos.AiConsentView> withdrawConsent(
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.withdrawConsent(user.getId()));
+    }
+
+    @PostMapping("/conversations")
+    public ApiResponse<AiConversationView> createConversation(
+            @Valid @RequestBody AiConversationCreateRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.createConversation(user.getId(), request));
+    }
+
+    @PostMapping("/conversations/{id}/messages")
+    public ApiResponse<AiChatReplyView> sendMessage(
+            @PathVariable String id,
+            @Valid @RequestBody AiMessageRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.send(id, request, user.getId()));
+    }
+
+    @PostMapping(value = "/conversations/{id}/messages:stream",
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamMessage(
+            @PathVariable String id,
+            @Valid @RequestBody AiMessageRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return service.stream(id, request, user.getId());
+    }
+
+    @GetMapping("/conversations/{id}/messages")
+    public ApiResponse<List<AiMessageView>> listMessages(
+            @PathVariable String id,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.listMessages(id, user.getId()));
+    }
+
+    @DeleteMapping("/conversations/{id}")
+    public ApiResponse<Void> deleteConversation(
+            @PathVariable String id,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        service.deleteConversation(id, user.getId());
+        return ApiResponse.ok();
+    }
+}

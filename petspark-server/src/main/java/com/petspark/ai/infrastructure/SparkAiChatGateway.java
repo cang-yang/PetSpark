@@ -7,6 +7,7 @@ import com.petspark.common.error.BusinessException;
 import com.petspark.common.error.ErrorCode;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +78,49 @@ public class SparkAiChatGateway implements AiChatGateway {
         return new AiProbeResult(content, response.usage() == null ? AiUsage.empty() : response.usage());
     }
 
+    @Override
+    public AiChatResult chat(AiChatRequest request) {
+        ensureAvailable();
+        SparkChatResponse response;
+        try {
+            response = restClient.post()
+                    .uri("/chat/completions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(toSparkRequest(request))
+                    .retrieve()
+                    .body(SparkChatResponse.class);
+        } catch (RestClientResponseException ex) {
+            throw mapHttpError(ex);
+        } catch (ResourceAccessException ex) {
+            if (isTimeout(ex)) {
+                log.warn("spark ai chat timed out model={} adapter={} requestId={}",
+                        properties.model(), ADAPTER, request.requestId());
+                throw new BusinessException(ErrorCode.AI_PROVIDER_001, "AI 服务调用超时，请稍后重试");
+            }
+            log.warn("spark ai chat network error model={} adapter={} reason={} requestId={}",
+                    properties.model(), ADAPTER, ex.getClass().getSimpleName(), request.requestId());
+            throw new BusinessException(ErrorCode.AI_PROVIDER_001);
+        } catch (RestClientException ex) {
+            log.warn("spark ai chat client error model={} adapter={} reason={} requestId={}",
+                    properties.model(), ADAPTER, ex.getClass().getSimpleName(), request.requestId());
+            throw new BusinessException(ErrorCode.AI_PROVIDER_001);
+        }
+        if (response == null) {
+            throw new BusinessException(ErrorCode.AI_PROVIDER_001, "AI 服务返回为空");
+        }
+        validateProviderCode(response);
+        String content = response.firstContent();
+        if (content == null || content.isBlank()) {
+            // 模型返回空内容视为输出格式无效（不可恢复，前端提示重试）。
+            log.warn("spark ai chat empty content model={} adapter={} requestId={}",
+                    properties.model(), ADAPTER, request.requestId());
+            throw new BusinessException(ErrorCode.AI_OUTPUT_001);
+        }
+        AiUsage usage = response.usage() == null ? AiUsage.empty() : response.usage();
+        String providerRequestId = response.code() == null ? null : response.code().toString();
+        return new AiChatResult(providerRequestId, content, usage, properties.model());
+    }
+
     private void ensureAvailable() {
         if (properties.enabled() && properties.apiPassword().isBlank()) {
             throw new BusinessException(ErrorCode.AI_DISABLED_001, "AI 服务未配置密钥");
@@ -97,6 +141,31 @@ public class SparkAiChatGateway implements AiChatGateway {
                 List.of(new SparkMessage("system", system), new SparkMessage("user", user)),
                 0.4,
                 1024,
+                false,
+                responseFormat);
+    }
+
+    private SparkChatRequest toSparkRequest(AiChatRequest request) {
+        List<SparkMessage> messages = new ArrayList<>();
+        String system = request.systemPrompt() == null || request.systemPrompt().isBlank()
+                ? "You are a PetSpark AI assistant."
+                : request.systemPrompt();
+        messages.add(new SparkMessage("system", system));
+        if (request.messages() != null) {
+            for (AiMessage msg : request.messages()) {
+                String role = msg.role() == null ? "user" : msg.role();
+                String content = msg.content() == null ? "" : msg.content();
+                messages.add(new SparkMessage(role, content));
+            }
+        }
+        ResponseFormat responseFormat = request.jsonOutput() ? new ResponseFormat("json_object") : null;
+        double temperature = request.temperature();
+        int maxTokens = request.maxOutputTokens() <= 0 ? 1024 : request.maxOutputTokens();
+        return new SparkChatRequest(
+                properties.model(),
+                messages,
+                temperature,
+                maxTokens,
                 false,
                 responseFormat);
     }

@@ -12,6 +12,7 @@
           <router-link to="/my/orders">我的订单</router-link>
           <router-link to="/pets">宠物</router-link>
           <router-link to="/my/pets">我的宠物</router-link>
+          <router-link to="/ai/chat" data-testid="nav-ai-chat">AI 对话</router-link>
           <router-link to="/profile">个人资料</router-link>
           <router-link to="/notifications">通知中心</router-link>
           <router-link to="/admin/users">用户管理</router-link>
