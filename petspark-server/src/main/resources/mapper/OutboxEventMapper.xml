@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petspark.common.event.OutboxEventMapper">
+
+    <insert id="insert" parameterType="com.petspark.common.event.OutboxEvent">
+        INSERT INTO outbox_event
+            (id, event_type, aggregate_type, aggregate_id, payload, status,
+             attempt_count, next_attempt_at, created_at, processed_at)
+        VALUES
+            (#{id}, #{eventType}, #{aggregateType}, #{aggregateId}, #{payload},
+             <choose>
+                 <when test="status != null">#{status}</when>
+                 <otherwise>'PENDING'</otherwise>
+             </choose>,
+             #{attemptCount},
+             <choose>
+                 <when test="nextAttemptAt != null">#{nextAttemptAt}</when>
+                 <otherwise>NULL</otherwise>
+             </choose>,
+             #{createdAt},
+             <choose>
+                 <when test="processedAt != null">#{processedAt}</when>
+                 <otherwise>NULL</otherwise>
+             </choose>)
+    </insert>
+
+</mapper>
