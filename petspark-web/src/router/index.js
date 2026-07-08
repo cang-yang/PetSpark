@@ -37,6 +37,16 @@ export default new VueRouter({
       component: NotificationsView
     },
     {
+      path: '/goods',
+      name: 'goods',
+      component: () => import('../views/GoodsListView.vue')
+    },
+    {
+      path: '/goods/:id',
+      name: 'goods-detail',
+      component: () => import('../views/GoodsDetailView.vue')
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue')
@@ -50,6 +60,11 @@ export default new VueRouter({
       path: '/admin/system',
       name: 'admin-system',
       component: () => import('../views/SystemAdminView.vue')
+    },
+    {
+      path: '/admin/goods',
+      name: 'admin-goods',
+      component: () => import('../views/AdminGoodsView.vue')
     }
   ]
 })
