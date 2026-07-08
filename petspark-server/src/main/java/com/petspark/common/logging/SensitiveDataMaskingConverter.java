@@ -37,7 +37,7 @@ public class SensitiveDataMaskingConverter extends MessageConverter {
             "(?i)\"(password|passwd|secret|api[-_]?key|access[-_]?token|refresh[-_]?token|authorization)\"\\s*:\\s*\"[^\"]*\"");
     // 形如 password=secret / api_key=sk-... （不含 authorization，由 AUTH_HEADER/BEARER 处理）
     private static final Pattern PASSWORD_KV = Pattern.compile(
-            "(?i)(password|passwd|secret|api[-_]?key|access[-_]?token|refresh[-_]?token)\\s*[:=]\\s*['\"]?[A-Za-z0-9._~+/=\\-]+");
+            "(?i)(password|passwd|secret|api[-_]?key|api[-_]?password|spark[-_]?api[-_]?password|access[-_]?token|refresh[-_]?token)\\s*[:=]\\s*['\"]?[A-Za-z0-9._~+/=\\-]+");
 
     @Override
     public String convert(ILoggingEvent event) {
