@@ -19,7 +19,7 @@ public enum ErrorCode {
     AUTH_CREDENTIAL_001(401, "AUTH_CREDENTIAL_001", "凭据无效"),
     AUTH_TOKEN_001(401, "AUTH_TOKEN_001", "访问令牌缺失或无效"),
     AUTH_REFRESH_001(401, "AUTH_REFRESH_001", "刷新令牌无效或已撤销"),
-    AUTH_CAPTCHA_001(401, "AUTH_CAPTCHA_001", "验证码无效或已过期"),
+    AUTH_CAPTCHA_001(400, "AUTH_CAPTCHA_001", "验证码无效或已过期"),
     AUTH_ACCOUNT_001(401, "AUTH_ACCOUNT_001", "账号已禁用或锁定"),
 
     // 鉴权类 403
