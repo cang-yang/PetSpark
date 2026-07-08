@@ -7,10 +7,11 @@ import org.springframework.stereotype.Repository;
 
 /**
  * {@link OutboxRepository} 的 MyBatis 实现。{@link #save} 依赖调用方已开启事务，
- * 与业务写操作在同一事务提交/回滚。
+ * 与业务写操作在同一事务提交/回滚；这是同事务 Outbox 的核心保证。
  *
- * <p>这是 common 层对 outbox_event 的唯一实现；后续 PR 若引入复杂投递调度，
- * 可扩展或替换，但同事务写入的语义不变。
+ * <p>状态机方法（claimPending / markSent / markFailed / reclaimStaleProcessing /
+ * countByStatus）由 {@link com.petspark.notification.OutboxDispatcher} 在调度线程调用，
+ * 使用各自的自动提交事务，与业务事务解耦——投递失败只推进事件状态，不回滚已提交业务。
  */
 @Repository
 public class MyBatisOutboxRepository implements OutboxRepository {
@@ -34,5 +35,30 @@ public class MyBatisOutboxRepository implements OutboxRepository {
     @Override
     public Optional<OutboxEvent> findById(String id) {
         return mapper.findById(id);
+    }
+
+    @Override
+    public int claimPending(String id) {
+        return mapper.claimPending(id);
+    }
+
+    @Override
+    public int reclaimStaleProcessing(Instant staleBefore) {
+        return mapper.reclaimStaleProcessing(staleBefore);
+    }
+
+    @Override
+    public void markSent(String id) {
+        mapper.markSent(id, Instant.now());
+    }
+
+    @Override
+    public void markFailed(String id, int attemptCount, Instant nextAttemptAt, boolean dead) {
+        mapper.markFailed(id, attemptCount, nextAttemptAt, dead);
+    }
+
+    @Override
+    public long countByStatus(OutboxEvent.Status status) {
+        return mapper.countByStatus(status.name());
     }
 }
