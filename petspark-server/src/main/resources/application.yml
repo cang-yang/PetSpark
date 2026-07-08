@@ -73,3 +73,7 @@ petspark:
     api-password: ${SPARK_API_PASSWORD:}
     connect-timeout: ${SPARK_CONNECT_TIMEOUT:5s}
     read-timeout: ${SPARK_READ_TIMEOUT:30s}
+    # AI 对话消息正文 AES-GCM 加密密钥；生产通过 AI_MESSAGE_SECRET 注入，禁止复用 dev 默认值。
+    message-secret: ${AI_MESSAGE_SECRET:dev-only-change-me-petspark-ai-message-secret}
+    # 单用户每分钟调用次数上限（内存滑动窗口）；0/负数回退为 10。
+    rate-limit-per-minute: ${AI_RATE_LIMIT_PER_MINUTE:10}

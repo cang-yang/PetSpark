@@ -64,10 +64,14 @@ public enum ErrorCode {
     RATE_LIMIT_CAPTCHA_001(429, "RATE_LIMIT_CAPTCHA_001", "验证码获取过于频繁"),
     RATE_LIMIT_EMAIL_001(429, "RATE_LIMIT_EMAIL_001", "邮件发送过于频繁"),
 
-    // AI 网关 401/429/503
+    // AI 网关 401/403/422/429/502/503
     AI_DISABLED_001(503, "AI_DISABLED_001", "AI 服务未启用或未配置"),
     AI_PROVIDER_AUTH_001(401, "AI_PROVIDER_AUTH_001", "AI 供应商鉴权失败"),
     AI_PROVIDER_LIMIT_001(429, "AI_PROVIDER_LIMIT_001", "AI 供应商额度或频率限制"),
+    AI_CONSENT_001(403, "AI_CONSENT_001", "未同意或已撤回 AI 服务协议"),
+    AI_SAFETY_001(422, "AI_SAFETY_001", "输入违反安全策略，已拒答"),
+    AI_CONTEXT_001(422, "AI_CONTEXT_001", "上下文超限，请缩短输入"),
+    AI_OUTPUT_001(502, "AI_OUTPUT_001", "AI 输出格式无效"),
 
     // 外部服务 502/503
     AI_PROVIDER_001(503, "AI_PROVIDER_001", "AI 服务暂不可用"),
