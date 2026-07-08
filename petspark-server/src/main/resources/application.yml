@@ -70,3 +70,6 @@ petspark:
     enabled: ${SPARK_ENABLED:false}
     base-url: ${SPARK_BASE_URL:https://spark-api-open.xf-yun.com/v2}
     model: ${SPARK_MODEL:spark-x}
+    api-password: ${SPARK_API_PASSWORD:}
+    connect-timeout: ${SPARK_CONNECT_TIMEOUT:5s}
+    read-timeout: ${SPARK_READ_TIMEOUT:30s}
