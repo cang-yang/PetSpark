@@ -38,6 +38,12 @@ export default new Vuex.Store({
         storage.setItem('petspark.user', JSON.stringify(session.user))
       }
     },
+    setUser(state, user) {
+      state.user = user
+      if (storage) {
+        storage.setItem('petspark.user', JSON.stringify(user))
+      }
+    },
     clearSession(state) {
       state.accessToken = ''
       state.user = null

@@ -52,4 +52,30 @@ public class FileObjectRepository {
                 WHERE id = ? AND owner_id = ? AND status = 'STAGED' AND deleted_at IS NULL
                 """, id, ownerId);
     }
+
+    public boolean existsActiveOwned(String id, String ownerId) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM file_object
+                WHERE id = ? AND owner_id = ? AND status = 'ACTIVE' AND deleted_at IS NULL
+                """, Integer.class, id, ownerId);
+        return count != null && count > 0;
+    }
+
+    public boolean existsAvailable(String id) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM file_object
+                WHERE id = ? AND deleted_at IS NULL AND status IN ('STAGED', 'ACTIVE')
+                """, Integer.class, id);
+        return count != null && count > 0;
+    }
+
+    public Optional<String> findStatusForOwner(String id, String ownerId) {
+        return jdbcTemplate.query("""
+                SELECT status
+                FROM file_object
+                WHERE id = ? AND owner_id = ? AND deleted_at IS NULL
+                """, rs -> rs.next() ? Optional.of(rs.getString("status")) : Optional.empty(), id, ownerId);
+    }
 }
