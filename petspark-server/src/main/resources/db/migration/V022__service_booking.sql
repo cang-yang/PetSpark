@@ -161,8 +161,8 @@ CREATE TABLE service_cancellation (
 -- 复用已有 BOOKING_CONFLICT_001 错误码（V018 前已存在），不在此重新定义。
 INSERT IGNORE INTO sys_permission (id, code, resource, action, description)
 VALUES
-    ('00000000-0000-0000-0000-000000000226', 'service:manage', 'service', 'manage', 'Manage service items, resources, slots and bookings'),
-    ('00000000-0000-0000-0000-000000000227', 'service:fulfill', 'service', 'fulfill', 'Transition service bookings to fulfillment and complete');
+    ('00000000-0000-0000-0000-000000000232', 'service:manage', 'service', 'manage', 'Manage service items, resources, slots and bookings'),
+    ('00000000-0000-0000-0000-000000000233', 'service:fulfill', 'service', 'fulfill', 'Transition service bookings to fulfillment and complete');
 
 -- ADMIN (...102) 显式绑定新引入权限（V009 的 blanket SELECT 未覆盖后续迁移新增的权限）。
 INSERT IGNORE INTO sys_role_permission (role_id, permission_id)
