@@ -15,6 +15,8 @@ Thumbs.db
 
 # 日志
 *.log
+*.log.gz
+logs/
 
 # 构建产物
 target/
