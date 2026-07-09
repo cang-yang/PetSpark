@@ -81,6 +81,8 @@ public enum ErrorCode {
     ADOPTION_DUPLICATE_001(409, "ADOPTION_DUPLICATE_001", "该宠物已有未结束的领养申请"),
     ADOPTION_STATE_001(422, "ADOPTION_STATE_001", "领养申请状态不允许该操作"),
     ADOPTION_HANDOVER_001(422, "ADOPTION_HANDOVER_001", "交接失败，已恢复宠物可领养状态"),
+    STRAY_NOT_FOUND_001(404, "STRAY_NOT_FOUND_001", "流浪救助线索不存在或不可见"),
+    STRAY_STATE_001(422, "STRAY_STATE_001", "流浪救助线索状态不允许该操作"),
     HEALTH_SCOPE_001(422, "HEALTH_SCOPE_001", "不在健康记录授权范围"),
     HEALTH_RETENTION_001(422, "HEALTH_RETENTION_001", "健康记录保留策略不允许该操作"),
     USER_DUPLICATE_001(422, "USER_DUPLICATE_001", "账号或邮箱已存在"),

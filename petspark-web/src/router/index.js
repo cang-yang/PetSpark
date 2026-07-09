@@ -12,6 +12,7 @@ import trainingRoutes from './modules/training'
 import beautyRoutes from './modules/beauty'
 import medicalRoutes from './modules/medical'
 import communityRoutes from './modules/community'
+import strayRoutes from './modules/stray'
 
 Vue.use(VueRouter)
 
@@ -33,7 +34,8 @@ const routes = [
   ...trainingRoutes,
   ...beautyRoutes,
   ...medicalRoutes,
-  ...communityRoutes
+  ...communityRoutes,
+  ...strayRoutes
 ]
 
 export default new VueRouter({
