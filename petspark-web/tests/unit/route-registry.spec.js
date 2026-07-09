@@ -31,6 +31,7 @@ import adoptionRoutes from '@/router/modules/adoption'
 import aiRoutes from '@/router/modules/ai'
 import systemRoutes from '@/router/modules/system'
 import boardingRoutes from '@/router/modules/boarding'
+import serviceRoutes from '@/router/modules/service'
 import router from '@/router'
 
 import navigation from '@/navigation'
@@ -46,17 +47,23 @@ describe('frontend route registry baseline', () => {
     'home', 'login', 'register', 'forgot-password', 'notifications',
     'goods', 'goods-detail', 'my-orders',
     'pets', 'my-pets', 'pet-health',
+    'adoptions', 'my-adoptions', 'admin-adoptions',
     'ai-chat',
     'profile',
-    'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders'
+    'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders',
+    'boarding-new', 'my-boarding', 'admin-rooms', 'admin-boarding',
+    'services', 'service-detail', 'my-service-bookings', 'admin-services'
   ]
   const expectedPaths = [
     '/', '/login', '/register', '/forgot-password', '/notifications',
     '/goods', '/goods/:id', '/my/orders',
     '/pets', '/my/pets', '/my/pets/:id/health',
+    '/adoptions', '/my/adoptions', '/admin/adoptions',
     '/ai/chat',
     '/profile',
-    '/admin/users', '/admin/system', '/admin/goods', '/admin/pets', '/admin/orders'
+    '/admin/users', '/admin/system', '/admin/goods', '/admin/pets', '/admin/orders',
+    '/boarding/new', '/my/boarding', '/admin/rooms', '/admin/boarding',
+    '/services', '/services/:id', '/my/services/bookings', '/admin/services'
   ]
 
   it('preserves every baseline route name after modularization', () => {
@@ -79,8 +86,10 @@ describe('frontend route registry baseline', () => {
     expect(aiRoutes.length).toBe(1)
     expect(systemRoutes.length).toBe(2)
     expect(boardingRoutes.length).toBe(4)
+    expect(serviceRoutes.length).toBe(4)
     expect(commonRoutes.length + catalogRoutes.length + petRoutes.length
-      + adoptionRoutes.length + aiRoutes.length + systemRoutes.length + boardingRoutes.length).toBe(router.options.routes.length)
+      + adoptionRoutes.length + aiRoutes.length + systemRoutes.length
+      + boardingRoutes.length + serviceRoutes.length).toBe(router.options.routes.length)
   })
 })
 
@@ -94,7 +103,10 @@ describe('navigation registry baseline', () => {
   it('keeps all pre-refactor member nav entries by name', () => {
     const memberNames = navigation.memberNav.map((e) => e.to)
     const expected = [
-      'goods', 'my-orders', 'pets', 'my-pets', 'ai-chat', 'profile', 'notifications'
+      'goods', 'my-orders', 'pets', 'my-pets', 'ai-chat', 'profile', 'notifications',
+      'adoptions', 'my-adoptions',
+      'boarding-new', 'my-boarding',
+      'services', 'my-service-bookings'
     ]
     expect(expected.filter((n) => !memberNames.includes(n))).toEqual([])
   })
@@ -102,7 +114,8 @@ describe('navigation registry baseline', () => {
   it('keeps all pre-refactor admin nav entries by name', () => {
     const adminNames = navigation.adminNav.map((e) => e.to)
     const expected = [
-      'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders'
+      'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders',
+      'admin-adoptions', 'admin-rooms', 'admin-boarding', 'admin-services'
     ]
     expect(expected.filter((n) => !adminNames.includes(n))).toEqual([])
   })
