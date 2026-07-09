@@ -32,6 +32,7 @@ import aiRoutes from '@/router/modules/ai'
 import systemRoutes from '@/router/modules/system'
 import boardingRoutes from '@/router/modules/boarding'
 import serviceRoutes from '@/router/modules/service'
+import trainingRoutes from '@/router/modules/training'
 import router from '@/router'
 
 import navigation from '@/navigation'
@@ -52,7 +53,8 @@ describe('frontend route registry baseline', () => {
     'profile',
     'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders',
     'boarding-new', 'my-boarding', 'admin-rooms', 'admin-boarding',
-    'services', 'service-detail', 'my-service-bookings', 'admin-services'
+    'services', 'service-detail', 'my-service-bookings', 'admin-services',
+    'training', 'training-detail', 'my-training-bookings', 'admin-training'
   ]
   const expectedPaths = [
     '/', '/login', '/register', '/forgot-password', '/notifications',
@@ -63,7 +65,8 @@ describe('frontend route registry baseline', () => {
     '/profile',
     '/admin/users', '/admin/system', '/admin/goods', '/admin/pets', '/admin/orders',
     '/boarding/new', '/my/boarding', '/admin/rooms', '/admin/boarding',
-    '/services', '/services/:id', '/my/services/bookings', '/admin/services'
+    '/services', '/services/:id', '/my/services/bookings', '/admin/services',
+    '/training', '/training/:id', '/my/training/bookings', '/admin/training'
   ]
 
   it('preserves every baseline route name after modularization', () => {
@@ -87,9 +90,10 @@ describe('frontend route registry baseline', () => {
     expect(systemRoutes.length).toBe(2)
     expect(boardingRoutes.length).toBe(4)
     expect(serviceRoutes.length).toBe(4)
+    expect(trainingRoutes.length).toBe(4)
     expect(commonRoutes.length + catalogRoutes.length + petRoutes.length
       + adoptionRoutes.length + aiRoutes.length + systemRoutes.length
-      + boardingRoutes.length + serviceRoutes.length).toBe(router.options.routes.length)
+      + boardingRoutes.length + serviceRoutes.length + trainingRoutes.length).toBe(router.options.routes.length)
   })
 })
 
@@ -106,7 +110,8 @@ describe('navigation registry baseline', () => {
       'goods', 'my-orders', 'pets', 'my-pets', 'ai-chat', 'profile', 'notifications',
       'adoptions', 'my-adoptions',
       'boarding-new', 'my-boarding',
-      'services', 'my-service-bookings'
+      'services', 'my-service-bookings',
+      'training', 'my-training-bookings'
     ]
     expect(expected.filter((n) => !memberNames.includes(n))).toEqual([])
   })
@@ -115,7 +120,7 @@ describe('navigation registry baseline', () => {
     const adminNames = navigation.adminNav.map((e) => e.to)
     const expected = [
       'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders',
-      'admin-adoptions', 'admin-rooms', 'admin-boarding', 'admin-services'
+      'admin-adoptions', 'admin-rooms', 'admin-boarding', 'admin-services', 'admin-training'
     ]
     expect(expected.filter((n) => !adminNames.includes(n))).toEqual([])
   })
