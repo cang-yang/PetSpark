@@ -6,6 +6,7 @@ jest.mock('@/api/auth', () => ({
   logout: jest.fn()
 }))
 jest.mock('@/api/notifications', () => ({
+  getUnreadNotificationCount: jest.fn(),
   listNotifications: jest.fn(),
   markNotificationRead: jest.fn(),
   markAllNotificationsRead: jest.fn()

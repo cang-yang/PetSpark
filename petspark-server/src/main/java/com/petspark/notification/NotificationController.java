@@ -5,6 +5,7 @@ import com.petspark.common.api.PageQuery;
 import com.petspark.common.api.PageResult;
 import com.petspark.common.security.AuthenticatedUser;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -42,6 +43,12 @@ public class NotificationController {
         NotificationPageView view = queryService.list(user.getId(), query, onlyUnread);
         // 复用 PageResult 信封出口的同时保留 unreadCount 扩展字段。
         return ApiResponse.ok(view);
+    }
+
+    @GetMapping("/unread-count")
+    public ApiResponse<Map<String, Long>> unreadCount(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(Map.of("unreadCount", queryService.countUnread(user.getId())));
     }
 
     @PutMapping("/{id}/read")

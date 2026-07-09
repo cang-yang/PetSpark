@@ -14,7 +14,14 @@
             v-for="entry in memberNav"
             :key="entry.to"
             :to="entry.to"
-            :data-testid="entry.dataTestId">{{ entry.text }}</router-link
+            :data-testid="entry.dataTestId">
+            {{ entry.text }}
+            <span
+              v-if="entry.badge === 'notifications' && notificationUnreadCount > 0"
+              class="nav-badge"
+              data-testid="nav-notifications-badge"
+            >{{ notificationUnreadCountText }}</span>
+          </router-link
           >
           <router-link
             v-for="entry in adminNav"
@@ -45,7 +52,8 @@ export default {
     return {
       publicNav: navigation.publicNav,
       memberNav: navigation.memberNav,
-      adminNav: navigation.adminNav
+      adminNav: navigation.adminNav,
+      notificationCountTimer: null
     }
   },
   computed: {
@@ -56,9 +64,47 @@ export default {
       return this.$store && this.$store.state && this.$store.state.user
         ? this.$store.state.user.nickname
         : ''
+    },
+    notificationUnreadCount() {
+      return this.$store && this.$store.state ? this.$store.state.notificationUnreadCount || 0 : 0
+    },
+    notificationUnreadCountText() {
+      return this.notificationUnreadCount > 99 ? '99+' : String(this.notificationUnreadCount)
+    }
+  },
+  created() {
+    this.startNotificationCountPolling()
+  },
+  beforeDestroy() {
+    this.stopNotificationCountPolling()
+  },
+  watch: {
+    isAuthenticated(value) {
+      if (value) {
+        this.refreshNotificationCount()
+        this.startNotificationCountPolling()
+      } else {
+        this.stopNotificationCountPolling()
+        this.$store.dispatch('setNotificationUnreadCount', 0)
+      }
     }
   },
   methods: {
+    refreshNotificationCount() {
+      if (!this.isAuthenticated || !this.$store || !this.$store.dispatch) return
+      this.$store.dispatch('refreshNotificationUnreadCount').catch(() => {})
+    },
+    startNotificationCountPolling() {
+      if (!this.isAuthenticated || this.notificationCountTimer) return
+      this.refreshNotificationCount()
+      this.notificationCountTimer = window.setInterval(this.refreshNotificationCount, 60000)
+    },
+    stopNotificationCountPolling() {
+      if (this.notificationCountTimer) {
+        window.clearInterval(this.notificationCountTimer)
+        this.notificationCountTimer = null
+      }
+    },
     async signOut() {
       try {
         await logout()
@@ -77,7 +123,8 @@ body { margin: 0; color: #24313d; background: #f5f7fa; font-family: "Microsoft Y
 .app-header h1, .app-header p { margin: 0; }
 .app-header p { margin-top: 8px; }
 .app-nav { display: flex; gap: 16px; align-items: center; }
-.app-nav a { color: #fff; text-decoration: none; font-weight: 600; }
+.app-nav a { color: #fff; text-decoration: none; font-weight: 600; position: relative; display: inline-flex; align-items: center; gap: 4px; }
 .app-nav a.router-link-exact-active { text-decoration: underline; }
+.nav-badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; color: #f56c6c; background: #fff; font-size: 11px; line-height: 16px; text-align: center; }
 .nav-button { padding: 0; color: #fff; background: transparent; border: 0; font: inherit; font-weight: 600; cursor: pointer; }
 </style>

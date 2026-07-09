@@ -10,7 +10,7 @@ import VueRouter from 'vue-router'
 import Vuex from 'vuex'
 import ElementUI from 'element-ui'
 import NotificationsView from '@/views/NotificationsView.vue'
-import { listNotifications } from '@/api/notifications'
+import { listNotifications, markNotificationRead, markAllNotificationsRead } from '@/api/notifications'
 
 function mountView(query = {}) {
   const localVue = createLocalVue()
@@ -18,12 +18,23 @@ function mountView(query = {}) {
   localVue.use(Vuex)
   localVue.use(ElementUI)
   const store = new Vuex.Store({
-    state: { accessToken: 't', user: { nickname: 'tester' } },
-    getters: { isAuthenticated: () => true }
+    state: { accessToken: 't', user: { nickname: 'tester' }, notificationUnreadCount: 0 },
+    getters: { isAuthenticated: () => true },
+    actions: {
+      setNotificationUnreadCount({ state }, count) {
+        state.notificationUnreadCount = count
+      }
+    }
   })
   const testRouter = new VueRouter({
     mode: 'abstract',
-    routes: [{ path: '/notifications', name: 'notifications', component: NotificationsView }]
+    routes: [
+      { path: '/notifications', name: 'notifications', component: NotificationsView },
+      { path: '/my/adoptions', name: 'my-adoptions' },
+      { path: '/my/boarding', name: 'my-boarding' },
+      { path: '/my/services/bookings', name: 'my-service-bookings' },
+      { path: '/my/orders', name: 'my-orders' }
+    ]
   })
   testRouter.push({ path: '/notifications', query })
   return shallowMount(NotificationsView, {
@@ -35,7 +46,11 @@ function mountView(query = {}) {
 }
 
 describe('NotificationsView', () => {
-  beforeEach(() => listNotifications.mockReset())
+  beforeEach(() => {
+    listNotifications.mockReset()
+    markNotificationRead.mockReset()
+    markAllNotificationsRead.mockReset()
+  })
 
   it('lists notifications on mount and renders items', async () => {
     listNotifications.mockResolvedValue({
@@ -95,6 +110,76 @@ describe('NotificationsView', () => {
     await flushPromises()
 
     expect(listNotifications).toHaveBeenCalledWith({ page: 3, size: 10, onlyUnread: true })
+  })
+
+  it('removes read item from only-unread list and updates shared unread count', async () => {
+    listNotifications
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            { id: 'n-1', type: 'BOARDING_CONFIRMED', title: '寄养确认', content: '内容', businessType: 'BOARDING', businessId: 'b-1', read: false, readAt: null, createdAt: '2026-07-08T09:00:00Z' }
+          ],
+          page: 1, size: 10, total: 1, unreadCount: 1
+        }
+      })
+      .mockResolvedValueOnce({
+        data: { items: [], page: 1, size: 10, total: 0, unreadCount: 0 }
+      })
+    markNotificationRead.mockResolvedValue({ data: null })
+
+    const wrapper = mountView({ onlyUnread: 'true' })
+    await flushPromises()
+
+    await wrapper.vm.markOne(wrapper.vm.items[0])
+    await flushPromises()
+
+    expect(markNotificationRead).toHaveBeenCalledWith('n-1')
+    expect(wrapper.find('[data-testid="notification-n-1"]').exists()).toBe(false)
+    expect(wrapper.vm.$store.state.notificationUnreadCount).toBe(0)
+  })
+
+  it('marks all unread notifications read and clears only-unread list', async () => {
+    listNotifications.mockResolvedValue({
+      data: {
+        items: [
+          { id: 'n-1', type: 'SYSTEM', title: '标题', content: '内容', read: false, readAt: null, createdAt: '2026-07-08T09:00:00Z' }
+        ],
+        page: 1, size: 10, total: 1, unreadCount: 1
+      }
+    })
+    markAllNotificationsRead.mockResolvedValue({ data: null })
+
+    const wrapper = mountView({ onlyUnread: 'true' })
+    await flushPromises()
+
+    await wrapper.vm.markAll()
+    await flushPromises()
+
+    expect(markAllNotificationsRead).toHaveBeenCalled()
+    expect(wrapper.find('[data-testid="notification-list"]').exists()).toBe(false)
+    expect(wrapper.vm.$store.state.notificationUnreadCount).toBe(0)
+  })
+
+  it('opens business target and marks unread notification read first', async () => {
+    listNotifications.mockResolvedValue({
+      data: {
+        items: [
+          { id: 'n-1', type: 'ADOPTION_APPROVED', title: '通过', content: '内容', businessType: 'ADOPTION', businessId: 'app-1', read: false, readAt: null, createdAt: '2026-07-08T09:00:00Z' }
+        ],
+        page: 1, size: 10, total: 1, unreadCount: 1
+      }
+    })
+    markNotificationRead.mockResolvedValue({ data: null })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.vm.openTarget(wrapper.vm.items[0])
+    await flushPromises()
+
+    expect(markNotificationRead).toHaveBeenCalledWith('n-1')
+    expect(wrapper.vm.$route.name).toBe('my-adoptions')
+    expect(wrapper.vm.$route.query.highlight).toBe('app-1')
   })
 })
 

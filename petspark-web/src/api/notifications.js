@@ -4,6 +4,10 @@ export function listNotifications(params) {
   return http.get('/api/v1/notifications', { params })
 }
 
+export function getUnreadNotificationCount() {
+  return http.get('/api/v1/notifications/unread-count')
+}
+
 export function markNotificationRead(id) {
   return http.put(`/api/v1/notifications/${id}/read`)
 }

@@ -24,10 +24,12 @@ const savedUser = readJson('petspark.user')
 export default new Vuex.Store({
   state: {
     accessToken: savedToken || '',
-    user: savedUser
+    user: savedUser,
+    notificationUnreadCount: 0
   },
   getters: {
-    isAuthenticated: (state) => Boolean(state.accessToken)
+    isAuthenticated: (state) => Boolean(state.accessToken),
+    notificationUnreadCount: (state) => state.notificationUnreadCount
   },
   mutations: {
     setSession(state, session) {
@@ -44,9 +46,14 @@ export default new Vuex.Store({
         storage.setItem('petspark.user', JSON.stringify(user))
       }
     },
+    setNotificationUnreadCount(state, count) {
+      const value = Number(count)
+      state.notificationUnreadCount = Number.isFinite(value) && value > 0 ? value : 0
+    },
     clearSession(state) {
       state.accessToken = ''
       state.user = null
+      state.notificationUnreadCount = 0
       if (storage) {
         storage.removeItem('petspark.accessToken')
         storage.removeItem('petspark.user')
@@ -59,6 +66,20 @@ export default new Vuex.Store({
         accessToken: loginResponse.accessToken,
         user: loginResponse.user
       })
+    },
+    async refreshNotificationUnreadCount({ commit, getters }) {
+      if (!getters.isAuthenticated) {
+        commit('setNotificationUnreadCount', 0)
+        return 0
+      }
+      const { getUnreadNotificationCount } = await import('@/api/notifications')
+      const res = await getUnreadNotificationCount()
+      const count = res && res.data ? res.data.unreadCount : 0
+      commit('setNotificationUnreadCount', count)
+      return count
+    },
+    setNotificationUnreadCount({ commit }, count) {
+      commit('setNotificationUnreadCount', count)
     },
     logout({ commit }) {
       commit('clearSession')

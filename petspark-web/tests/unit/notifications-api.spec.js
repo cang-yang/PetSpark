@@ -1,6 +1,7 @@
 import http from '@/api/http'
 import {
   listNotifications,
+  getUnreadNotificationCount,
   markNotificationRead,
   markAllNotificationsRead
 } from '@/api/notifications'
@@ -22,6 +23,11 @@ describe('notifications API', () => {
     const [url, config] = http.get.mock.calls[0]
     expect(url).toBe('/api/v1/notifications')
     expect(config.params).toEqual({ page: 1, size: 10, onlyUnread: true })
+  })
+
+  it('fetches unread notification count only', () => {
+    getUnreadNotificationCount()
+    expect(http.get).toHaveBeenCalledWith('/api/v1/notifications/unread-count')
   })
 
   it('marks a single notification read by id', () => {
