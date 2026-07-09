@@ -7,6 +7,7 @@
  * 下方合并表中追加，即可把新入口加入导航。
  */
 import commonNav from './modules/common'
+import adoptionNav from './modules/adoption'
 
 /**
  * 取一组的聚合列表：把多个模块里同名组的数组顺序拼接。
@@ -24,7 +25,7 @@ function collect(modules, group) {
   return items
 }
 
-const modules = [commonNav]
+const modules = [commonNav, adoptionNav]
 
 export const publicNav = collect(modules, 'public')
 export const memberNav = collect(modules, 'member')

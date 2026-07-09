@@ -15,6 +15,7 @@ jest.mock('@/api/http', () => ({ default: { get: jest.fn(), post: jest.fn(), put
 import commonRoutes from '@/router/modules/common'
 import catalogRoutes from '@/router/modules/catalog'
 import petRoutes from '@/router/modules/pet'
+import adoptionRoutes from '@/router/modules/adoption'
 import aiRoutes from '@/router/modules/ai'
 import systemRoutes from '@/router/modules/system'
 import router from '@/router'
@@ -61,10 +62,11 @@ describe('frontend route registry baseline', () => {
     expect(commonRoutes.length).toBeGreaterThanOrEqual(6)
     expect(catalogRoutes.length).toBe(5)
     expect(petRoutes.length).toBe(4)
+    expect(adoptionRoutes.length).toBe(3)
     expect(aiRoutes.length).toBe(1)
     expect(systemRoutes.length).toBe(2)
     expect(commonRoutes.length + catalogRoutes.length + petRoutes.length
-      + aiRoutes.length + systemRoutes.length).toBe(router.options.routes.length)
+      + adoptionRoutes.length + aiRoutes.length + systemRoutes.length).toBe(router.options.routes.length)
   })
 })
 

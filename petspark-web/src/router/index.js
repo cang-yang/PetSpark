@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import commonRoutes from './modules/common'
 import catalogRoutes from './modules/catalog'
 import petRoutes from './modules/pet'
+import adoptionRoutes from './modules/adoption'
 import aiRoutes from './modules/ai'
 import systemRoutes from './modules/system'
 
@@ -18,6 +19,7 @@ const routes = [
   ...commonRoutes,
   ...catalogRoutes,
   ...petRoutes,
+  ...adoptionRoutes,
   ...aiRoutes,
   ...systemRoutes
 ]
