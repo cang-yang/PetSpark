@@ -10,6 +10,18 @@ jest.mock('@/api/notifications', () => ({
   markNotificationRead: jest.fn(),
   markAllNotificationsRead: jest.fn()
 }))
+jest.mock('@/api/boarding', () => ({
+  queryAvailability: jest.fn(),
+  createBooking: jest.fn(),
+  listMyBookings: jest.fn(),
+  cancelBooking: jest.fn(),
+  listRooms: jest.fn(),
+  createRoom: jest.fn(),
+  updateRoom: jest.fn(),
+  listAdminBookings: jest.fn(),
+  assignRoom: jest.fn(),
+  transitionBooking: jest.fn()
+}))
 jest.mock('@/api/http', () => ({ default: { get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn() } }))
 
 import commonRoutes from '@/router/modules/common'
@@ -18,6 +30,7 @@ import petRoutes from '@/router/modules/pet'
 import adoptionRoutes from '@/router/modules/adoption'
 import aiRoutes from '@/router/modules/ai'
 import systemRoutes from '@/router/modules/system'
+import boardingRoutes from '@/router/modules/boarding'
 import router from '@/router'
 
 import navigation from '@/navigation'
@@ -65,8 +78,9 @@ describe('frontend route registry baseline', () => {
     expect(adoptionRoutes.length).toBe(3)
     expect(aiRoutes.length).toBe(1)
     expect(systemRoutes.length).toBe(2)
+    expect(boardingRoutes.length).toBe(4)
     expect(commonRoutes.length + catalogRoutes.length + petRoutes.length
-      + adoptionRoutes.length + aiRoutes.length + systemRoutes.length).toBe(router.options.routes.length)
+      + adoptionRoutes.length + aiRoutes.length + systemRoutes.length + boardingRoutes.length).toBe(router.options.routes.length)
   })
 })
 
