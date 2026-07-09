@@ -9,6 +9,9 @@ jest.mock('@/api/notifications', () => ({
   markNotificationRead: jest.fn(),
   markAllNotificationsRead: jest.fn()
 }))
+jest.mock('@/api/banner', () => ({
+  listActiveBanners: jest.fn()
+}))
 
 import router from '@/router'
 
