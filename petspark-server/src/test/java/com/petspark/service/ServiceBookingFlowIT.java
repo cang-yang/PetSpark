@@ -93,6 +93,8 @@ class ServiceBookingFlowIT extends AbstractControllerTest {
                 + "(SELECT id FROM service_item WHERE code LIKE 'IT-SVC-%')");
         jdbcTemplate.update("DELETE FROM service_beauty_profile WHERE service_item_id IN "
                 + "(SELECT id FROM service_item WHERE code LIKE 'IT-SVC-%')");
+        jdbcTemplate.update("DELETE FROM service_medical_profile WHERE service_item_id IN "
+                + "(SELECT id FROM service_item WHERE code LIKE 'IT-SVC-%')");
         jdbcTemplate.update("DELETE FROM service_item WHERE code LIKE 'IT-SVC-%'");
         jdbcTemplate.update("DELETE FROM pet WHERE name LIKE 'IT-SVC-%'");
         jdbcTemplate.update("DELETE FROM notification WHERE recipient_id IN (?, ?, ?, ?)",
@@ -393,6 +395,50 @@ class ServiceBookingFlowIT extends AbstractControllerTest {
         assertThat(genericCount).isEqualTo(1);
     }
 
+    @Test
+    void medicalKindFilteredViewsAndProfileReuseServiceBookingFlow() throws Exception {
+        String medicalItemId = createServiceItem("IT-SVC-MEDICAL", "MEDICAL", "测试医疗服务",
+                "执业兽医师", "09-18 点", "急症请转急诊");
+        createMedicalProfile(medicalItemId, "动物诊疗许可证 IT-MED", "全科兽医团队", "DOG,CAT",
+                "健康体检与疫苗咨询", "携带免疫记录", "呼吸困难等急症优先急诊");
+        String genericItemId = createServiceItem("IT-SVC-NON-MEDICAL", "GENERIC", "测试非医疗服务", null, null, null);
+        String resourceId = createServiceResource(medicalItemId, "IT-SVC 医疗诊室", 1);
+        String slotId = createSlot(resourceId, 1);
+
+        String medicalListBody = mockMvc.perform(get("/api/v1/services/items")
+                        .header("Authorization", bearer(userToken))
+                        .param("kind", "MEDICAL")
+                        .param("keyword", "IT-SVC-MEDICAL"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode medicalItem = objectMapper.readTree(medicalListBody).path("data").path("items").get(0);
+        assertThat(medicalItem.path("kind").asText()).isEqualTo("MEDICAL");
+        assertThat(medicalItem.path("medicalProfile").path("careScope").asText()).isEqualTo("健康体检与疫苗咨询");
+        assertThat(medicalItem.path("medicalProfile").path("clinicLicense").asText()).isEqualTo("动物诊疗许可证 IT-MED");
+
+        String bookingId = createBooking(medicalItemId, resourceId, slotId, null);
+        String bookingNo = jdbcTemplate.queryForObject("SELECT booking_no FROM service_booking WHERE id = ?",
+                String.class, bookingId);
+        mockMvc.perform(get("/api/v1/services/bookings")
+                        .header("Authorization", bearer(userToken))
+                        .param("kind", "MEDICAL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].id").value(bookingId))
+                .andExpect(jsonPath("$.data.items[0].kind").value("MEDICAL"));
+
+        mockMvc.perform(get("/api/v1/admin/services/bookings")
+                        .header("Authorization", bearer(adminToken))
+                        .param("kind", "MEDICAL")
+                        .param("keyword", bookingNo))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].id").value(bookingId))
+                .andExpect(jsonPath("$.data.items[0].kind").value("MEDICAL"));
+
+        Integer genericCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM service_item WHERE id = ? AND kind = 'GENERIC'", Integer.class, genericItemId);
+        assertThat(genericCount).isEqualTo(1);
+    }
+
     // ----- helpers -----
 
     private String createServiceItem(String code, String kind, String name,
@@ -415,6 +461,17 @@ class ServiceBookingFlowIT extends AbstractControllerTest {
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, UUID.randomUUID().toString(), itemId, supportedPetTypes, coatTypes,
                 sizeRanges, carePreferences, cautionNotes);
+    }
+
+    private void createMedicalProfile(String itemId, String clinicLicense, String veterinarianTeam,
+            String supportedPetTypes, String careScope, String appointmentNotice, String emergencyRule) {
+        jdbcTemplate.update("""
+                INSERT INTO service_medical_profile
+                    (id, service_item_id, clinic_license, veterinarian_team, supported_pet_types,
+                     care_scope, appointment_notice, emergency_rule)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, UUID.randomUUID().toString(), itemId, clinicLicense, veterinarianTeam,
+                supportedPetTypes, careScope, appointmentNotice, emergencyRule);
     }
 
     private String createServiceResource(String itemId, String name, int capacity) {

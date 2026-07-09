@@ -34,6 +34,7 @@ import boardingRoutes from '@/router/modules/boarding'
 import serviceRoutes from '@/router/modules/service'
 import trainingRoutes from '@/router/modules/training'
 import beautyRoutes from '@/router/modules/beauty'
+import medicalRoutes from '@/router/modules/medical'
 import router from '@/router'
 
 import navigation from '@/navigation'
@@ -56,7 +57,8 @@ describe('frontend route registry baseline', () => {
     'boarding-new', 'my-boarding', 'admin-rooms', 'admin-boarding',
     'services', 'service-detail', 'my-service-bookings', 'admin-services',
     'training', 'training-detail', 'my-training-bookings', 'admin-training',
-    'beauty', 'beauty-detail', 'my-beauty-bookings', 'admin-beauty'
+    'beauty', 'beauty-detail', 'my-beauty-bookings', 'admin-beauty',
+    'medical', 'medical-detail', 'my-medical-bookings', 'admin-medical'
   ]
   const expectedPaths = [
     '/', '/login', '/register', '/forgot-password', '/notifications',
@@ -69,7 +71,8 @@ describe('frontend route registry baseline', () => {
     '/boarding/new', '/my/boarding', '/admin/rooms', '/admin/boarding',
     '/services', '/services/:id', '/my/services/bookings', '/admin/services',
     '/training', '/training/:id', '/my/training/bookings', '/admin/training',
-    '/beauty', '/beauty/:id', '/my/beauty/bookings', '/admin/beauty'
+    '/beauty', '/beauty/:id', '/my/beauty/bookings', '/admin/beauty',
+    '/medical', '/medical/:id', '/my/medical/bookings', '/admin/medical'
   ]
 
   it('preserves every baseline route name after modularization', () => {
@@ -95,10 +98,11 @@ describe('frontend route registry baseline', () => {
     expect(serviceRoutes.length).toBe(4)
     expect(trainingRoutes.length).toBe(4)
     expect(beautyRoutes.length).toBe(4)
+    expect(medicalRoutes.length).toBe(4)
     expect(commonRoutes.length + catalogRoutes.length + petRoutes.length
       + adoptionRoutes.length + aiRoutes.length + systemRoutes.length
       + boardingRoutes.length + serviceRoutes.length + trainingRoutes.length
-      + beautyRoutes.length).toBe(router.options.routes.length)
+      + beautyRoutes.length + medicalRoutes.length).toBe(router.options.routes.length)
   })
 })
 
@@ -117,7 +121,8 @@ describe('navigation registry baseline', () => {
       'boarding-new', 'my-boarding',
       'services', 'my-service-bookings',
       'training', 'my-training-bookings',
-      'beauty', 'my-beauty-bookings'
+      'beauty', 'my-beauty-bookings',
+      'medical', 'my-medical-bookings'
     ]
     expect(expected.filter((n) => !memberNames.includes(n))).toEqual([])
   })
@@ -126,7 +131,7 @@ describe('navigation registry baseline', () => {
     const adminNames = navigation.adminNav.map((e) => e.to)
     const expected = [
       'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders',
-      'admin-adoptions', 'admin-rooms', 'admin-boarding', 'admin-services', 'admin-training', 'admin-beauty'
+      'admin-adoptions', 'admin-rooms', 'admin-boarding', 'admin-services', 'admin-training', 'admin-beauty', 'admin-medical'
     ]
     expect(expected.filter((n) => !adminNames.includes(n))).toEqual([])
   })

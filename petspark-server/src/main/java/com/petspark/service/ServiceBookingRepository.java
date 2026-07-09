@@ -96,7 +96,8 @@ public class ServiceBookingRepository {
                         .map(s -> new ServiceDtos.ServiceSpecificationView(
                                 s.id(), s.name(), s.priceDelta(), s.sortOrder(), s.status()))
                         .toList(),
-                "BEAUTY".equals(row.kind()) ? loadBeautyProfile(id) : null))
+                "BEAUTY".equals(row.kind()) ? loadBeautyProfile(id) : null,
+                "MEDICAL".equals(row.kind()) ? loadMedicalProfile(id) : null))
                 .orElse(null);
     }
 
@@ -115,6 +116,24 @@ public class ServiceBookingRepository {
                 rs.getString("size_ranges"),
                 rs.getString("care_preferences"),
                 rs.getString("caution_notes")) : null, itemId);
+    }
+
+    /** 加载医疗服务规则视图。 */
+    public ServiceDtos.MedicalProfileView loadMedicalProfile(String itemId) {
+        return jdbcTemplate.query("""
+                SELECT id, service_item_id, clinic_license, veterinarian_team, supported_pet_types,
+                       care_scope, appointment_notice, emergency_rule
+                FROM service_medical_profile
+                WHERE service_item_id = ? AND active = 1
+                """, rs -> rs.next() ? new ServiceDtos.MedicalProfileView(
+                rs.getString("id"),
+                rs.getString("service_item_id"),
+                rs.getString("clinic_license"),
+                rs.getString("veterinarian_team"),
+                rs.getString("supported_pet_types"),
+                rs.getString("care_scope"),
+                rs.getString("appointment_notice"),
+                rs.getString("emergency_rule")) : null, itemId);
     }
 
     /** 加载服务项目规格列表。 */
