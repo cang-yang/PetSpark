@@ -99,8 +99,8 @@ CREATE TABLE boarding_care_profile (
 -- room:manage 房间 CRUD；boarding:fulfill 履约角色可查照护敏感字段与发起履约。
 INSERT IGNORE INTO sys_permission (id, code, resource, action, description)
 VALUES
-    ('00000000-0000-0000-0000-000000000226', 'boarding:manage', 'boarding', 'manage', 'Manage and fulfill boarding bookings'),
-    ('00000000-0000-0000-0000-000000000227', 'room:read', 'room', 'read', 'Read boarding rooms and occupancy'),
+    ('00000000-0000-0000-0000-000000000230', 'boarding:manage', 'boarding', 'manage', 'Manage and fulfill boarding bookings'),
+    ('00000000-0000-0000-0000-000000000231', 'room:read', 'room', 'read', 'Read boarding rooms and occupancy'),
     ('00000000-0000-0000-0000-000000000228', 'room:manage', 'room', 'manage', 'Create and update boarding rooms'),
     ('00000000-0000-0000-0000-000000000229', 'boarding:fulfill', 'boarding', 'fulfill', 'Fulfill boarding bookings and view care sensitive fields');
 
