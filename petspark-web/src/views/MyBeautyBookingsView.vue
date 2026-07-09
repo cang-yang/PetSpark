@@ -1,6 +1,6 @@
 <template>
-  <section class="my-service-bookings">
-    <h2>我的服务预约</h2>
+  <section class="my-beauty-bookings">
+    <h2>我的美容预约</h2>
     <div class="toolbar">
       <el-select v-model="filters.status" placeholder="状态" clearable @change="loadBookings">
         <el-option label="已确认" value="CONFIRMED" />
@@ -11,41 +11,25 @@
       </el-select>
       <el-button type="primary" @click="loadBookings">查询</el-button>
     </div>
-
-    <el-table :data="bookings" data-testid="my-service-bookings-table">
+    <el-table :data="bookings" data-testid="my-beauty-bookings-table">
       <el-table-column prop="bookingNo" label="预约号" />
-      <el-table-column label="状态">
-        <template slot-scope="{ row }">
-          <el-tag :type="statusTagType(row.status)">{{ statusLabel(row.status) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="unitPrice" label="单价" />
-      <el-table-column label="开始时间">
-        <template slot-scope="{ row }">{{ formatTime(row.startAt) }}</template>
-      </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="{ row }">
-          <el-button size="mini" @click="openDetail(row)">详情</el-button>
-        </template>
-      </el-table-column>
+      <el-table-column prop="serviceItemName" label="美容项目" />
+      <el-table-column label="状态"><template slot-scope="{ row }"><el-tag :type="statusTagType(row.status)">{{ statusLabel(row.status) }}</el-tag></template></el-table-column>
+      <el-table-column label="开始时间"><template slot-scope="{ row }">{{ formatTime(row.startAt) }}</template></el-table-column>
+      <el-table-column label="操作"><template slot-scope="{ row }"><el-button size="mini" @click="openDetail(row)">详情</el-button></template></el-table-column>
     </el-table>
 
-    <el-dialog title="预约详情" :visible.sync="showDetail" width="640px">
+    <el-dialog title="美容预约详情" :visible.sync="showDetail" width="640px">
       <div v-if="current" class="booking-detail">
         <p><strong>预约号：</strong>{{ current.bookingNo }}</p>
+        <p><strong>项目：</strong>{{ current.serviceItemName }}</p>
         <p><strong>状态：</strong>{{ statusLabel(current.status) }}</p>
         <p><strong>联系人：</strong>{{ current.customerName }} / {{ current.customerPhone }}</p>
         <p><strong>时间：</strong>{{ formatTime(current.startAt) }} ~ {{ formatTime(current.endAt) }}</p>
-        <p v-if="current.remark"><strong>备注：</strong>{{ current.remark }}</p>
-        <p v-if="current.cancelReason"><strong>取消原因：</strong>{{ current.cancelReason }}</p>
-        <p v-if="current.exceptionNote"><strong>异常说明：</strong>{{ current.exceptionNote }}</p>
+        <p v-if="current.remark"><strong>护理备注：</strong>{{ current.remark }}</p>
         <div v-if="canCancel(current)" class="cancel-area">
           <el-input v-model="cancelReason" placeholder="取消原因" />
           <el-button type="danger" :loading="cancelling" @click="submitCancel">取消预约</el-button>
-        </div>
-        <div v-if="canException(current)" class="cancel-area">
-          <el-input v-model="exceptionReason" placeholder="异常说明" />
-          <el-button type="warning" :loading="exceptioning" @click="submitException">异常终止</el-button>
         </div>
       </div>
     </el-dialog>
@@ -53,10 +37,10 @@
 </template>
 
 <script>
-import { listMyServiceBookings, getServiceBooking, cancelServiceBooking, exceptionServiceBooking } from '@/api/service'
+import { listMyServiceBookings, getServiceBooking, cancelServiceBooking } from '@/api/service'
 
 export default {
-  name: 'MyServiceBookingsView',
+  name: 'MyBeautyBookingsView',
   data() {
     return {
       bookings: [],
@@ -66,9 +50,7 @@ export default {
       showDetail: false,
       current: null,
       cancelReason: '',
-      cancelling: false,
-      exceptionReason: '',
-      exceptioning: false
+      cancelling: false
     }
   },
   created() {
@@ -78,6 +60,7 @@ export default {
     async loadBookings() {
       try {
         const response = await listMyServiceBookings({
+          kind: 'BEAUTY',
           status: this.filters.status || undefined,
           page: this.page.page,
           size: this.page.size
@@ -93,58 +76,24 @@ export default {
         const response = await getServiceBooking(row.id)
         this.current = response.data
         this.cancelReason = ''
-        this.exceptionReason = ''
         this.showDetail = true
       } catch (error) {
         this.$message && this.$message.error(error.message)
       }
     },
-    canCancel(booking) {
-      return booking && (booking.status === 'CONFIRMED' || booking.status === 'IN_PROGRESS')
-    },
-    canException(booking) {
-      return booking && (booking.status === 'CONFIRMED' || booking.status === 'IN_PROGRESS')
-    },
+    canCancel(booking) { return booking && (booking.status === 'CONFIRMED' || booking.status === 'IN_PROGRESS') },
     async submitCancel() {
-      if (!this.current) return
-      if (!this.cancelReason || !this.cancelReason.trim()) {
-        this.$message && this.$message.warning('请填写取消原因')
-        return
-      }
+      if (!this.current || !this.cancelReason.trim()) return
       this.cancelling = true
       try {
-        const response = await cancelServiceBooking(this.current.id, {
-          reason: this.cancelReason.trim(),
-          version: this.current.version
-        })
+        const response = await cancelServiceBooking(this.current.id, { reason: this.cancelReason.trim(), version: this.current.version })
         this.current = response.data
-        this.$message && this.$message.success('预约已取消')
+        this.$message && this.$message.success('美容预约已取消')
         await this.loadBookings()
       } catch (error) {
         this.$message && this.$message.error(error.message)
       } finally {
         this.cancelling = false
-      }
-    },
-    async submitException() {
-      if (!this.current) return
-      if (!this.exceptionReason || !this.exceptionReason.trim()) {
-        this.$message && this.$message.warning('请填写异常说明')
-        return
-      }
-      this.exceptioning = true
-      try {
-        const response = await exceptionServiceBooking(this.current.id, {
-          note: this.exceptionReason.trim(),
-          version: this.current.version
-        })
-        this.current = response.data
-        this.$message && this.$message.success('已异常终止')
-        await this.loadBookings()
-      } catch (error) {
-        this.$message && this.$message.error(error.message)
-      } finally {
-        this.exceptioning = false
       }
     },
     statusLabel(status) {
@@ -170,7 +119,7 @@ export default {
 </script>
 
 <style scoped>
-.my-service-bookings { max-width: 960px; margin: 24px auto; }
+.my-beauty-bookings { max-width: 960px; margin: 24px auto; }
 .toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
 .booking-detail p { margin: 6px 0; }
 .cancel-area { margin-top: 16px; display: flex; gap: 12px; align-items: center; }

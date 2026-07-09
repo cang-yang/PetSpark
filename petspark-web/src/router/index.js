@@ -9,6 +9,7 @@ import systemRoutes from './modules/system'
 import boardingRoutes from './modules/boarding'
 import serviceRoutes from './modules/service'
 import trainingRoutes from './modules/training'
+import beautyRoutes from './modules/beauty'
 
 Vue.use(VueRouter)
 
@@ -27,7 +28,8 @@ const routes = [
   ...systemRoutes,
   ...boardingRoutes,
   ...serviceRoutes,
-  ...trainingRoutes
+  ...trainingRoutes,
+  ...beautyRoutes
 ]
 
 export default new VueRouter({

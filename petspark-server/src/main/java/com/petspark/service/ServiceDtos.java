@@ -37,7 +37,19 @@ public final class ServiceDtos {
             String exceptionRule,
             BigDecimal basePrice,
             String status,
-            List<ServiceSpecificationView> specifications) {
+            List<ServiceSpecificationView> specifications,
+            BeautyProfileView beautyProfile) {
+    }
+
+    /** 美容服务规则视图，仅 kind=BEAUTY 的服务项目返回。 */
+    public record BeautyProfileView(
+            String id,
+            String serviceItemId,
+            String supportedPetTypes,
+            String coatTypes,
+            String sizeRanges,
+            String carePreferences,
+            String cautionNotes) {
     }
 
     /** 服务规格视图。 */

@@ -91,6 +91,8 @@ class ServiceBookingFlowIT extends AbstractControllerTest {
                 + "(SELECT id FROM service_item WHERE code LIKE 'IT-SVC-%')");
         jdbcTemplate.update("DELETE FROM service_specification WHERE service_item_id IN "
                 + "(SELECT id FROM service_item WHERE code LIKE 'IT-SVC-%')");
+        jdbcTemplate.update("DELETE FROM service_beauty_profile WHERE service_item_id IN "
+                + "(SELECT id FROM service_item WHERE code LIKE 'IT-SVC-%')");
         jdbcTemplate.update("DELETE FROM service_item WHERE code LIKE 'IT-SVC-%'");
         jdbcTemplate.update("DELETE FROM pet WHERE name LIKE 'IT-SVC-%'");
         jdbcTemplate.update("DELETE FROM notification WHERE recipient_id IN (?, ?, ?, ?)",
@@ -348,6 +350,49 @@ class ServiceBookingFlowIT extends AbstractControllerTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void beautyKindFilteredViewsAndProfileReuseServiceBookingFlow() throws Exception {
+        String beautyItemId = createServiceItem("IT-SVC-BEAUTY", "BEAUTY", "测试美容服务",
+                "美容师 B 级", "10-18 点", "严重应激暂停");
+        createBeautyProfile(beautyItemId, "DOG,CAT", "LONG,CURLY", "SMALL,MEDIUM",
+                "低噪吹干", "说明过敏史");
+        String genericItemId = createServiceItem("IT-SVC-NON-BEAUTY", "GENERIC", "测试非美容服务", null, null, null);
+        String resourceId = createServiceResource(beautyItemId, "IT-SVC 美容师", 1);
+        String slotId = createSlot(resourceId, 1);
+
+        String beautyListBody = mockMvc.perform(get("/api/v1/services/items")
+                        .header("Authorization", bearer(userToken))
+                        .param("kind", "BEAUTY")
+                        .param("keyword", "IT-SVC-BEAUTY"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode beautyItem = objectMapper.readTree(beautyListBody).path("data").path("items").get(0);
+        assertThat(beautyItem.path("kind").asText()).isEqualTo("BEAUTY");
+        assertThat(beautyItem.path("beautyProfile").path("carePreferences").asText()).isEqualTo("低噪吹干");
+
+        String bookingId = createBooking(beautyItemId, resourceId, slotId, null);
+        String bookingNo = jdbcTemplate.queryForObject("SELECT booking_no FROM service_booking WHERE id = ?",
+                String.class, bookingId);
+        mockMvc.perform(get("/api/v1/services/bookings")
+                        .header("Authorization", bearer(userToken))
+                        .param("kind", "BEAUTY"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].id").value(bookingId))
+                .andExpect(jsonPath("$.data.items[0].kind").value("BEAUTY"));
+
+        mockMvc.perform(get("/api/v1/admin/services/bookings")
+                        .header("Authorization", bearer(adminToken))
+                        .param("kind", "BEAUTY")
+                        .param("keyword", bookingNo))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].id").value(bookingId))
+                .andExpect(jsonPath("$.data.items[0].kind").value("BEAUTY"));
+
+        Integer genericCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM service_item WHERE id = ? AND kind = 'GENERIC'", Integer.class, genericItemId);
+        assertThat(genericCount).isEqualTo(1);
+    }
+
     // ----- helpers -----
 
     private String createServiceItem(String code, String kind, String name,
@@ -359,6 +404,17 @@ class ServiceBookingFlowIT extends AbstractControllerTest {
                 VALUES (?, ?, ?, ?, ?, ?, ?, 50.00, 'ACTIVE', 0)
                 """, id, kind, code, name, qualification, availabilityNote, exceptionRule);
         return id;
+    }
+
+    private void createBeautyProfile(String itemId, String supportedPetTypes, String coatTypes,
+            String sizeRanges, String carePreferences, String cautionNotes) {
+        jdbcTemplate.update("""
+                INSERT INTO service_beauty_profile
+                    (id, service_item_id, supported_pet_types, coat_types, size_ranges,
+                     care_preferences, caution_notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, UUID.randomUUID().toString(), itemId, supportedPetTypes, coatTypes,
+                sizeRanges, carePreferences, cautionNotes);
     }
 
     private String createServiceResource(String itemId, String name, int capacity) {

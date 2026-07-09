@@ -95,8 +95,26 @@ public class ServiceBookingRepository {
                 findSpecifications(id).stream()
                         .map(s -> new ServiceDtos.ServiceSpecificationView(
                                 s.id(), s.name(), s.priceDelta(), s.sortOrder(), s.status()))
-                        .toList()))
+                        .toList(),
+                "BEAUTY".equals(row.kind()) ? loadBeautyProfile(id) : null))
                 .orElse(null);
+    }
+
+    /** 加载美容服务规则视图。 */
+    public ServiceDtos.BeautyProfileView loadBeautyProfile(String itemId) {
+        return jdbcTemplate.query("""
+                SELECT id, service_item_id, supported_pet_types, coat_types, size_ranges,
+                       care_preferences, caution_notes
+                FROM service_beauty_profile
+                WHERE service_item_id = ? AND active = 1
+                """, rs -> rs.next() ? new ServiceDtos.BeautyProfileView(
+                rs.getString("id"),
+                rs.getString("service_item_id"),
+                rs.getString("supported_pet_types"),
+                rs.getString("coat_types"),
+                rs.getString("size_ranges"),
+                rs.getString("care_preferences"),
+                rs.getString("caution_notes")) : null, itemId);
     }
 
     /** 加载服务项目规格列表。 */
@@ -400,7 +418,7 @@ public class ServiceBookingRepository {
         return new PageResult<>(items, q.getPage(), q.getSize(), total == null ? 0 : total);
     }
 
-    /** 管理员预约列表（状态 + 订单号模糊 + 分页）。 */
+    /** 管理员预约列表（状态 + kind + 订单号模糊 + 分页）。 */
     public PageResult<ServiceDtos.ServiceBookingView> findBookingsAdmin(ServiceDtos.AdminBookingQuery q) {
         StringBuilder where = new StringBuilder(" WHERE 1=1 ");
         List<Object> args = new ArrayList<>();
