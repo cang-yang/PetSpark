@@ -69,7 +69,7 @@ describe('MyServiceBookingsView', () => {
     await wrapper.vm.openDetail(wrapper.vm.bookings[0])
     wrapper.setData({ exceptionReason: '宠物不适' })
     await wrapper.vm.submitException()
-    expect(exceptionServiceBooking).toHaveBeenCalledWith('b-1', { reason: '宠物不适', version: 1 })
+    expect(exceptionServiceBooking).toHaveBeenCalledWith('b-1', { note: '宠物不适', version: 1 })
   })
 })
 

@@ -11,6 +11,7 @@ import adoptionNav from './modules/adoption'
 import boardingNav from './modules/boarding'
 import serviceNav from './modules/service'
 import trainingNav from './modules/training'
+import beautyNav from './modules/beauty'
 
 /**
  * 取一组的聚合列表：把多个模块里同名组的数组顺序拼接。
@@ -28,7 +29,7 @@ function collect(modules, group) {
   return items
 }
 
-const modules = [commonNav, adoptionNav, boardingNav, serviceNav, trainingNav]
+const modules = [commonNav, adoptionNav, boardingNav, serviceNav, trainingNav, beautyNav]
 
 export const publicNav = collect(modules, 'public')
 export const memberNav = collect(modules, 'member')
