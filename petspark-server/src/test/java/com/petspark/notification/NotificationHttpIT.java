@@ -104,6 +104,19 @@ class NotificationHttpIT extends AbstractControllerTest {
     }
 
     @Test
+    void exposesUnreadCountOnlyForBadgePolling() throws Exception {
+        insertNotification("c-1", ownerId, "SYSTEM", "未读", "内容", null, null, null);
+        insertNotification("c-2", ownerId, "SYSTEM", "已读", "内容", null, null,
+                java.sql.Timestamp.from(java.time.Instant.now()));
+        insertNotification("c-3", otherId, "SYSTEM", "他人未读", "内容", null, null, null);
+
+        mockMvc.perform(get("/api/v1/notifications/unread-count")
+                        .header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.unreadCount").value(1));
+    }
+
+    @Test
     void markReadIsIdempotentAndIsolated() throws Exception {
         insertNotification("m-1", ownerId, "SYSTEM", "待读", "内容", null, null, null);
 

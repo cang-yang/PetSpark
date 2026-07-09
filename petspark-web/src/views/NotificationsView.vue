@@ -68,11 +68,20 @@
           </div>
           <p class="notification-item__content">{{ item.content }}</p>
           <div class="notification-item__meta">
+            <span>{{ sceneLabel(item.businessType) }} · {{ eventLabel(item.type) }}</span>
             <span>{{ formatTime(item.createdAt) }}</span>
             <span v-if="item.read">已读 · {{ formatTime(item.readAt) }}</span>
           </div>
         </div>
         <div class="notification-item__action">
+          <el-button
+            v-if="targetRoute(item)"
+            size="mini"
+            data-testid="notification-open"
+            @click="openTarget(item)"
+          >
+            查看
+          </el-button>
           <el-button
             v-if="!item.read"
             size="mini"
@@ -104,6 +113,46 @@ import { listNotifications, markNotificationRead, markAllNotificationsRead } fro
 import StatusPanel from '@/components/StatusPanel.vue'
 
 const DEFAULT_SIZE = 10
+
+const SCENE_LABELS = {
+  ADOPTION: '领养',
+  BOARDING: '寄养',
+  SERVICE: '服务',
+  ORDER: '订单',
+  SYSTEM: '系统'
+}
+
+const EVENT_LABELS = {
+  SYSTEM: '系统通知',
+  ADOPTION_WITHDRAWN: '申请撤回',
+  ADOPTION_APPROVED: '申请通过',
+  ADOPTION_REJECTED: '申请拒绝',
+  ADOPTION_COMPLETED: '领养完成',
+  ADOPTION_HANDOVER_FAILED: '交接失败',
+  BOARDING_CREATED: '预约提交',
+  BOARDING_CANCELLED: '预约取消',
+  BOARDING_CONFIRMED: '预约确认',
+  BOARDING_REJECTED: '预约拒绝',
+  BOARDING_STARTED: '开始寄养',
+  BOARDING_COMPLETED: '寄养完成',
+  BOARDING_TERMINATED: '寄养终止',
+  ORDER_CREATED: '订单创建',
+  ORDER_CANCELLED: '订单取消',
+  ORDER_TRANSITION: '订单状态更新',
+  SERVICE_BOOKING_CREATED: '服务预约提交',
+  SERVICE_BOOKING_CANCELLED: '服务预约取消',
+  SERVICE_BOOKING_CONFIRMED: '服务预约确认',
+  SERVICE_BOOKING_REJECTED: '服务预约拒绝',
+  SERVICE_BOOKING_STARTED: '服务开始',
+  SERVICE_BOOKING_COMPLETED: '服务完成'
+}
+
+const TARGET_ROUTES = {
+  ADOPTION: { name: 'my-adoptions' },
+  BOARDING: { name: 'my-boarding' },
+  SERVICE: { name: 'my-service-bookings' },
+  ORDER: { name: 'my-orders' }
+}
 
 /**
  * 通知中心（API-NOTIFY-001~003，§10.1 路由 /notifications，权限=登录）。
@@ -167,6 +216,7 @@ export default {
         this.size = view.size
         this.total = view.total
         this.unreadCount = view.unreadCount
+        this.publishUnreadCount()
       } catch (err) {
         this.error = err.message
       } finally {
@@ -190,6 +240,17 @@ export default {
         item.read = true
         item.readAt = new Date().toISOString()
         this.unreadCount = Math.max(0, this.unreadCount - 1)
+        if (this.onlyUnread) {
+          this.items = this.items.filter((current) => current.id !== item.id)
+          this.total = Math.max(0, this.total - 1)
+          if (!this.items.length && this.total > 0 && this.page > 1) {
+            this.page -= 1
+            this.syncToRoute()
+          }
+          await this.load()
+        } else {
+          this.publishUnreadCount()
+        }
         this.$message.success('已标记已读')
       } catch (err) {
         this.$message.error(err.message)
@@ -208,6 +269,11 @@ export default {
           }
         })
         this.unreadCount = 0
+        if (this.onlyUnread) {
+          this.items = []
+          this.total = 0
+        }
+        this.publishUnreadCount()
         this.$message.success('已全部标记已读')
       } catch (err) {
         this.$message.error(err.message)
@@ -216,10 +282,37 @@ export default {
       }
     },
     typeLabel(type) {
-      const labels = { SYSTEM: '系统', ADOPTION: '领养', BOARDING: '寄养', ORDER: '订单' }
-      return labels[type] || type || '通知'
+      if (EVENT_LABELS[type]) return EVENT_LABELS[type]
+      if (!type) return '通知'
+      return type.split('_').map((part) => part.charAt(0) + part.slice(1).toLowerCase()).join(' ')
+    },
+    sceneLabel(scene) {
+      return SCENE_LABELS[scene] || SCENE_LABELS.SYSTEM
+    },
+    eventLabel(type) {
+      return EVENT_LABELS[type] || this.typeLabel(type)
+    },
+    targetRoute(item) {
+      if (!item || !item.businessType || !TARGET_ROUTES[item.businessType]) return null
+      return { ...TARGET_ROUTES[item.businessType], query: item.businessId ? { highlight: item.businessId } : {} }
+    },
+    async openTarget(item) {
+      const route = this.targetRoute(item)
+      if (!route) return
+      if (!item.read) {
+        await this.markOne(item)
+      }
+      this.$router.push(route).catch(() => {})
+    },
+    publishUnreadCount() {
+      if (this.$store && this.$store.dispatch) {
+        this.$store.dispatch('setNotificationUnreadCount', this.unreadCount)
+      }
     },
     tagType(type) {
+      if (type && type.startsWith('ADOPTION')) return 'success'
+      if (type && type.startsWith('BOARDING')) return 'warning'
+      if (type && type.startsWith('SERVICE')) return 'primary'
       return type === 'SYSTEM' ? 'info' : 'success'
     },
     formatTime(value) {
