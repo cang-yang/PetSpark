@@ -385,6 +385,10 @@ public class ServiceBookingRepository {
             where.append(" AND status = ? ");
             args.add(q.getStatus().trim());
         }
+        if (StringUtils.hasText(q.getKind())) {
+            where.append(" AND kind = ? ");
+            args.add(q.getKind().trim());
+        }
         Long total = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM service_booking" + where, Long.class, args.toArray());
         List<Object> pageArgs = new ArrayList<>(args);
@@ -403,6 +407,10 @@ public class ServiceBookingRepository {
         if (StringUtils.hasText(q.getStatus())) {
             where.append(" AND status = ? ");
             args.add(q.getStatus().trim());
+        }
+        if (StringUtils.hasText(q.getKind())) {
+            where.append(" AND kind = ? ");
+            args.add(q.getKind().trim());
         }
         if (StringUtils.hasText(q.getKeyword())) {
             where.append(" AND booking_no LIKE ? ");

@@ -8,6 +8,7 @@ import aiRoutes from './modules/ai'
 import systemRoutes from './modules/system'
 import boardingRoutes from './modules/boarding'
 import serviceRoutes from './modules/service'
+import trainingRoutes from './modules/training'
 
 Vue.use(VueRouter)
 
@@ -25,7 +26,8 @@ const routes = [
   ...aiRoutes,
   ...systemRoutes,
   ...boardingRoutes,
-  ...serviceRoutes
+  ...serviceRoutes,
+  ...trainingRoutes
 ]
 
 export default new VueRouter({

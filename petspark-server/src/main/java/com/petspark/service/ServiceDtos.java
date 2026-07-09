@@ -217,21 +217,27 @@ public final class ServiceDtos {
         public void setSlotDate(String slotDate) { this.slotDate = slotDate; }
     }
 
-    /** 我的预约查询：状态过滤 + 分页。 */
+    /** 我的预约查询：状态/kind 过滤 + 分页。 */
     public static class MyBookingQuery extends PageQuery {
         private String status;
+        private String kind;
 
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
+        public String getKind() { return kind; }
+        public void setKind(String kind) { this.kind = kind; }
     }
 
-    /** 管理员预约查询：状态 + 订单号模糊 + 分页。 */
+    /** 管理员预约查询：状态 + kind + 订单号模糊 + 分页。 */
     public static class AdminBookingQuery extends PageQuery {
         private String status;
+        private String kind;
         private String keyword;
 
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
+        public String getKind() { return kind; }
+        public void setKind(String kind) { this.kind = kind; }
         public String getKeyword() { return keyword; }
         public void setKeyword(String keyword) { this.keyword = keyword; }
     }
