@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.List;
 
 /**
  * AI 对话相关 DTO 集合。统一放在 chat 包，避免散落多个文件。
@@ -67,11 +68,23 @@ public final class AiChatDtos {
     public record AiMessageRequest(
             @NotBlank @Size(max = 4000) String message) {}
 
-    /** 非流式回复视图。 */
+    /** 非流式回复视图。PET_CHAT 场景使用 {@code content}/{@code boundaryNotice}，
+     *  护理问答场景由服务层把 {@link CareQaReplyView} 序列化进 {@code content}（仍为 JSON 字符串），
+     *  并在 {@code boundaryNotice} 位置放入固定非诊断声明，保持 PET_CHAT 回复形状字节一致。 */
     public record AiChatReplyView(
             String requestId,
             String content,
             String boundaryNotice,
+            AiUsageView usage) {}
+
+    /** 护理问答结构化回复视图（PR-AI-04 / 06A §6.4）。前端按 riskLevel 渲染颜色/求助入口。 */
+    public record CareQaReplyView(
+            String requestId,
+            String riskLevel,
+            List<String> generalAdvice,
+            List<String> warningSigns,
+            String seekHelp,
+            String disclaimer,
             AiUsageView usage) {}
 
     /** Token 用量视图。 */

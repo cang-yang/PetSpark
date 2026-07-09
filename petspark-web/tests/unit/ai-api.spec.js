@@ -21,6 +21,8 @@ import {
   withdrawAiConsent,
   createAiConversation,
   sendAiMessage,
+  sendCareQaMessage,
+  getCareQaStatus,
   deleteAiConversation,
   listAiMessages,
   streamAiMessage,
@@ -136,6 +138,16 @@ describe('ai API', () => {
     await flushPromises()
     const [, init] = global.fetch.mock.calls[0]
     expect(init.headers.Authorization).toBe('Bearer test-token')
+  })
+
+  it('getCareQaStatus hits /api/v1/ai/care-qa/status', () => {
+    getCareQaStatus()
+    expect(http.get).toHaveBeenCalledWith('/api/v1/ai/care-qa/status')
+  })
+
+  it('sendCareQaMessage POSTs to care-qa endpoint', () => {
+    sendCareQaMessage('c-9', '猫咪呕吐')
+    expect(http.post).toHaveBeenCalledWith('/api/v1/ai/conversations/c-9/messages:care-qa', { message: '猫咪呕吐' })
   })
 })
 

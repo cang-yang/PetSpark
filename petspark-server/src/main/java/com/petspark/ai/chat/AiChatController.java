@@ -10,10 +10,12 @@ import com.petspark.ai.chat.AiChatDtos.AiRecommendReplyView;
 import com.petspark.ai.chat.AiChatDtos.AiRecommendRequest;
 import com.petspark.ai.chat.AiChatDtos.AiStatusView;
 import com.petspark.ai.recommend.RecommendationService;
+import com.petspark.ai.chat.AiChatDtos.CareQaReplyView;
 import com.petspark.common.api.ApiResponse;
 import com.petspark.common.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -36,6 +38,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  *   <li>API-AI-002b {@code DELETE /ai/consent}：撤回同意，撤回后阻止新会话；</li>
  *   <li>API-AI-003 {@code POST /ai/conversations}：创建会话（场景+可选 petId+标题）；</li>
  *   <li>API-AI-004 {@code POST /ai/conversations/{id}/messages}：非流式发送消息；</li>
+ *   <li>API-AI-004b {@code POST /ai/conversations/{id}/messages:care-qa}：护理问答非流式发送，
+ *       返回结构化 {@link CareQaReplyView}（PR-AI-04）；</li>
+ *   <li>API-AI-004c {@code GET /ai/care-qa/status}：护理问答场景可用性查询；</li>
  *   <li>API-AI-005 {@code POST /ai/conversations/{id}/messages:stream}：SSE 流式发送；</li>
  *   <li>API-AI-006 {@code DELETE /ai/conversations/{id}}：软删会话与消息；</li>
  *   <li>API-AI-006b {@code GET /ai/conversations/{id}/messages}：列出会话历史消息；</li>
@@ -89,6 +94,34 @@ public class AiChatController {
             @Valid @RequestBody AiMessageRequest request,
             @AuthenticationPrincipal AuthenticatedUser user) {
         return ApiResponse.ok(service.send(id, request, user.getId()));
+    }
+
+    /**
+     * 护理问答非流式发送（PR-AI-04 / API-AI-004b）。
+     *
+     * <p>返回结构化 {@link CareQaReplyView}：riskLevel/generalAdvice/warningSigns/seekHelp
+     * + 固定非诊断声明。会话 scene 必须为 CARE_QA，否则 BUSINESS_RULE_001。
+     * 场景开关关闭时 AI_DISABLED_001。
+     */
+    @PostMapping("/conversations/{id}/messages:care-qa")
+    public ApiResponse<CareQaReplyView> sendCareQaMessage(
+            @PathVariable String id,
+            @Valid @RequestBody AiMessageRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.sendCareQa(id, request, user.getId()));
+    }
+
+    /**
+     * 护理问答场景可用性查询（PR-AI-04 / API-AI-004c）。
+     *
+     * <p>前端进入护理问答页前查询：全局 AI 可用且 care-qa 开关打开时 enabled=true。
+     */
+    @GetMapping("/care-qa/status")
+    public ApiResponse<Map<String, Object>> careQaStatus(
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(Map.of(
+                "enabled", service.isCareQaAvailable(),
+                "scene", "CARE_QA"));
     }
 
     @PostMapping(value = "/conversations/{id}/messages:stream",

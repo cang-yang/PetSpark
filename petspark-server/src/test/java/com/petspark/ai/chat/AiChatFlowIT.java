@@ -258,6 +258,88 @@ class AiChatFlowIT extends AbstractControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    // ---- 护理问答场景（PR-AI-04）----
+
+    /**
+     * 护理问答场景默认关闭：已同意用户尝试创建 CARE_QA 会话时返回 AI_DISABLED_001（503），
+     * 且错误消息指明护理问答未开放。PET_CHAT 路径不受影响。
+     */
+    @Test
+    void careQaSceneDisabledByDefaultBlocksConversationCreation() throws Exception {
+        grantConsent(ownerToken);
+        // CARE_QA 场景创建被独立开关拦截。
+        mockMvc.perform(post("/api/v1/ai/conversations").header("Authorization", bearer(ownerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"scene":"CARE_QA","title":"care-qa-disabled"}
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI_DISABLED_001"));
+    }
+
+    /**
+     * 护理问答场景可用性查询端点：默认关闭时 enabled=false。
+     */
+    @Test
+    void careQaStatusReportsDisabledByDefault() throws Exception {
+        mockMvc.perform(get("/api/v1/ai/care-qa/status")
+                        .header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.enabled").value(false))
+                .andExpect(jsonPath("$.data.scene").value("CARE_QA"));
+    }
+
+    /**
+     * 即使绕过 create 直接插入 CARE_QA 会话行，send:care-qa 端点也受场景开关拦截。
+     */
+    @Test
+    void careQaSendBlockedWhenSceneDisabled() throws Exception {
+        grantConsent(ownerToken);
+        String convId = insertConversationDirect(ownerId, "CARE_QA", null, "IT-care-qa");
+        mockMvc.perform(post("/api/v1/ai/conversations/{id}/messages:care-qa", convId)
+                        .header("Authorization", bearer(ownerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"message":"我家狗今天食欲不好"}
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI_DISABLED_001"));
+    }
+
+    /**
+     * PET_CHAT 路径回归：既有 send 端点对 PET_CHAT 会话的行为不变（AI 未启用 → AI_DISABLED_001）。
+     */
+    @Test
+    void petChatSendStillReturnsDisabledWhenAiOff() throws Exception {
+        grantConsent(ownerToken);
+        String convId = insertConversationDirect(ownerId, "PET_CHAT", null, "IT-pet-regression");
+        mockMvc.perform(post("/api/v1/ai/conversations/{id}/messages", convId)
+                        .header("Authorization", bearer(ownerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"message":"你好"}
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI_DISABLED_001"));
+    }
+
+    /**
+     * CARE_QA 会话用普通 send 端点：服务层路由到 doCareQaChat，场景开关关闭 → AI_DISABLED_001。
+     */
+    @Test
+    void careQaConversationRoutedViaStandardSendWhenDisabled() throws Exception {
+        grantConsent(ownerToken);
+        String convId = insertConversationDirect(ownerId, "CARE_QA", null, "IT-care-route");
+        mockMvc.perform(post("/api/v1/ai/conversations/{id}/messages", convId)
+                        .header("Authorization", bearer(ownerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"message":"我家猫今天精神不好"}
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AI_DISABLED_001"));
+    }
+
     // ---- 辅助 ----
 
     private void grantConsent(String token) throws Exception {
