@@ -36,6 +36,7 @@ import serviceRoutes from '@/router/modules/service'
 import trainingRoutes from '@/router/modules/training'
 import beautyRoutes from '@/router/modules/beauty'
 import medicalRoutes from '@/router/modules/medical'
+import communityRoutes from '@/router/modules/community'
 import router from '@/router'
 
 import navigation from '@/navigation'
@@ -100,10 +101,11 @@ describe('frontend route registry baseline', () => {
     expect(trainingRoutes.length).toBe(4)
     expect(beautyRoutes.length).toBe(4)
     expect(medicalRoutes.length).toBe(4)
+    expect(communityRoutes.length).toBe(4)
     expect(commonRoutes.length + catalogRoutes.length + petRoutes.length
       + adoptionRoutes.length + aiRoutes.length + systemRoutes.length
       + boardingRoutes.length + serviceRoutes.length + trainingRoutes.length
-      + beautyRoutes.length + medicalRoutes.length).toBe(router.options.routes.length)
+      + beautyRoutes.length + medicalRoutes.length + communityRoutes.length).toBe(router.options.routes.length)
   })
 })
 
