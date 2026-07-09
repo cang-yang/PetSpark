@@ -6,21 +6,23 @@
         <p>派宠 · 智慧 AI 宠物管理平台</p>
       </div>
       <nav class="app-nav">
-        <router-link to="/">首页</router-link>
-        <template v-if="$store && $store.getters.isAuthenticated">
-          <router-link to="/goods">商品</router-link>
-          <router-link to="/my/orders">我的订单</router-link>
-          <router-link to="/pets">宠物</router-link>
-          <router-link to="/my/pets">我的宠物</router-link>
-          <router-link to="/ai/chat" data-testid="nav-ai-chat">AI 对话</router-link>
-          <router-link to="/profile">个人资料</router-link>
-          <router-link to="/notifications">通知中心</router-link>
-          <router-link to="/admin/users">用户管理</router-link>
-          <router-link to="/admin/system">系统管理</router-link>
-          <router-link to="/admin/goods">商品管理</router-link>
-          <router-link to="/admin/pets">宠物管理</router-link>
-          <router-link to="/admin/orders">订单管理</router-link>
-          <span>{{ $store.state.user && $store.state.user.nickname }}</span>
+        <span v-for="entry in publicNav" :key="entry.to">
+          <router-link :to="entry.to">{{ entry.text }}</router-link>
+        </span>
+        <template v-if="isAuthenticated">
+          <router-link
+            v-for="entry in memberNav"
+            :key="entry.to"
+            :to="entry.to"
+            :data-testid="entry.dataTestId">{{ entry.text }}</router-link
+          >
+          <router-link
+            v-for="entry in adminNav"
+            :key="entry.to"
+            :to="entry.to"
+            :data-testid="entry.dataTestId">{{ entry.text }}</router-link
+          >
+          <span>{{ userNickname }}</span>
           <button type="button" class="nav-button" @click="signOut">退出</button>
         </template>
         <template v-else>
@@ -35,9 +37,27 @@
 
 <script>
 import { logout } from '@/api/auth'
+import navigation from '@/navigation'
 
 export default {
   name: 'App',
+  data() {
+    return {
+      publicNav: navigation.publicNav,
+      memberNav: navigation.memberNav,
+      adminNav: navigation.adminNav
+    }
+  },
+  computed: {
+    isAuthenticated() {
+      return Boolean(this.$store && this.$store.getters && this.$store.getters.isAuthenticated)
+    },
+    userNickname() {
+      return this.$store && this.$store.state && this.$store.state.user
+        ? this.$store.state.user.nickname
+        : ''
+    }
+  },
   methods: {
     async signOut() {
       try {
@@ -56,7 +76,7 @@ body { margin: 0; color: #24313d; background: #f5f7fa; font-family: "Microsoft Y
 .app-header { padding: 24px; color: #fff; background: #409eff; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 .app-header h1, .app-header p { margin: 0; }
 .app-header p { margin-top: 8px; }
-.app-nav { display: flex; gap: 16px; }
+.app-nav { display: flex; gap: 16px; align-items: center; }
 .app-nav a { color: #fff; text-decoration: none; font-weight: 600; }
 .app-nav a.router-link-exact-active { text-decoration: underline; }
 .nav-button { padding: 0; color: #fff; background: transparent; border: 0; font: inherit; font-weight: 600; cursor: pointer; }

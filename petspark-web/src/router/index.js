@@ -1,33 +1,28 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
-import ForgotPasswordView from '../views/ForgotPasswordView.vue'
-import NotificationsView from '../views/NotificationsView.vue'
+import commonRoutes from './modules/common'
+import catalogRoutes from './modules/catalog'
+import petRoutes from './modules/pet'
+import aiRoutes from './modules/ai'
+import systemRoutes from './modules/system'
 
 Vue.use(VueRouter)
 
+/**
+ * 路由注册底座：index 只收集各 router/modules/* 模块并组合路由。
+ * 后续业务 PR 只新增自己的 router/modules/xxx.js 并在此追加 import + concat，
+ * 不再集中在本文件硬编码每条路由。模块顺序即路由匹配顺序；公共模块在前，
+ * 业务模块在后，保证精确路径不被通配/动态路径误匹配。
+ */
+const routes = [
+  ...commonRoutes,
+  ...catalogRoutes,
+  ...petRoutes,
+  ...aiRoutes,
+  ...systemRoutes
+]
+
 export default new VueRouter({
   mode: 'history',
-  routes: [
-    { path: '/', name: 'home', component: HomeView },
-    { path: '/login', name: 'login', component: LoginView },
-    { path: '/register', name: 'register', component: RegisterView },
-    { path: '/forgot-password', name: 'forgot-password', component: ForgotPasswordView },
-    { path: '/notifications', name: 'notifications', component: NotificationsView },
-    { path: '/goods', name: 'goods', component: () => import('../views/GoodsListView.vue') },
-    { path: '/goods/:id', name: 'goods-detail', component: () => import('../views/GoodsDetailView.vue') },
-    { path: '/my/orders', name: 'my-orders', component: () => import('../views/MyOrdersView.vue') },
-    { path: '/pets', name: 'pets', component: () => import('../views/PetsView.vue') },
-    { path: '/my/pets', name: 'my-pets', component: () => import('../views/MyPetsView.vue') },
-    { path: '/my/pets/:id/health', name: 'pet-health', component: () => import('../views/PetHealthView.vue') },
-    { path: '/ai/chat', name: 'ai-chat', component: () => import('../views/AiChatView.vue') },
-    { path: '/profile', name: 'profile', component: () => import('../views/ProfileView.vue') },
-    { path: '/admin/users', name: 'admin-users', component: () => import('../views/AdminUsersView.vue') },
-    { path: '/admin/system', name: 'admin-system', component: () => import('../views/SystemAdminView.vue') },
-    { path: '/admin/goods', name: 'admin-goods', component: () => import('../views/AdminGoodsView.vue') },
-    { path: '/admin/pets', name: 'admin-pets', component: () => import('../views/AdminPetsView.vue') },
-    { path: '/admin/orders', name: 'admin-orders', component: () => import('../views/AdminOrdersView.vue') }
-  ]
+  routes
 })
