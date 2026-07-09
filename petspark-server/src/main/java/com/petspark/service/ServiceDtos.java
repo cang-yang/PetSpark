@@ -38,7 +38,8 @@ public final class ServiceDtos {
             BigDecimal basePrice,
             String status,
             List<ServiceSpecificationView> specifications,
-            BeautyProfileView beautyProfile) {
+            BeautyProfileView beautyProfile,
+            MedicalProfileView medicalProfile) {
     }
 
     /** 美容服务规则视图，仅 kind=BEAUTY 的服务项目返回。 */
@@ -50,6 +51,18 @@ public final class ServiceDtos {
             String sizeRanges,
             String carePreferences,
             String cautionNotes) {
+    }
+
+    /** 医疗服务规则视图，仅 kind=MEDICAL 的服务项目返回。 */
+    public record MedicalProfileView(
+            String id,
+            String serviceItemId,
+            String clinicLicense,
+            String veterinarianTeam,
+            String supportedPetTypes,
+            String careScope,
+            String appointmentNotice,
+            String emergencyRule) {
     }
 
     /** 服务规格视图。 */
