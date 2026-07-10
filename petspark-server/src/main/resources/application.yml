@@ -43,6 +43,21 @@ management:
       show-details: when_authorized
 
 petspark:
+  web:
+    cors:
+      # 本地默认使用 Vue devServer 同源代理。仅在确需浏览器直连后端时设置精确源列表，逗号分隔。
+      allowed-origins: ${PETSPARK_CORS_ALLOWED_ORIGINS:}
+  demo-users:
+    # 默认不创建已知账号；显式开启时必须通过环境变量提供两组强密码。
+    enabled: ${PETSPARK_DEMO_USERS_ENABLED:false}
+    admin-username: ${PETSPARK_DEMO_ADMIN_USERNAME:admin}
+    admin-email: ${PETSPARK_DEMO_ADMIN_EMAIL:admin@petspark.local}
+    admin-nickname: ${PETSPARK_DEMO_ADMIN_NICKNAME:平台管理员}
+    admin-password: ${PETSPARK_DEMO_ADMIN_PASSWORD:}
+    member-username: ${PETSPARK_DEMO_MEMBER_USERNAME:demo}
+    member-email: ${PETSPARK_DEMO_MEMBER_EMAIL:demo@petspark.local}
+    member-nickname: ${PETSPARK_DEMO_MEMBER_NICKNAME:演示用户}
+    member-password: ${PETSPARK_DEMO_MEMBER_PASSWORD:}
   file:
     storage-root: ${FILE_STORAGE_ROOT:./data/files}
   auth:
