@@ -5,17 +5,27 @@
     :data-scene="scene"
     aria-hidden="true"
   >
-    <div class="page-atmosphere__wash" />
-    <img
-      v-if="artwork"
-      class="page-atmosphere__artwork"
-      :src="artwork"
-      alt=""
-      data-testid="scene-artwork"
+    <div
+      v-for="layerScene in renderedScenes"
+      :key="layerScene"
+      class="page-atmosphere__scene"
+      :class="[`page-atmosphere--${layerScene}`, { 'is-active': layerScene === activeScene }]"
+      :data-scene-layer="layerScene"
+      data-testid="scene-layer"
+      @transitionend="handleSceneTransitionEnd($event, layerScene)"
     >
-    <div v-else class="page-atmosphere__artwork page-atmosphere__artwork--abstract" data-testid="scene-artwork" />
-    <div class="page-atmosphere__spark page-atmosphere__spark--one" />
-    <div class="page-atmosphere__spark page-atmosphere__spark--two" />
+      <div class="page-atmosphere__wash" />
+      <img
+        v-if="artworkFor(layerScene)"
+        class="page-atmosphere__artwork"
+        :src="artworkFor(layerScene)"
+        alt=""
+        data-testid="scene-artwork"
+      >
+      <div v-else class="page-atmosphere__artwork page-atmosphere__artwork--abstract" data-testid="scene-artwork" />
+      <div class="page-atmosphere__spark page-atmosphere__spark--one" />
+      <div class="page-atmosphere__spark page-atmosphere__spark--two" />
+    </div>
   </div>
 </template>
 
@@ -44,11 +54,13 @@ export default {
     }
   },
   data() {
-    return { animationFrame: null }
-  },
-  computed: {
-    artwork() {
-      return ARTWORK[this.scene] || ''
+    return {
+      renderedScenes: [this.scene],
+      activeScene: this.scene,
+      pointerFrame: null,
+      transitionFrame: null,
+      cleanupTimer: null,
+      disposed: false
     }
   },
   mounted() {
@@ -58,18 +70,56 @@ export default {
     }
   },
   beforeDestroy() {
+    this.disposed = true
     window.removeEventListener('pointermove', this.handlePointerMove)
-    if (this.animationFrame) window.cancelAnimationFrame(this.animationFrame)
+    if (this.pointerFrame) window.cancelAnimationFrame(this.pointerFrame)
+    if (this.transitionFrame) window.cancelAnimationFrame(this.transitionFrame)
+    if (this.cleanupTimer) window.clearTimeout(this.cleanupTimer)
+  },
+  watch: {
+    scene(nextScene) {
+      this.transitionTo(nextScene)
+    }
   },
   methods: {
+    artworkFor(scene) {
+      return ARTWORK[scene] || ''
+    },
+    transitionTo(nextScene) {
+      if (nextScene === this.activeScene && this.renderedScenes.length === 1) return
+      if (this.transitionFrame) window.cancelAnimationFrame(this.transitionFrame)
+      if (this.cleanupTimer) window.clearTimeout(this.cleanupTimer)
+
+      this.renderedScenes = [...new Set([this.activeScene, nextScene])]
+      this.$nextTick(() => {
+        if (this.disposed) return
+        this.transitionFrame = window.requestAnimationFrame(() => {
+          if (this.disposed) return
+          this.activeScene = nextScene
+          this.transitionFrame = null
+          this.cleanupTimer = window.setTimeout(() => {
+            this.finishTransition()
+          }, 620)
+        })
+      })
+    },
+    handleSceneTransitionEnd(event, layerScene) {
+      if (event.target !== event.currentTarget || event.propertyName !== 'opacity') return
+      if (layerScene === this.activeScene) this.finishTransition()
+    },
+    finishTransition() {
+      if (this.cleanupTimer) window.clearTimeout(this.cleanupTimer)
+      this.cleanupTimer = null
+      this.renderedScenes = [this.activeScene]
+    },
     handlePointerMove(event) {
-      if (this.animationFrame) return
-      this.animationFrame = window.requestAnimationFrame(() => {
+      if (this.pointerFrame) return
+      this.pointerFrame = window.requestAnimationFrame(() => {
         const x = ((event.clientX / window.innerWidth) - 0.5) * 10
         const y = ((event.clientY / window.innerHeight) - 0.5) * 8
         this.$el.style.setProperty('--ps-scene-x', `${x.toFixed(2)}px`)
         this.$el.style.setProperty('--ps-scene-y', `${y.toFixed(2)}px`)
-        this.animationFrame = null
+        this.pointerFrame = null
       })
     }
   }
@@ -85,7 +135,25 @@ export default {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  background: #f7f8fb;
+}
+.page-atmosphere__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  opacity: 0;
   background: var(--scene-base, #f7f8fb);
+  transform: scale(1.012);
+  transition:
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.page-atmosphere__scene.is-active {
+  z-index: 2;
+  opacity: 1;
+  transform: scale(1);
 }
 .page-atmosphere__wash {
   position: absolute;
@@ -151,5 +219,12 @@ export default {
   .page-atmosphere { position: absolute; }
   .page-atmosphere__artwork { top: 5vh; right: -28vw; width: 96vw; opacity: 0.075; transform: none; }
   .page-atmosphere__spark--two { right: -100px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-atmosphere__scene {
+    transform: none;
+    transition: opacity 80ms linear;
+  }
+  .page-atmosphere__artwork { transform: none; }
 }
 </style>

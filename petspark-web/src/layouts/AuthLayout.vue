@@ -1,10 +1,8 @@
 <template>
   <div class="ps-auth-shell">
-    <PageAtmosphere scene="care" />
     <header class="ps-auth-header">
       <router-link class="ps-brand" to="/" aria-label="返回 PetSpark 首页">
-        <span class="ps-brand-mark" aria-hidden="true">派</span>
-        <span class="ps-brand-copy">PetSpark<small>认真照顾每一次陪伴</small></span>
+        <BrandMark tagline="认真照顾每一次陪伴" />
       </router-link>
       <nav class="ps-auth-nav" aria-label="认证导航">
         <router-link to="/">返回首页</router-link>
@@ -15,11 +13,11 @@
 </template>
 
 <script>
-import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 
 export default {
   name: 'AuthLayout',
-  components: { PageAtmosphere }
+  components: { BrandMark }
 }
 </script>
 

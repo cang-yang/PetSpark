@@ -1,10 +1,8 @@
 <template>
   <div class="ps-admin-shell">
-    <PageAtmosphere scene="admin" />
     <aside class="ps-admin-sidebar">
       <router-link class="admin-brand" to="/">
-        <span class="ps-brand-mark" aria-hidden="true">派</span>
-        <span>PetSpark 管理台</span>
+        <BrandMark tagline="管理控制台" inverse />
       </router-link>
       <nav class="admin-nav" aria-label="管理端导航">
         <router-link
@@ -12,7 +10,7 @@
           :key="entry.to"
           :to="routeTarget(entry.to)"
           :data-testid="entry.dataTestId"
-        >{{ entry.text }}</router-link>
+        ><AppIcon :name="entry.icon" />{{ entry.text }}</router-link>
       </nav>
     </aside>
     <section class="ps-admin-content">
@@ -33,11 +31,12 @@
 </template>
 
 <script>
-import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 
 export default {
   name: 'AdminLayout',
-  components: { PageAtmosphere },
+  components: { AppIcon, BrandMark },
   props: {
     adminNav: { type: Array, default: () => [] },
     userNickname: { type: String, default: '' }
@@ -62,6 +61,9 @@ export default {
 }
 .admin-nav { display: grid; gap: 3px; }
 .admin-nav a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   padding: 9px 12px;
   color: #c6d1dc;
   border-radius: var(--ps-radius-sm);

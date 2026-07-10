@@ -14,13 +14,13 @@
 
 .ps-page-enter-active,
 .ps-page-leave-active {
-  transition: opacity 260ms ease, transform 320ms var(--ps-ease-out);
+  transition: opacity 210ms ease, transform 240ms var(--ps-ease-out);
 }
 
 .ps-page-enter,
 .ps-page-leave-to {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(4px);
 }
 
 @media (prefers-reduced-motion: reduce) {

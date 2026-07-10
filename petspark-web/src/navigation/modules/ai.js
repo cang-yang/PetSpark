@@ -6,8 +6,8 @@
  */
 export default {
   member: [
-    { to: 'ai-chat', text: 'AI 对话', dataTestId: 'nav-ai-chat' },
-    { to: 'ai-recommend', text: 'AI 推荐', dataTestId: 'nav-ai-recommend' },
-    { to: 'ai-care-qa', text: '护理问答', dataTestId: 'nav-ai-care-qa' }
+    { to: 'ai-chat', text: 'AI 对话', icon: 'ai', dataTestId: 'nav-ai-chat' },
+    { to: 'ai-recommend', text: 'AI 推荐', icon: 'ai', dataTestId: 'nav-ai-recommend' },
+    { to: 'ai-care-qa', text: '护理问答', icon: 'medical', dataTestId: 'nav-ai-care-qa' }
   ]
 }

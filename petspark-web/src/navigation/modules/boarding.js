@@ -5,11 +5,11 @@
  */
 export default {
   member: [
-    { to: 'boarding-new', text: '发起寄养', dataTestId: 'nav-boarding-new' },
-    { to: 'my-boarding', text: '我的寄养', dataTestId: 'nav-my-boarding' }
+    { to: 'boarding-new', text: '发起寄养', icon: 'boarding', dataTestId: 'nav-boarding-new' },
+    { to: 'my-boarding', text: '我的寄养', icon: 'boarding', dataTestId: 'nav-my-boarding' }
   ],
   admin: [
-    { to: 'admin-rooms', text: '房间管理', dataTestId: 'nav-admin-rooms' },
-    { to: 'admin-boarding', text: '寄养管理', dataTestId: 'nav-admin-boarding' }
+    { to: 'admin-rooms', text: '房间管理', icon: 'room', dataTestId: 'nav-admin-rooms' },
+    { to: 'admin-boarding', text: '寄养管理', icon: 'boarding', dataTestId: 'nav-admin-boarding' }
   ]
 }

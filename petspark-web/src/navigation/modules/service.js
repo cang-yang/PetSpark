@@ -6,10 +6,10 @@
  */
 export default {
   member: [
-    { to: 'services', text: '服务', dataTestId: 'nav-services' },
-    { to: 'my-service-bookings', text: '我的服务预约', dataTestId: 'nav-my-service-bookings' }
+    { to: 'services', text: '服务', icon: 'service', dataTestId: 'nav-services' },
+    { to: 'my-service-bookings', text: '我的服务预约', icon: 'service', dataTestId: 'nav-my-service-bookings' }
   ],
   admin: [
-    { to: 'admin-services', text: '服务管理', dataTestId: 'nav-admin-services' }
+    { to: 'admin-services', text: '服务管理', icon: 'service', dataTestId: 'nav-admin-services' }
   ]
 }

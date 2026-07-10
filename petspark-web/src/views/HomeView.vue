@@ -56,7 +56,7 @@
 
     <section class="home-ai">
       <div>
-        <span class="home-ai__mark" aria-hidden="true">AI</span>
+        <span class="home-ai__mark" aria-hidden="true"><AppIcon name="ai" /></span>
         <h2>遇到护理问题，先问问智能宠物伙伴</h2>
         <p>提供日常护理信息、服务选择参考和陪伴对话。健康相关回答仅作信息参考，不替代兽医诊断。</p>
       </div>
@@ -76,23 +76,24 @@ import { listActiveBanners } from '@/api/banner'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import FeatureCard from '@/components/ui/FeatureCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import heroPets from '@/assets/illustrations/hero-pets.jpg'
 
 export default {
   name: 'HomeView',
-  components: { ErrorState, PageHero, FeatureCard },
+  components: { ErrorState, PageHero, FeatureCard, AppIcon },
   data() {
     return {
       heroPets,
       banners: [],
       error: '',
       features: [
-        { title: '我的宠物', description: '管理档案与健康记录', icon: '宠', to: '/my/pets', tone: 'pink' },
-        { title: 'AI 助手', description: '获得日常护理信息参考', icon: 'AI', to: '/ai/chat', tone: 'purple' },
-        { title: '领养服务', description: '认识正在等待家庭的小伙伴', icon: '家', to: '/adoptions', tone: 'peach' },
-        { title: '寄养预约', description: '查询房间并安排照护', icon: '住', to: '/boarding/new', tone: 'green' },
-        { title: '宠物服务', description: '训练、美容与线下医疗预约', icon: '服', to: '/services', tone: 'green' },
-        { title: '宠物商城', description: '挑选日常用品并管理订单', icon: '购', to: '/goods', tone: 'peach' }
+        { title: '我的宠物', description: '管理档案与健康记录', icon: 'pets', to: '/my/pets', tone: 'pink' },
+        { title: 'AI 助手', description: '获得日常护理信息参考', icon: 'ai', to: '/ai/chat', tone: 'purple' },
+        { title: '领养服务', description: '认识正在等待家庭的小伙伴', icon: 'adoption', to: '/adoptions', tone: 'peach' },
+        { title: '寄养预约', description: '查询房间并安排照护', icon: 'boarding', to: '/boarding/new', tone: 'green' },
+        { title: '宠物服务', description: '训练、美容与线下医疗预约', icon: 'service', to: '/services', tone: 'green' },
+        { title: '宠物商城', description: '挑选日常用品并管理订单', icon: 'goods', to: '/goods', tone: 'peach' }
       ]
     }
   },
@@ -176,7 +177,7 @@ export default {
   color: #3a315f;
   background: #fff;
   border-radius: 14px;
-  font-weight: 900;
+  font-size: 25px;
 }
 .home-ai p { max-width: 62ch; margin: 7px 0 0; color: #ddd7f5; }
 .home-ai a {

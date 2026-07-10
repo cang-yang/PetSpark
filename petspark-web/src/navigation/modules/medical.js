@@ -4,10 +4,10 @@
  */
 export default {
   member: [
-    { to: 'medical', text: '宠物医疗', dataTestId: 'nav-medical' },
-    { to: 'my-medical-bookings', text: '我的医疗预约', dataTestId: 'nav-my-medical-bookings' }
+    { to: 'medical', text: '宠物医疗', icon: 'medical', dataTestId: 'nav-medical' },
+    { to: 'my-medical-bookings', text: '我的医疗预约', icon: 'medical', dataTestId: 'nav-my-medical-bookings' }
   ],
   admin: [
-    { to: 'admin-medical', text: '医疗管理', dataTestId: 'nav-admin-medical' }
+    { to: 'admin-medical', text: '医疗管理', icon: 'medical', dataTestId: 'nav-admin-medical' }
   ]
 }
