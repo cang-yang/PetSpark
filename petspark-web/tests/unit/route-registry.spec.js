@@ -32,6 +32,9 @@ jest.mock('@/api/banner', () => ({
   updateBannerOrder: jest.fn(),
   deleteBanner: jest.fn()
 }))
+jest.mock('@/api/dashboard', () => ({
+  getDashboardSummary: jest.fn()
+}))
 jest.mock('@/api/http', () => ({ get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn() }))
 
 import commonRoutes from '@/router/modules/common'
@@ -48,6 +51,7 @@ import medicalRoutes from '@/router/modules/medical'
 import communityRoutes from '@/router/modules/community'
 import strayRoutes from '@/router/modules/stray'
 import bannerRoutes from '@/router/modules/banner'
+import dashboardRoutes from '@/router/modules/dashboard'
 import router from '@/router'
 
 import navigation from '@/navigation'
@@ -74,7 +78,8 @@ describe('frontend route registry baseline', () => {
     'medical', 'medical-detail', 'my-medical-bookings', 'admin-medical',
     'community', 'community-detail', 'my-community-posts', 'admin-community',
     'stray-clues', 'my-stray-clues', 'admin-stray-clues',
-    'admin-banners'
+    'admin-banners',
+    'admin-dashboard'
   ]
   const expectedPaths = [
     '/', '/login', '/register', '/forgot-password', '/notifications',
@@ -91,7 +96,8 @@ describe('frontend route registry baseline', () => {
     '/medical', '/medical/:id', '/my/medical/bookings', '/admin/medical',
     '/community', '/community/posts/:id', '/my/community/posts', '/admin/community',
     '/stray', '/my/stray-clues', '/admin/stray-clues',
-    '/admin/banners'
+    '/admin/banners',
+    '/admin/dashboard'
   ]
 
   it('preserves every baseline route name after modularization', () => {
@@ -121,11 +127,12 @@ describe('frontend route registry baseline', () => {
     expect(communityRoutes.length).toBe(4)
     expect(strayRoutes.length).toBe(3)
     expect(bannerRoutes.length).toBe(1)
+    expect(dashboardRoutes.length).toBe(1)
     expect(commonRoutes.length + catalogRoutes.length + petRoutes.length
       + adoptionRoutes.length + aiRoutes.length + systemRoutes.length
       + boardingRoutes.length + serviceRoutes.length + trainingRoutes.length
       + beautyRoutes.length + medicalRoutes.length + communityRoutes.length + strayRoutes.length
-      + bannerRoutes.length).toBe(router.options.routes.length)
+      + bannerRoutes.length + dashboardRoutes.length).toBe(router.options.routes.length)
   })
 })
 
@@ -157,7 +164,8 @@ describe('navigation registry baseline', () => {
     const expected = [
       'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders',
       'admin-adoptions', 'admin-rooms', 'admin-boarding', 'admin-services', 'admin-training', 'admin-beauty', 'admin-medical',
-      'admin-community', 'admin-stray-clues', 'admin-banners'
+      'admin-community', 'admin-stray-clues', 'admin-banners',
+      'admin-dashboard'
     ]
     expect(expected.filter((n) => !adminNames.includes(n))).toEqual([])
   })

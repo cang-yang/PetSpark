@@ -14,6 +14,7 @@ import medicalRoutes from './modules/medical'
 import communityRoutes from './modules/community'
 import strayRoutes from './modules/stray'
 import bannerRoutes from './modules/banner'
+import dashboardRoutes from './modules/dashboard'
 
 Vue.use(VueRouter)
 
@@ -37,7 +38,8 @@ const routes = [
   ...medicalRoutes,
   ...communityRoutes,
   ...strayRoutes,
-  ...bannerRoutes
+  ...bannerRoutes,
+  ...dashboardRoutes
 ]
 
 export default new VueRouter({
