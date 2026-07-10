@@ -1,0 +1,32 @@
+:root {
+  --ps-color-canvas: #f6f8fb;
+  --ps-color-surface: #ffffff;
+  --ps-color-surface-soft: #f1f4f8;
+  --ps-color-cream: #fff6ef;
+  --ps-color-pink: #e93472;
+  --ps-color-pink-dark: #b91f55;
+  --ps-color-peach: #f78155;
+  --ps-color-green: #4f9c63;
+  --ps-color-blue: #2878c8;
+  --ps-color-purple: #725fc5;
+  --ps-color-text: #24313d;
+  --ps-color-muted: #5f6c78;
+  --ps-color-border: #dfe5ec;
+  --ps-color-danger: #c83c4d;
+  --ps-color-warning: #a45c16;
+  --ps-radius-sm: 8px;
+  --ps-radius-md: 12px;
+  --ps-radius-lg: 16px;
+  --ps-radius-pill: 999px;
+  --ps-shadow-card: 0 4px 8px rgba(36, 49, 61, 0.08);
+  --ps-shadow-float: 0 8px 20px rgba(36, 49, 61, 0.12);
+  --ps-page-max: 1180px;
+  --ps-admin-sidebar: 236px;
+  --ps-z-dropdown: 20;
+  --ps-z-sticky: 30;
+  --ps-z-modal: 50;
+  --ps-focus-ring: 0 0 0 3px rgba(233, 52, 114, 0.22);
+  --ps-motion-fast: 160ms;
+  --ps-motion-normal: 220ms;
+  --ps-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}

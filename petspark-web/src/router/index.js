@@ -15,6 +15,7 @@ import communityRoutes from './modules/community'
 import strayRoutes from './modules/stray'
 import bannerRoutes from './modules/banner'
 import dashboardRoutes from './modules/dashboard'
+import { withLayoutMeta } from './layout'
 
 Vue.use(VueRouter)
 
@@ -24,7 +25,7 @@ Vue.use(VueRouter)
  * 不再集中在本文件硬编码每条路由。模块顺序即路由匹配顺序；公共模块在前，
  * 业务模块在后，保证精确路径不被通配/动态路径误匹配。
  */
-const routes = [
+const routes = withLayoutMeta([
   ...commonRoutes,
   ...catalogRoutes,
   ...petRoutes,
@@ -40,7 +41,7 @@ const routes = [
   ...strayRoutes,
   ...bannerRoutes,
   ...dashboardRoutes
-]
+])
 
 export default new VueRouter({
   mode: 'history',

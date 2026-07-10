@@ -1,21 +1,25 @@
 <template>
   <section class="admin-dashboard">
-    <h2>统计仪表盘</h2>
+    <PageHeader title="统计仪表盘" description="查看平台核心指标与业务状态分布。" />
 
-    <div v-if="loading" class="loading" data-testid="dashboard-loading">加载中…</div>
-    <div v-else-if="error" class="error" data-testid="dashboard-error">{{ error }}</div>
+    <LoadingState v-if="loading" data-testid="dashboard-loading" text="正在汇总平台数据…" />
+    <ErrorState
+      v-else-if="error"
+      data-testid="dashboard-error"
+      title="仪表盘数据暂时不可用"
+      :description="error"
+      @retry="loadSummary"
+    />
     <template v-else>
       <!-- 计数指标卡片 -->
       <div class="metrics-grid" data-testid="dashboard-metrics">
-        <div
+        <MetricCard
           v-for="m in metrics"
           :key="m.key"
-          class="metric-card"
           :data-testid="'metric-' + m.key"
-        >
-          <div class="metric-value">{{ m.value }}</div>
-          <div class="metric-label">{{ m.label }}</div>
-        </div>
+          :label="m.label"
+          :value="m.value"
+        />
       </div>
 
       <!-- 状态分布饼图 -->
@@ -37,6 +41,10 @@
 <script>
 import * as echarts from 'echarts'
 import { getDashboardSummary } from '@/api/dashboard'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import LoadingState from '@/components/ui/LoadingState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import MetricCard from '@/components/ui/MetricCard.vue'
 
 const STATUS_COLORS = {
   CREATED: '#409EFF',
@@ -69,6 +77,7 @@ const STATUS_COLORS = {
 
 export default {
   name: 'AdminDashboardView',
+  components: { PageHeader, LoadingState, ErrorState, MetricCard },
   data() {
     return {
       loading: false,
@@ -144,23 +153,6 @@ export default {
   gap: 16px;
   margin-bottom: 32px;
 }
-.metric-card {
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  padding: 20px;
-  text-align: center;
-}
-.metric-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #303133;
-}
-.metric-label {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #909399;
-}
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -180,13 +172,5 @@ export default {
 .chart-canvas {
   width: 100%;
   height: 260px;
-}
-.loading, .error {
-  padding: 40px;
-  text-align: center;
-  color: #909399;
-}
-.error {
-  color: #F56C6C;
 }
 </style>
