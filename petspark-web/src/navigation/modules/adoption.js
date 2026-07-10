@@ -3,10 +3,10 @@
  */
 export default {
   member: [
-    { to: 'adoptions', text: '领养', dataTestId: 'nav-adoptions' },
-    { to: 'my-adoptions', text: '我的领养', dataTestId: 'nav-my-adoptions' }
+    { to: 'adoptions', text: '领养', icon: 'adoption', dataTestId: 'nav-adoptions' },
+    { to: 'my-adoptions', text: '我的领养', icon: 'adoption', dataTestId: 'nav-my-adoptions' }
   ],
   admin: [
-    { to: 'admin-adoptions', text: '领养审核', dataTestId: 'nav-admin-adoptions' }
+    { to: 'admin-adoptions', text: '领养审核', icon: 'adoption', dataTestId: 'nav-admin-adoptions' }
   ]
 }

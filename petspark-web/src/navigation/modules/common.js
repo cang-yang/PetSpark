@@ -2,7 +2,7 @@
  * 导航注册项底座。
  *
  * 每个导航项是一个普通对象：
- *   { to: 'router-name 或 path', text: '导航文案', requireAuth?: boolean,
+ *   { to: 'router-name 或 path', text: '导航文案', icon: '语义图标键', requireAuth?: boolean,
  *     dataTestId?: string, group?: 'public'|'member'|'admin' }
  *
  * 规则：
@@ -18,21 +18,21 @@
  */
 export default {
   public: [
-    { to: '/', text: '首页', dataTestId: 'nav-home' }
+    { to: '/', text: '首页', icon: 'home', dataTestId: 'nav-home' }
   ],
   member: [
-    { to: 'goods', text: '商品', dataTestId: 'nav-goods' },
-    { to: 'my-orders', text: '我的订单', dataTestId: 'nav-my-orders' },
-    { to: 'pets', text: '宠物', dataTestId: 'nav-pets' },
-    { to: 'my-pets', text: '我的宠物', dataTestId: 'nav-my-pets' },
-    { to: 'profile', text: '个人资料', dataTestId: 'nav-profile' },
-    { to: 'notifications', text: '通知中心', dataTestId: 'nav-notifications', badge: 'notifications' }
+    { to: 'goods', text: '商品', icon: 'goods', dataTestId: 'nav-goods' },
+    { to: 'my-orders', text: '我的订单', icon: 'orders', dataTestId: 'nav-my-orders' },
+    { to: 'pets', text: '宠物', icon: 'pets', dataTestId: 'nav-pets' },
+    { to: 'my-pets', text: '我的宠物', icon: 'pets', dataTestId: 'nav-my-pets' },
+    { to: 'profile', text: '个人资料', icon: 'profile', dataTestId: 'nav-profile' },
+    { to: 'notifications', text: '通知中心', icon: 'bell', dataTestId: 'nav-notifications', badge: 'notifications' }
   ],
   admin: [
-    { to: 'admin-users', text: '用户管理', dataTestId: 'nav-admin-users' },
-    { to: 'admin-system', text: '系统管理', dataTestId: 'nav-admin-system' },
-    { to: 'admin-goods', text: '商品管理', dataTestId: 'nav-admin-goods' },
-    { to: 'admin-pets', text: '宠物管理', dataTestId: 'nav-admin-pets' },
-    { to: 'admin-orders', text: '订单管理', dataTestId: 'nav-admin-orders' }
+    { to: 'admin-users', text: '用户管理', icon: 'users', dataTestId: 'nav-admin-users' },
+    { to: 'admin-system', text: '系统管理', icon: 'system', dataTestId: 'nav-admin-system' },
+    { to: 'admin-goods', text: '商品管理', icon: 'goods', dataTestId: 'nav-admin-goods' },
+    { to: 'admin-pets', text: '宠物管理', icon: 'pets', dataTestId: 'nav-admin-pets' },
+    { to: 'admin-orders', text: '订单管理', icon: 'orders', dataTestId: 'nav-admin-orders' }
   ]
 }

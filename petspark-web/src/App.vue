@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <span class="ps-sr-only" data-testid="app-title">PetSpark</span>
+    <PageAtmosphere :scene="routeScene" />
     <component
       :is="layoutComponent"
       v-bind="layoutProps"
@@ -19,11 +20,12 @@ import navigation from '@/navigation'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
+import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
 import { inferRouteScene } from '@/ui/scene'
 
 export default {
   name: 'App',
-  components: { PublicLayout, AdminLayout, AuthLayout },
+  components: { PublicLayout, AdminLayout, AuthLayout, PageAtmosphere },
   data() {
     return {
       publicNav: navigation.publicNav,
@@ -57,7 +59,6 @@ export default {
         userNickname: this.userNickname,
         notificationUnreadCount: this.notificationUnreadCount,
         notificationUnreadCountText: this.notificationUnreadCountText,
-        scene: this.routeScene,
         showAiAssistant: !this.currentPath.startsWith('/ai')
       }
     },

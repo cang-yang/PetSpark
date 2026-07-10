@@ -3,10 +3,10 @@
  */
 export default {
   member: [
-    { to: 'beauty', text: '宠物美容', dataTestId: 'nav-beauty' },
-    { to: 'my-beauty-bookings', text: '我的美容预约', dataTestId: 'nav-my-beauty-bookings' }
+    { to: 'beauty', text: '宠物美容', icon: 'beauty', dataTestId: 'nav-beauty' },
+    { to: 'my-beauty-bookings', text: '我的美容预约', icon: 'beauty', dataTestId: 'nav-my-beauty-bookings' }
   ],
   admin: [
-    { to: 'admin-beauty', text: '美容管理', dataTestId: 'nav-admin-beauty' }
+    { to: 'admin-beauty', text: '美容管理', icon: 'beauty', dataTestId: 'nav-admin-beauty' }
   ]
 }

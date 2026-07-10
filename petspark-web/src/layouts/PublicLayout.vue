@@ -1,10 +1,8 @@
 <template>
   <div class="ps-public-shell">
-    <PageAtmosphere :scene="scene" />
     <header class="ps-public-header">
       <router-link class="ps-brand" to="/" aria-label="PetSpark 首页">
-        <span class="ps-brand-mark" aria-hidden="true">派</span>
-        <span class="ps-brand-copy">PetSpark<small>智慧宠物生活平台</small></span>
+        <BrandMark tagline="智慧宠物生活平台" />
       </router-link>
 
       <nav class="public-nav" aria-label="主导航">
@@ -13,7 +11,7 @@
           :key="entry.to"
           :to="routeTarget(entry.to)"
           :data-testid="entry.dataTestId"
-        >{{ entry.text }}</router-link>
+        ><AppIcon :name="entry.icon" />{{ entry.text }}</router-link>
 
         <template v-if="isAuthenticated">
           <details class="nav-menu">
@@ -25,6 +23,7 @@
                 :to="routeTarget(entry.to)"
                 :data-testid="entry.dataTestId"
               >
+                <AppIcon :name="entry.icon" />
                 {{ entry.text }}
                 <span
                   v-if="entry.badge === 'notifications' && notificationUnreadCount > 0"
@@ -50,12 +49,13 @@
 </template>
 
 <script>
-import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
 import AiAssistantBubble from '@/components/ui/AiAssistantBubble.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 
 export default {
   name: 'PublicLayout',
-  components: { PageAtmosphere, AiAssistantBubble },
+  components: { AiAssistantBubble, AppIcon, BrandMark },
   props: {
     publicNav: { type: Array, default: () => [] },
     memberNav: { type: Array, default: () => [] },
@@ -64,7 +64,6 @@ export default {
     userNickname: { type: String, default: '' },
     notificationUnreadCount: { type: Number, default: 0 },
     notificationUnreadCountText: { type: String, default: '0' },
-    scene: { type: String, default: 'care' },
     showAiAssistant: { type: Boolean, default: true }
   },
   methods: {
@@ -96,6 +95,7 @@ export default {
   font-weight: 650;
   cursor: pointer;
 }
+.public-nav > a { display: inline-flex; align-items: center; gap: 6px; }
 
 .public-nav > a:hover,
 .public-nav > a.router-link-exact-active,
@@ -133,13 +133,14 @@ export default {
 .nav-menu__panel a {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   padding: 9px 10px;
   color: var(--ps-color-text);
   border-radius: var(--ps-radius-sm);
   text-decoration: none;
 }
+.nav-menu__panel .nav-badge { margin-left: auto; }
 .nav-menu__panel a:hover { background: var(--ps-color-surface-soft); }
 .nav-badge {
   min-width: 20px;

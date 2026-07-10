@@ -4,6 +4,7 @@ import App from '@/App.vue'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
+import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
 
 jest.mock('@/api/auth', () => ({ logout: jest.fn() }))
 jest.mock('@/api/notifications', () => ({ getUnreadNotificationCount: jest.fn() }))
@@ -94,7 +95,7 @@ describe('App', () => {
     ['/pets', 'companion'],
     ['/boarding/new', 'service'],
     ['/ai/chat', 'ai']
-  ])('passes the %s route atmosphere to the public shell', async (path, scene) => {
+  ])('passes the %s route atmosphere to the persistent scene layer', async (path, scene) => {
     jest.useFakeTimers()
     const localVue = createLocalVue()
     localVue.use(VueRouter)
@@ -112,7 +113,40 @@ describe('App', () => {
       }
     })
 
-    expect(wrapper.findComponent(PublicLayout).props('scene')).toBe(scene)
+    expect(wrapper.findComponent(PageAtmosphere).props('scene')).toBe(scene)
+    wrapper.destroy()
+    jest.useRealTimers()
+  })
+
+  it('keeps one atmosphere component alive while switching between public and admin layouts', async () => {
+    jest.useFakeTimers()
+    const localVue = createLocalVue()
+    localVue.use(VueRouter)
+    const router = new VueRouter({
+      routes: [
+        { path: '/pets', meta: { layout: 'public' } },
+        { path: '/admin/users', meta: { layout: 'admin' } }
+      ]
+    })
+    await router.push('/pets')
+    const wrapper = shallowMount(App, {
+      localVue,
+      router,
+      mocks: {
+        $store: {
+          getters: { isAuthenticated: false },
+          state: { user: null, notificationUnreadCount: 0 },
+          dispatch: jest.fn()
+        }
+      }
+    })
+    const atmosphereVm = wrapper.findComponent(PageAtmosphere).vm
+
+    await router.push('/admin/users')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent(PageAtmosphere).vm).toBe(atmosphereVm)
+    expect(wrapper.findComponent(PageAtmosphere).props('scene')).toBe('admin')
     wrapper.destroy()
     jest.useRealTimers()
   })

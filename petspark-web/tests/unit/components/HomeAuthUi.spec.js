@@ -2,6 +2,7 @@ import { createLocalVue, shallowMount } from '@vue/test-utils'
 import VueRouter from 'vue-router'
 import PageHero from '@/components/ui/PageHero.vue'
 import FeatureCard from '@/components/ui/FeatureCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import AuthPanel from '@/components/ui/AuthPanel.vue'
 
 const localVue = createLocalVue()
@@ -34,7 +35,7 @@ describe('home and authentication UI components', () => {
       propsData: {
         title: '我的宠物',
         description: '管理档案与健康记录',
-        icon: '宠',
+        icon: 'pets',
         to: '/my/pets',
         tone: 'pink'
       }
@@ -42,6 +43,7 @@ describe('home and authentication UI components', () => {
 
     expect(wrapper.text()).toContain('我的宠物')
     expect(wrapper.attributes('data-tone')).toBe('pink')
+    expect(wrapper.findComponent(AppIcon).props('name')).toBe('pets')
   })
 
   it('provides a shared two-column authentication panel', () => {
