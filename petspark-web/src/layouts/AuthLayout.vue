@@ -1,5 +1,6 @@
 <template>
   <div class="ps-auth-shell">
+    <PageAtmosphere scene="care" />
     <header class="ps-auth-header">
       <router-link class="ps-brand" to="/" aria-label="返回 PetSpark 首页">
         <span class="ps-brand-mark" aria-hidden="true">派</span>
@@ -14,7 +15,12 @@
 </template>
 
 <script>
-export default { name: 'AuthLayout' }
+import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
+
+export default {
+  name: 'AuthLayout',
+  components: { PageAtmosphere }
+}
 </script>
 
 <style scoped>

@@ -6,7 +6,9 @@
       v-bind="layoutProps"
       @sign-out="signOut"
     >
-      <router-view />
+      <transition name="ps-page" mode="out-in">
+        <router-view :key="$route.path" />
+      </transition>
     </component>
   </div>
 </template>
@@ -17,6 +19,7 @@ import navigation from '@/navigation'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
+import { inferRouteScene } from '@/ui/scene'
 
 export default {
   name: 'App',
@@ -53,8 +56,16 @@ export default {
         isAuthenticated: this.isAuthenticated,
         userNickname: this.userNickname,
         notificationUnreadCount: this.notificationUnreadCount,
-        notificationUnreadCountText: this.notificationUnreadCountText
+        notificationUnreadCountText: this.notificationUnreadCountText,
+        scene: this.routeScene,
+        showAiAssistant: !this.currentPath.startsWith('/ai')
       }
+    },
+    currentPath() {
+      return this.$route && this.$route.path ? this.$route.path : '/'
+    },
+    routeScene() {
+      return inferRouteScene(this.currentPath)
     },
     isAuthenticated() {
       return Boolean(this.$store && this.$store.getters && this.$store.getters.isAuthenticated)

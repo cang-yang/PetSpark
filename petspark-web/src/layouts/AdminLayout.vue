@@ -1,5 +1,6 @@
 <template>
   <div class="ps-admin-shell">
+    <PageAtmosphere scene="admin" />
     <aside class="ps-admin-sidebar">
       <router-link class="admin-brand" to="/">
         <span class="ps-brand-mark" aria-hidden="true">派</span>
@@ -32,8 +33,11 @@
 </template>
 
 <script>
+import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
+
 export default {
   name: 'AdminLayout',
+  components: { PageAtmosphere },
   props: {
     adminNav: { type: Array, default: () => [] },
     userNickname: { type: String, default: '' }

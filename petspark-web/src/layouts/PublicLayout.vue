@@ -1,5 +1,6 @@
 <template>
   <div class="ps-public-shell">
+    <PageAtmosphere :scene="scene" />
     <header class="ps-public-header">
       <router-link class="ps-brand" to="/" aria-label="PetSpark 首页">
         <span class="ps-brand-mark" aria-hidden="true">派</span>
@@ -44,12 +45,17 @@
       </nav>
     </header>
     <main class="ps-public-main"><slot /></main>
+    <AiAssistantBubble v-if="showAiAssistant" />
   </div>
 </template>
 
 <script>
+import PageAtmosphere from '@/components/ui/PageAtmosphere.vue'
+import AiAssistantBubble from '@/components/ui/AiAssistantBubble.vue'
+
 export default {
   name: 'PublicLayout',
+  components: { PageAtmosphere, AiAssistantBubble },
   props: {
     publicNav: { type: Array, default: () => [] },
     memberNav: { type: Array, default: () => [] },
@@ -57,7 +63,9 @@ export default {
     isAuthenticated: { type: Boolean, default: false },
     userNickname: { type: String, default: '' },
     notificationUnreadCount: { type: Number, default: 0 },
-    notificationUnreadCountText: { type: String, default: '0' }
+    notificationUnreadCountText: { type: String, default: '0' },
+    scene: { type: String, default: 'care' },
+    showAiAssistant: { type: Boolean, default: true }
   },
   methods: {
     routeTarget(to) {
@@ -119,6 +127,8 @@ export default {
   border: 1px solid var(--ps-color-border);
   border-radius: var(--ps-radius-md);
   box-shadow: var(--ps-shadow-float);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 .nav-menu__panel a {
   display: flex;
