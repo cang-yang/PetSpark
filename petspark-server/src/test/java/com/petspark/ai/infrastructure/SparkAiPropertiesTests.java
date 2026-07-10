@@ -23,8 +23,16 @@ class SparkAiPropertiesTests {
                     SparkAiProperties properties = context.getBean(SparkAiProperties.class);
 
                     assertThat(properties.isAvailable()).isFalse();
-                    assertThat(properties.unavailableReason()).isEqualTo("SPARK_API_PASSWORD is not configured");
+                    assertThat(properties.unavailableReason()).isEqualTo("星火 API 密钥未配置");
                 });
+    }
+
+    @Test
+    void disabledGatewayReturnsAReadableChineseReason() {
+        contextRunner
+                .withPropertyValues("petspark.ai.enabled=false")
+                .run(context -> assertThat(context.getBean(SparkAiProperties.class).unavailableReason())
+                        .isEqualTo("AI 服务未启用"));
     }
 
     @Test

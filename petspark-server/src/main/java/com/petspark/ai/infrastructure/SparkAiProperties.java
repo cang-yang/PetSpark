@@ -31,10 +31,10 @@ public record SparkAiProperties(
 
     public String unavailableReason() {
         if (!enabled) {
-            return "AI gateway is disabled";
+            return "AI 服务未启用";
         }
         if (apiPassword.isBlank()) {
-            return "SPARK_API_PASSWORD is not configured";
+            return "星火 API 密钥未配置";
         }
         return "";
     }
