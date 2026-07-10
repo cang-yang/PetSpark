@@ -1,7 +1,8 @@
 <template>
-  <section class="admin-orders">
-    <h2>订单管理</h2>
-    <div class="toolbar">
+  <section class="admin-console-page admin-orders">
+    <AdminPageHeader eyebrow="交易履约" title="订单管理" description="跟进订单处理、完成与取消状态。" />
+    <AdminTableShell title="订单列表" :total="total">
+      <template #filters>
       <el-input v-model="filters.keyword" placeholder="订单号" clearable />
       <el-select v-model="filters.status" placeholder="状态" clearable>
         <el-option label="已创建" value="CREATED" />
@@ -9,15 +10,15 @@
         <el-option label="已完成" value="COMPLETED" />
         <el-option label="已取消" value="CANCELLED" />
       </el-select>
-      <el-button type="primary" @click="loadOrders">查询</el-button>
-    </div>
+      <el-button type="primary" @click="search">查询</el-button>
+      </template>
 
     <el-table :data="orders" data-testid="admin-orders-table">
       <el-table-column prop="orderNo" label="订单号" />
       <el-table-column prop="userId" label="用户" />
       <el-table-column label="状态">
         <template slot-scope="{ row }">
-          <el-tag :type="statusTagType(row.status)">{{ statusLabel(row.status) }}</el-tag>
+          <StatusTag :status="row.status" :label="statusLabel(row.status)" />
         </template>
       </el-table-column>
       <el-table-column prop="totalAmount" label="总额" />
@@ -32,26 +33,57 @@
           <el-button size="mini" type="success" :disabled="row.status !== 'PROCESSING'" @click="transition(row, 'COMPLETED', '完成')">
             完成
           </el-button>
-          <el-button size="mini" type="danger" :disabled="!canCancel(row)" @click="cancel(row)">
+          <el-button size="mini" type="danger" :disabled="!canCancel(row)" @click="requestCancel(row)">
             取消
           </el-button>
         </template>
       </el-table-column>
     </el-table>
+      <template #pagination>
+        <el-pagination
+          background
+          layout="prev, pager, next"
+          :current-page="page.page"
+          :page-size="page.size"
+          :total="total"
+          @current-change="changePage"
+        />
+      </template>
+    </AdminTableShell>
+
+    <ConfirmActionDialog
+      :visible.sync="cancelDialogVisible"
+      title="取消订单"
+      description="确认取消当前订单吗？"
+      warning="取消后订单将无法继续履约。"
+      confirm-text="确认取消"
+      require-reason
+      reason-placeholder="请填写取消原因"
+      :loading="cancelling"
+      @confirm="confirmCancel"
+    />
   </section>
 </template>
 
 <script>
 import { cancelOrder, listAdminOrders, transitionOrder } from '@/api/orders'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
+import AdminTableShell from '@/components/ui/AdminTableShell.vue'
+import ConfirmActionDialog from '@/components/ui/ConfirmActionDialog.vue'
+import StatusTag from '@/components/ui/StatusTag.vue'
 
 export default {
   name: 'AdminOrdersView',
+  components: { AdminPageHeader, AdminTableShell, ConfirmActionDialog, StatusTag },
   data() {
     return {
       orders: [],
       total: 0,
       filters: { keyword: undefined, status: undefined },
-      page: { page: 1, size: 10 }
+      page: { page: 1, size: 10 },
+      cancelDialogVisible: false,
+      cancelling: false,
+      pendingCancelOrder: null
     }
   },
   created() {
@@ -72,6 +104,14 @@ export default {
         this.$message && this.$message.error(error.message)
       }
     },
+    search() {
+      this.page.page = 1
+      this.loadOrders()
+    },
+    changePage(page) {
+      this.page.page = page
+      this.loadOrders()
+    },
     async transition(row, status, note) {
       try {
         const response = await transitionOrder(row.id, { status, note, version: row.version })
@@ -81,15 +121,27 @@ export default {
         this.$message && this.$message.error(error.message)
       }
     },
-    async cancel(row) {
-      const reason = window.prompt('取消原因')
-      if (!reason) return
+    requestCancel(row) {
+      this.pendingCancelOrder = row
+      this.cancelDialogVisible = true
+    },
+    cancel(row) {
+      this.requestCancel(row)
+    },
+    async confirmCancel(reason) {
+      const row = this.pendingCancelOrder
+      if (!row || !reason) return
+      this.cancelling = true
       try {
         const response = await cancelOrder(row.id, { reason, version: row.version })
         Object.assign(row, response.data)
+        this.cancelDialogVisible = false
+        this.pendingCancelOrder = null
         this.$message && this.$message.success('订单已取消')
       } catch (error) {
         this.$message && this.$message.error(error.message)
+      } finally {
+        this.cancelling = false
       }
     },
     canCancel(row) {
@@ -98,12 +150,6 @@ export default {
     statusLabel(status) {
       const labels = { CREATED: '已创建', PROCESSING: '处理中', COMPLETED: '已完成', CANCELLED: '已取消' }
       return labels[status] || status
-    },
-    statusTagType(status) {
-      if (status === 'COMPLETED') return 'success'
-      if (status === 'CANCELLED') return 'info'
-      if (status === 'PROCESSING') return 'warning'
-      return ''
     },
     formatTime(value) {
       if (!value) return ''
@@ -117,6 +163,5 @@ export default {
 </script>
 
 <style scoped>
-.admin-orders { max-width: 1100px; margin: 24px auto; }
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
+.admin-console-page { display: grid; gap: 20px; }
 </style>

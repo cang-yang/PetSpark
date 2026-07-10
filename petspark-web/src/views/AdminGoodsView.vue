@@ -1,22 +1,24 @@
 <template>
-  <section>
-    <el-card>
-      <div class="toolbar">
+  <section class="admin-console-page">
+    <AdminPageHeader eyebrow="商品与库存" title="商品管理" description="维护商品资料、上下架状态与库存。">
+      <template #actions><el-button type="primary" @click="openCreate">新增商品</el-button></template>
+    </AdminPageHeader>
+    <AdminTableShell title="商品列表" :total="total">
+      <template #filters>
         <el-input v-model="filters.keyword" placeholder="SKU / 名称" clearable />
         <el-select v-model="filters.status" placeholder="状态" clearable>
           <el-option label="草稿" value="DRAFT" />
           <el-option label="上架" value="ACTIVE" />
           <el-option label="下架" value="INACTIVE" />
         </el-select>
-        <el-button type="primary" @click="loadGoods">查询</el-button>
-        <el-button @click="openCreate">新增商品</el-button>
-      </div>
+        <el-button type="primary" @click="search">查询</el-button>
+      </template>
       <el-table :data="goods" data-testid="admin-goods-table">
         <el-table-column prop="sku" label="SKU" />
         <el-table-column prop="name" label="名称" />
         <el-table-column prop="price" label="价格" />
         <el-table-column prop="stock" label="库存" />
-        <el-table-column prop="status" label="状态" />
+        <el-table-column label="状态"><template #default="{ row }"><StatusTag :status="row.status" :label="statusLabel(row.status)" /></template></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="{ row }">
             <el-button size="mini" @click="changeStatus(row, row.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')">
@@ -26,7 +28,8 @@
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+      <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
+    </AdminTableShell>
 
     <el-dialog title="新增商品" :visible.sync="showForm">
       <el-form :model="form">
@@ -46,9 +49,13 @@
 
 <script>
 import { adjustGoodsStock, createGoods, listAdminGoods, updateGoodsStatus } from '@/api/catalog'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
+import AdminTableShell from '@/components/ui/AdminTableShell.vue'
+import StatusTag from '@/components/ui/StatusTag.vue'
 
 export default {
   name: 'AdminGoodsView',
+  components: { AdminPageHeader, AdminTableShell, StatusTag },
   data() {
     return {
       goods: [],
@@ -90,6 +97,8 @@ export default {
         this.$message && this.$message.error(error.message)
       }
     },
+    search() { this.page.page = 1; this.loadGoods() },
+    changePage(page) { this.page.page = page; this.loadGoods() },
     openCreate() {
       this.form = this.emptyForm()
       this.showForm = true
@@ -113,15 +122,14 @@ export default {
       const response = await adjustGoodsStock(row.id, { delta, reason, version: row.version })
       Object.assign(row, response.data)
       this.$message && this.$message.success('库存已更新')
+    },
+    statusLabel(status) {
+      return { DRAFT: '草稿', ACTIVE: '上架', INACTIVE: '下架' }[status] || status
     }
   }
 }
 </script>
 
 <style scoped>
-.toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
+.admin-console-page { display: grid; gap: 20px; }
 </style>

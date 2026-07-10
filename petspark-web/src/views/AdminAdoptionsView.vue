@@ -1,7 +1,8 @@
 <template>
-  <section class="admin-adoptions">
-    <h2>领养审核</h2>
-    <div class="toolbar">
+  <section class="admin-console-page admin-adoptions">
+    <AdminPageHeader eyebrow="审核中心" title="领养审核" description="核验领养申请、记录审核意见并跟进交接。" />
+    <AdminTableShell title="领养申请" :total="total">
+      <template #filters>
       <el-input v-model="filters.keyword" placeholder="申请号/申请人" clearable />
       <el-select v-model="filters.status" placeholder="状态" clearable>
         <el-option label="待审核" value="PENDING" />
@@ -11,8 +12,8 @@
         <el-option label="已完成" value="COMPLETED" />
         <el-option label="已取消" value="CANCELLED" />
       </el-select>
-      <el-button type="primary" @click="loadAdoptions">查询</el-button>
-    </div>
+      <el-button type="primary" @click="search">查询</el-button>
+      </template>
 
     <el-table :data="applications" data-testid="admin-adoptions-table">
       <el-table-column prop="applicationNo" label="申请号" />
@@ -20,7 +21,7 @@
       <el-table-column prop="petName" label="宠物" />
       <el-table-column label="状态">
         <template slot-scope="{ row }">
-          <el-tag :type="statusTagType(row.status)">{{ row.statusLabel || statusLabel(row.status) }}</el-tag>
+          <StatusTag :status="row.status" :label="row.statusLabel || statusLabel(row.status)" />
         </template>
       </el-table-column>
       <el-table-column label="申请时间">
@@ -34,6 +35,8 @@
         </template>
       </el-table-column>
     </el-table>
+      <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
+    </AdminTableShell>
 
     <el-dialog title="审核详情" :visible.sync="showDetail" width="720px">
       <div v-if="current" class="adoption-detail">
@@ -69,12 +72,29 @@
         </div>
       </div>
     </el-dialog>
+
+    <ConfirmActionDialog
+      :visible.sync="decisionDialogVisible"
+      :title="pendingDecision === 'APPROVED' ? '通过领养申请' : '驳回领养申请'"
+      :description="pendingDecision === 'APPROVED' ? '确认该申请符合领养条件吗？' : '确认驳回该领养申请吗？'"
+      :warning="pendingDecision === 'REJECTED' ? '驳回后需由申请人重新提交申请。' : ''"
+      :confirm-type="pendingDecision === 'APPROVED' ? 'primary' : 'danger'"
+      :confirm-text="pendingDecision === 'APPROVED' ? '确认通过' : '确认驳回'"
+      :require-reason="pendingDecision === 'REJECTED'"
+      reason-placeholder="请填写审核意见"
+      :loading="deciding"
+      @confirm="confirmDecision"
+    />
   </section>
 </template>
 
 <script>
 import StatusPanel from '@/components/StatusPanel.vue'
 import { listAdminAdoptions, getAdoption, decideAdoption, handoverAdoption } from '@/api/adoption'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
+import AdminTableShell from '@/components/ui/AdminTableShell.vue'
+import ConfirmActionDialog from '@/components/ui/ConfirmActionDialog.vue'
+import StatusTag from '@/components/ui/StatusTag.vue'
 
 const STATUS_LABELS = {
   PENDING: '待审核',
@@ -95,7 +115,7 @@ const STATUS_CLASSES = {
 
 export default {
   name: 'AdminAdoptionsView',
-  components: { StatusPanel },
+  components: { StatusPanel, AdminPageHeader, AdminTableShell, ConfirmActionDialog, StatusTag },
   data() {
     return {
       applications: [],
@@ -108,7 +128,9 @@ export default {
       deciding: false,
       handoverResult: 'SUCCESS',
       handoverNote: '',
-      handingOver: false
+      handingOver: false,
+      decisionDialogVisible: false,
+      pendingDecision: ''
     }
   },
   created() {
@@ -129,6 +151,8 @@ export default {
         this.$message && this.$message.error(error.message)
       }
     },
+    search() { this.page.page = 1; this.loadAdoptions() },
+    changePage(page) { this.page.page = page; this.loadAdoptions() },
     async openDetail(row) {
       try {
         const response = await getAdoption(row.id)
@@ -141,13 +165,16 @@ export default {
         this.$message && this.$message.error(error.message)
       }
     },
-    openDecision(row, decision) {
-      this.openDetail(row).then(() => {
-        this.decisionNote = ''
-        if (decision === 'APPROVED') {
-          this.submitDecision('APPROVED')
-        }
-      })
+    async openDecision(row, decision) {
+      await this.openDetail(row)
+      this.decisionNote = ''
+      this.pendingDecision = decision
+      this.decisionDialogVisible = true
+    },
+    async confirmDecision(note) {
+      this.decisionNote = note || ''
+      await this.submitDecision(this.pendingDecision)
+      this.decisionDialogVisible = false
     },
     async submitDecision(decision) {
       if (!this.current) return
@@ -222,8 +249,7 @@ export default {
 </script>
 
 <style scoped>
-.admin-adoptions { max-width: 1100px; margin: 24px auto; }
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
+.admin-console-page { display: grid; gap: 20px; }
 .adoption-detail p { margin: 6px 0; }
 .decision-area { margin-top: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .handover-area { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
