@@ -40,7 +40,7 @@
       <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
     </AdminTableShell>
 
-    <el-dialog title="分配房间" :visible.sync="showAssign" width="480px">
+    <el-dialog title="分配房间" :visible.sync="showAssign" width="480px" append-to-body>
       <el-form label-width="80px">
         <el-form-item label="房间">
           <el-select v-model="assignForm.roomId" placeholder="选择房间">

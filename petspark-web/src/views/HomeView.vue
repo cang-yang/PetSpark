@@ -12,31 +12,42 @@
       image-alt="猫咪和狗狗在明亮温暖的家中陪伴主人"
     />
 
-    <el-carousel
-      v-if="banners.length"
-      class="home-banners"
-      height="260px"
-      data-testid="home-banner-carousel"
-    >
-      <el-carousel-item v-for="banner in banners" :key="banner.id">
-        <a class="home-banner" :href="banner.targetUrl || '#'" @click="handleBannerClick($event, banner)">
-          <img :src="banner.imageUrl" :alt="banner.title">
-          <span class="home-banner__copy">
-            <strong>{{ banner.title }}</strong>
-            <small v-if="banner.subtitle">{{ banner.subtitle }}</small>
-          </span>
-        </a>
-      </el-carousel-item>
-    </el-carousel>
-
-    <ErrorState
-      v-if="error"
-      class="home-banner-error"
-      title="推荐内容暂时未加载"
-      :description="error"
-      action-text="重新加载"
-      @retry="loadBanners"
-    />
+    <div class="home-banners-wrap" aria-label="首页精选内容" :data-banner-degraded="String(bannerLoadFailed)">
+      <transition name="home-carousel-fade">
+        <el-carousel
+          :key="carouselKey"
+          class="home-banners"
+          height="260px"
+          :interval="5200"
+          :autoplay="carouselAutoplay"
+          arrow="always"
+          :pause-on-hover="true"
+          data-testid="home-banner-carousel"
+        >
+          <el-carousel-item v-for="(banner, index) in displayBanners" :key="banner.id">
+            <a class="home-banner" :href="banner.targetUrl || '#'" @click="handleBannerClick($event, banner)">
+              <img
+                :src="banner.imageUrl"
+                alt=""
+                :loading="index === 0 ? 'eager' : 'lazy'"
+                :fetchpriority="index === 0 ? 'high' : 'low'"
+              >
+              <span class="home-banner__copy">
+                <strong>{{ banner.title }}</strong>
+                <small v-if="banner.subtitle">{{ banner.subtitle }}</small>
+              </span>
+            </a>
+          </el-carousel-item>
+        </el-carousel>
+      </transition>
+      <button
+        type="button"
+        class="home-banners__motion"
+        :aria-pressed="String(!carouselAutoplay)"
+        data-testid="home-banner-motion"
+        @click="toggleCarouselMotion"
+      >{{ carouselAutoplay ? '暂停轮播' : '继续轮播' }}</button>
+    </div>
 
     <section class="home-section" aria-labelledby="home-features-title">
       <div class="home-section__head">
@@ -73,20 +84,32 @@
 
 <script>
 import { listActiveBanners } from '@/api/banner'
-import ErrorState from '@/components/ui/ErrorState.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import FeatureCard from '@/components/ui/FeatureCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import heroPets from '@/assets/illustrations/hero-pets.jpg'
+import boardingBanner from '@/assets/placeholders/service-boarding.png'
+import adoptionBanner from '@/assets/placeholders/pet-dog.png'
+import careBanner from '@/assets/illustrations/login-dog.jpg'
+
+const FALLBACK_BANNERS = [
+  { id: 'fallback-boarding', title: '安心寄养计划', subtitle: '提前安排房间与照护，让短暂分别也放心', imageUrl: boardingBanner, targetUrl: '/boarding/new', requiresAuth: true },
+  { id: 'fallback-adoption', title: '给等待一个温暖的家', subtitle: '认识正在寻找新家庭的小伙伴', imageUrl: adoptionBanner, targetUrl: '/adoptions' },
+  { id: 'fallback-care', title: '日常健康与护理', subtitle: '记录成长变化，及时安排专业服务', imageUrl: careBanner, targetUrl: '/services' }
+]
 
 export default {
   name: 'HomeView',
-  components: { ErrorState, PageHero, FeatureCard, AppIcon },
+  components: { PageHero, FeatureCard, AppIcon },
   data() {
     return {
       heroPets,
       banners: [],
-      error: '',
+      bannerLoadFailed: false,
+      carouselPaused: false,
+      motionOptIn: false,
+      prefersReducedMotion: Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
+      motionMediaQuery: null,
       features: [
         { title: '我的宠物', description: '管理档案与健康记录', icon: 'pets', to: '/my/pets', tone: 'pink' },
         { title: 'AI 助手', description: '获得日常护理信息参考', icon: 'ai', to: '/ai/chat', tone: 'purple' },
@@ -97,18 +120,72 @@ export default {
       ]
     }
   },
+  computed: {
+    carouselAutoplay() {
+      return !this.carouselPaused && (!this.prefersReducedMotion || this.motionOptIn) && this.displayBanners.length > 1
+    },
+    carouselKey() {
+      return this.displayBanners.map(item => item.id).join('|')
+    },
+    displayBanners() {
+      const remote = Array.isArray(this.banners) ? this.banners.filter(item => item && item.imageUrl) : []
+      if (remote.length >= 3) return remote
+      const supplement = FALLBACK_BANNERS.filter(fallback => !remote.some(item => item.id === fallback.id))
+      return [...remote, ...supplement].slice(0, 3)
+    }
+  },
   created() {
     this.loadBanners()
+  },
+  mounted() {
+    if (!window.matchMedia) return
+    this.motionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (this.motionMediaQuery.addEventListener) this.motionMediaQuery.addEventListener('change', this.handleMotionPreference)
+  },
+  beforeDestroy() {
+    if (this.motionMediaQuery && this.motionMediaQuery.removeEventListener) {
+      this.motionMediaQuery.removeEventListener('change', this.handleMotionPreference)
+    }
   },
   methods: {
     async loadBanners() {
       try {
         const response = await listActiveBanners({ limit: 5 })
-        this.banners = Array.isArray(response.data) ? response.data : []
-        this.error = ''
-      } catch (error) {
-        this.error = error.message
+        const remote = Array.isArray(response.data) ? response.data : []
+        const ready = await this.preloadBanners(remote)
+        if (ready.length) this.banners = ready
+        this.bannerLoadFailed = remote.length > 0 && ready.length === 0
+      } catch {
+        this.banners = []
+        this.bannerLoadFailed = true
       }
+    },
+    async preloadBanners(banners) {
+      if (typeof Image === 'undefined') return banners
+      const prepared = await Promise.all(banners.map(async banner => {
+        const image = new Image()
+        image.src = banner.imageUrl
+        if (typeof image.decode !== 'function') return banner
+        try {
+          await image.decode()
+          return banner
+        } catch {
+          return null
+        }
+      }))
+      return prepared.filter(Boolean)
+    },
+    toggleCarouselMotion() {
+      if (this.prefersReducedMotion && !this.motionOptIn) {
+        this.motionOptIn = true
+        this.carouselPaused = false
+        return
+      }
+      this.carouselPaused = !this.carouselPaused
+    },
+    handleMotionPreference(event) {
+      this.prefersReducedMotion = Boolean(event.matches)
+      if (event.matches) this.motionOptIn = false
     },
     handleBannerClick(event, banner) {
       if (!banner.targetUrl) {
@@ -117,8 +194,15 @@ export default {
       }
       if (banner.targetUrl.startsWith('/')) {
         event.preventDefault()
+        if (banner.requiresAuth && !this.isAuthenticated()) {
+          this.$router.push({ path: '/login', query: { redirect: banner.targetUrl } })
+          return
+        }
         this.$router.push(banner.targetUrl)
       }
+    },
+    isAuthenticated() {
+      return Boolean(this.$store && this.$store.getters && this.$store.getters.isAuthenticated)
     }
   }
 }
@@ -126,11 +210,35 @@ export default {
 
 <style scoped>
 .home-view { display: grid; gap: 34px; }
+.home-banners-wrap { position: relative; min-height: 260px; }
+.home-carousel-fade-enter-active,
+.home-carousel-fade-leave-active { transition: opacity 360ms var(--ps-ease-out); }
+.home-carousel-fade-enter,
+.home-carousel-fade-leave-to { opacity: 0; }
+.home-carousel-fade-leave-active { position: absolute; inset: 0; width: 100%; }
 .home-banners {
   overflow: hidden;
   margin: 0;
   background: var(--ps-color-surface-soft);
   border-radius: var(--ps-radius-lg);
+}
+.home-banners__motion {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  z-index: 3;
+  padding: 7px 11px;
+  color: #fff;
+  background: rgba(18, 27, 36, 0.64);
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  border-radius: var(--ps-radius-pill);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+.home-banners__motion:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .home-carousel-fade-enter-active,
+  .home-carousel-fade-leave-active { transition-duration: 1ms; }
 }
 .home-banner { position: relative; display: block; height: 100%; color: #fff; text-decoration: none; }
 .home-banner img { width: 100%; height: 100%; object-fit: cover; }
@@ -151,7 +259,6 @@ export default {
 }
 .home-banner__copy strong { font-size: 28px; }
 .home-banner__copy small { font-size: 15px; }
-.home-banner-error { min-height: 150px; }
 .home-section { padding: 8px 0; }
 .home-section__head { display: flex; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
 .home-section__head h2, .home-ai h2 { margin: 0; font-size: 28px; line-height: 1.3; }

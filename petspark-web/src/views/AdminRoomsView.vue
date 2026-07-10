@@ -27,7 +27,7 @@
       <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
     </AdminTableShell>
 
-    <el-dialog :title="editForm.id ? '编辑房间' : '新建房间'" :visible.sync="showEdit" width="480px">
+    <el-dialog :title="editForm.id ? '编辑房间' : '新建房间'" :visible.sync="showEdit" width="480px" append-to-body>
       <el-form :model="editForm" label-width="80px">
         <el-form-item label="编码"><el-input v-model="editForm.code" :disabled="!!editForm.id" /></el-form-item>
         <el-form-item label="名称"><el-input v-model="editForm.name" maxlength="120" /></el-form-item>

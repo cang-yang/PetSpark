@@ -4,6 +4,7 @@
     :title="title"
     :visible="visible"
     :width="width"
+    append-to-body
     :close-on-click-modal="false"
     @close="cancel"
   >

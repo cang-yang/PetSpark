@@ -151,6 +151,7 @@
       title="可用房间"
       :visible.sync="showAvailability"
       width="min(640px, 92vw)"
+      append-to-body
     >
       <div class="room-grid" data-testid="boarding-availability-table">
         <article

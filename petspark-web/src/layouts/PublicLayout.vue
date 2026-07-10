@@ -14,14 +14,25 @@
         ><AppIcon :name="entry.icon" />{{ entry.text }}</router-link>
 
         <template v-if="isAuthenticated">
-          <details class="nav-menu">
-            <summary>功能</summary>
-            <div class="nav-menu__panel">
+          <div ref="navMenu" class="nav-menu">
+            <button
+              type="button"
+              ref="navMenuTrigger"
+              class="nav-menu__trigger"
+              :aria-expanded="String(navMenuOpen)"
+              aria-controls="member-navigation-panel"
+              data-testid="nav-menu-trigger"
+              @click.stop="toggleNavMenu"
+              @keydown.esc.stop.prevent="closeNavMenu"
+            >功能</button>
+            <transition name="nav-menu-fade">
+              <div id="member-navigation-panel" v-show="navMenuOpen" class="nav-menu__panel" data-testid="nav-menu-panel">
               <router-link
                 v-for="entry in memberNav"
                 :key="entry.to"
                 :to="routeTarget(entry.to)"
                 :data-testid="entry.dataTestId"
+                @click.native="closeNavMenu"
               >
                 <AppIcon :name="entry.icon" />
                 {{ entry.text }}
@@ -31,8 +42,9 @@
                   data-testid="nav-notifications-badge"
                 >{{ notificationUnreadCountText }}</span>
               </router-link>
-            </div>
-          </details>
+              </div>
+            </transition>
+          </div>
           <router-link v-if="adminNav.length" :to="routeTarget(adminNav[0].to)">管理端</router-link>
           <span class="user-pill">{{ userNickname || '已登录' }}</span>
           <button type="button" class="nav-button" @click="$emit('sign-out')">退出</button>
@@ -66,9 +78,46 @@ export default {
     notificationUnreadCountText: { type: String, default: '0' },
     showAiAssistant: { type: Boolean, default: true }
   },
+  data() {
+    return { navMenuOpen: false }
+  },
+  watch: {
+    '$route.fullPath'() {
+      this.closeNavMenu()
+    },
+    isAuthenticated(value) {
+      if (!value) this.closeNavMenu()
+    }
+  },
+  mounted() {
+    document.addEventListener('pointerdown', this.handleDocumentPointerDown)
+    document.addEventListener('keydown', this.handleDocumentKeydown)
+  },
+  beforeDestroy() {
+    document.removeEventListener('pointerdown', this.handleDocumentPointerDown)
+    document.removeEventListener('keydown', this.handleDocumentKeydown)
+  },
   methods: {
     routeTarget(to) {
       return typeof to === 'string' && to.startsWith('/') ? to : { name: to }
+    },
+    toggleNavMenu() {
+      this.navMenuOpen = !this.navMenuOpen
+    },
+    closeNavMenu() {
+      this.navMenuOpen = false
+    },
+    handleDocumentPointerDown(event) {
+      if (!this.navMenuOpen) return
+      const menu = this.$refs.navMenu
+      if (!menu || !menu.contains(event.target)) this.closeNavMenu()
+    },
+    handleDocumentKeydown(event) {
+      if (event.key !== 'Escape' || !this.navMenuOpen) return
+      this.closeNavMenu()
+      this.$nextTick(() => {
+        if (this.$refs.navMenuTrigger) this.$refs.navMenuTrigger.focus()
+      })
     }
   }
 }
@@ -84,7 +133,7 @@ export default {
 }
 
 .public-nav > a,
-.nav-menu summary,
+.nav-menu__trigger,
 .nav-button {
   padding: 8px 10px;
   color: var(--ps-color-muted);
@@ -98,12 +147,33 @@ export default {
 .public-nav > a { display: inline-flex; align-items: center; gap: 6px; }
 
 .public-nav > a:hover,
-.public-nav > a.router-link-exact-active,
-.nav-menu summary:hover,
+.nav-menu__trigger:hover,
 .nav-button:hover {
   color: var(--ps-color-pink-dark);
   background: #fdeef3;
 }
+
+.public-nav > a.router-link-exact-active {
+  position: relative;
+  color: var(--ps-color-pink-dark);
+  background: transparent;
+}
+.public-nav > a.router-link-exact-active::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  bottom: 3px;
+  left: 10px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+.public-nav > a:focus:not(:focus-visible),
+.nav-menu__trigger:focus:not(:focus-visible),
+.nav-button:focus:not(:focus-visible) { outline: none; }
+.public-nav > a:focus-visible,
+.nav-menu__trigger:focus-visible,
+.nav-button:focus-visible { outline: 3px solid rgba(233, 52, 114, 0.24); outline-offset: 2px; }
 
 .public-nav .nav-register {
   color: #fff;
@@ -112,8 +182,7 @@ export default {
 
 .public-nav .nav-register:hover { color: #fff; background: var(--ps-color-pink-dark); }
 .nav-menu { position: relative; }
-.nav-menu summary { list-style: none; }
-.nav-menu summary::-webkit-details-marker { display: none; }
+.nav-menu__trigger { font: inherit; }
 .nav-menu__panel {
   position: absolute;
   top: calc(100% + 10px);
@@ -142,6 +211,10 @@ export default {
 }
 .nav-menu__panel .nav-badge { margin-left: auto; }
 .nav-menu__panel a:hover { background: var(--ps-color-surface-soft); }
+.nav-menu-fade-enter-active,
+.nav-menu-fade-leave-active { transition: opacity 140ms ease, transform 140ms ease; transform-origin: top right; }
+.nav-menu-fade-enter,
+.nav-menu-fade-leave-to { opacity: 0; transform: translateY(-5px) scale(0.98); }
 .nav-badge {
   min-width: 20px;
   padding: 1px 6px;
@@ -165,5 +238,11 @@ export default {
   .public-nav { width: 100%; justify-content: flex-end; }
   .user-pill { display: none; }
   .nav-menu__panel { right: -80px; grid-template-columns: 1fr; max-height: 70vh; overflow-y: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-menu-fade-enter-active,
+  .nav-menu-fade-leave-active { transition-duration: 1ms; }
+  .nav-menu-fade-enter,
+  .nav-menu-fade-leave-to { transform: none; }
 }
 </style>

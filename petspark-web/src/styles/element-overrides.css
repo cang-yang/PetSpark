@@ -46,3 +46,6 @@
   border-color: var(--ps-color-border);
   border-radius: var(--ps-radius-md);
 }
+.el-dialog {
+  max-width: calc(100vw - 32px);
+}

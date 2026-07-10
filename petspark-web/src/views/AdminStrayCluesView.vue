@@ -30,7 +30,7 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog title="线索详情" :visible.sync="showDetail" width="680px">
+    <el-dialog title="线索详情" :visible.sync="showDetail" width="680px" append-to-body>
       <div v-if="current" data-testid="admin-stray-detail">
         <p><strong>线索号：</strong>{{ current.clueNo }}</p>
         <p><strong>提交人：</strong>{{ current.reporterUserId }}</p>
@@ -49,7 +49,7 @@
       <span slot="footer"><el-button @click="showDetail = false">关闭</el-button></span>
     </el-dialog>
 
-    <el-dialog title="指派救助负责人" :visible.sync="showAssign" width="520px">
+    <el-dialog title="指派救助负责人" :visible.sync="showAssign" width="520px" append-to-body>
       <el-form label-width="110px">
         <el-form-item label="负责人用户ID" required><el-input v-model="assignForm.assignedUserId" maxlength="36" /></el-form-item>
         <el-form-item label="处理备注"><el-input v-model="assignForm.note" type="textarea" :rows="3" maxlength="500" show-word-limit /></el-form-item>
@@ -60,7 +60,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog :title="transitionTitle" :visible.sync="showTransition" width="560px">
+    <el-dialog :title="transitionTitle" :visible.sync="showTransition" width="560px" append-to-body>
       <el-form label-width="110px">
         <el-form-item label="处理备注"><el-input v-model="transitionForm.note" type="textarea" :rows="3" maxlength="500" show-word-limit /></el-form-item>
         <el-form-item v-if="transitionForm.status === 'RESOLVED'" label="宠物ID占位"><el-input v-model="transitionForm.handoffPetId" maxlength="36" placeholder="选填：后续建档/领养占位引用" /></el-form-item>

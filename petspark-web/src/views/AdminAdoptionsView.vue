@@ -38,7 +38,7 @@
       <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
     </AdminTableShell>
 
-    <el-dialog title="审核详情" :visible.sync="showDetail" width="720px">
+    <el-dialog title="审核详情" :visible.sync="showDetail" width="720px" append-to-body>
       <div v-if="current" class="adoption-detail">
         <status-panel
           :status="current.status"

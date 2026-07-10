@@ -31,7 +31,7 @@
       <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
     </AdminTableShell>
 
-    <el-dialog title="新增商品" :visible.sync="showForm">
+    <el-dialog title="新增商品" :visible.sync="showForm" append-to-body>
       <el-form :model="form">
         <el-form-item label="分类 ID"><el-input v-model="form.categoryId" /></el-form-item>
         <el-form-item label="SKU"><el-input v-model="form.sku" /></el-form-item>

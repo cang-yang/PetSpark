@@ -89,7 +89,7 @@
       @current-change="changePage"
     />
 
-    <el-dialog title="新增健康记录" :visible.sync="showCreate">
+    <el-dialog title="新增健康记录" :visible.sync="showCreate" append-to-body>
       <el-form :model="form" label-width="100px">
         <el-form-item label="类型">
           <el-select v-model="form.recordType">
@@ -127,7 +127,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="修订健康记录" :visible.sync="showRevise">
+    <el-dialog title="修订健康记录" :visible.sync="showRevise" append-to-body>
       <el-form :model="reviseForm" label-width="100px">
         <el-form-item label="类型">
           <el-select v-model="reviseForm.recordType">

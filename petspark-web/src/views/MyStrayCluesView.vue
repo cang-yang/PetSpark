@@ -27,7 +27,7 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog title="线索详情" :visible.sync="showDetail" width="640px">
+    <el-dialog title="线索详情" :visible.sync="showDetail" width="640px" append-to-body>
       <div v-if="current" data-testid="my-stray-detail">
         <p><strong>线索号：</strong>{{ current.clueNo }}</p>
         <p><strong>动物类型：</strong>{{ animalLabel(current.animalType) }}</p>

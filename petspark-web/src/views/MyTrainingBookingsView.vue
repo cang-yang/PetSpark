@@ -30,7 +30,7 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog title="训练预约详情" :visible.sync="showDetail" width="680px">
+    <el-dialog title="训练预约详情" :visible.sync="showDetail" width="680px" append-to-body>
       <div v-if="current" class="booking-detail">
         <p><strong>预约号：</strong>{{ current.bookingNo }}</p>
         <p><strong>状态：</strong>{{ statusLabel(current.status) }}</p>
