@@ -1,7 +1,8 @@
 <template>
-  <section class="admin-service">
-    <h2>服务管理</h2>
-    <div class="toolbar">
+  <section class="admin-console-page admin-service">
+    <AdminPageHeader eyebrow="服务履约" title="服务管理" description="查看通用服务预约并推进履约状态。" />
+    <AdminTableShell title="服务预约" :total="total">
+      <template #filters>
       <el-input v-model="filters.keyword" placeholder="预约号/项目" clearable />
       <el-select v-model="filters.status" placeholder="状态" clearable>
         <el-option label="已确认" value="CONFIRMED" />
@@ -10,15 +11,15 @@
         <el-option label="已取消" value="CANCELLED" />
         <el-option label="异常终止" value="EXCEPTION" />
       </el-select>
-      <el-button type="primary" @click="loadBookings">查询</el-button>
-    </div>
+      <el-button type="primary" @click="search">查询</el-button>
+      </template>
 
     <el-table :data="bookings" data-testid="admin-service-bookings-table">
       <el-table-column prop="bookingNo" label="预约号" />
       <el-table-column prop="userId" label="用户" />
       <el-table-column label="状态">
         <template slot-scope="{ row }">
-          <el-tag :type="statusTagType(row.status)">{{ statusLabel(row.status) }}</el-tag>
+          <StatusTag :status="row.status" :label="statusLabel(row.status)" />
         </template>
       </el-table-column>
       <el-table-column prop="unitPrice" label="单价" />
@@ -36,14 +37,20 @@
         </template>
       </el-table-column>
     </el-table>
+      <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
+    </AdminTableShell>
   </section>
 </template>
 
 <script>
 import { listAdminServiceBookings, transitionServiceBooking } from '@/api/service'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
+import AdminTableShell from '@/components/ui/AdminTableShell.vue'
+import StatusTag from '@/components/ui/StatusTag.vue'
 
 export default {
   name: 'AdminServiceView',
+  components: { AdminPageHeader, AdminTableShell, StatusTag },
   data() {
     return {
       bookings: [],
@@ -70,6 +77,8 @@ export default {
         this.$message && this.$message.error(error.message)
       }
     },
+    search() { this.page.page = 1; this.loadBookings() },
+    changePage(page) { this.page.page = page; this.loadBookings() },
     async transition(row, status, note) {
       try {
         const response = await transitionServiceBooking(row.id, { status, note, version: row.version })
@@ -83,13 +92,6 @@ export default {
       const labels = { CREATED: '已创建', CONFIRMED: '已确认', IN_PROGRESS: '进行中', COMPLETED: '已完成', CANCELLED: '已取消', EXCEPTION: '异常终止' }
       return labels[status] || status
     },
-    statusTagType(status) {
-      if (status === 'COMPLETED') return 'success'
-      if (status === 'CANCELLED') return 'info'
-      if (status === 'EXCEPTION') return 'danger'
-      if (status === 'IN_PROGRESS') return 'warning'
-      return ''
-    },
     formatTime(value) {
       if (!value) return ''
       const date = typeof value === 'string' ? new Date(value) : value
@@ -102,6 +104,5 @@ export default {
 </script>
 
 <style scoped>
-.admin-service { max-width: 1100px; margin: 24px auto; }
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
+.admin-console-page { display: grid; gap: 20px; }
 </style>

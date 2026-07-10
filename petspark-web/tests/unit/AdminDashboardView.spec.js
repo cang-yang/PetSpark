@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import AdminDashboardView from '@/views/AdminDashboardView.vue'
 import { getDashboardSummary } from '@/api/dashboard'
+import * as echarts from 'echarts'
 
 jest.mock('@/api/dashboard', () => ({
   getDashboardSummary: jest.fn()
@@ -57,6 +58,16 @@ describe('AdminDashboardView', () => {
     expect(charts.length).toBe(2)
     expect(wrapper.find('[data-testid="chart-orders"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="chart-outbox"]').exists()).toBe(true)
+  })
+
+  it('initializes charts after loading reveals their containers', async () => {
+    shallowMount(AdminDashboardView, {
+      mocks: { $message: { success: jest.fn(), error: jest.fn() } }
+    })
+    await flush()
+    await flush()
+
+    expect(echarts.init).toHaveBeenCalledTimes(2)
   })
 
   it('shows error message on API failure', async () => {

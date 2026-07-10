@@ -1,30 +1,34 @@
 <template>
-  <section class="admin-training">
-    <h2>训练管理</h2>
+  <section class="admin-console-page admin-training">
+    <AdminPageHeader eyebrow="专业服务" title="训练管理" description="维护训练项目、资源与预约履约。">
+      <template #actions><el-button type="primary" @click="openItemForm()">新增训练项目</el-button></template>
+    </AdminPageHeader>
     <el-tabs v-model="activeTab">
       <el-tab-pane label="训练项目" name="items">
-        <div class="toolbar">
+        <AdminTableShell title="训练项目" :total="items.length">
+          <template #filters>
           <el-input v-model="itemFilters.keyword" placeholder="项目名称/编码" clearable />
           <el-button type="primary" @click="loadItems">查询</el-button>
-          <el-button type="success" @click="openItemForm()">新增训练项目</el-button>
-        </div>
+          </template>
         <el-table :data="items" data-testid="admin-training-items-table">
           <el-table-column prop="code" label="编码" />
           <el-table-column prop="name" label="名称" />
           <el-table-column prop="basePrice" label="基础价" />
-          <el-table-column prop="status" label="状态" />
+          <el-table-column label="状态"><template #default="{ row }"><StatusTag :status="row.status" :label="row.status === 'ACTIVE' ? '启用' : '停用'" /></template></el-table-column>
           <el-table-column label="操作" width="260">
             <template slot-scope="{ row }">
               <el-button size="mini" @click="openItemForm(row)">编辑</el-button>
               <el-button size="mini" @click="openResourceForm(row)">新增资源</el-button>
-              <el-button size="mini" type="danger" @click="removeItem(row)">停用</el-button>
+              <el-button size="mini" type="danger" @click="requestRemoveItem(row)">停用</el-button>
             </template>
           </el-table-column>
         </el-table>
+        </AdminTableShell>
       </el-tab-pane>
 
       <el-tab-pane label="训练预约" name="bookings">
-        <div class="toolbar">
+        <AdminTableShell title="训练预约" :total="bookingTotal">
+          <template #filters>
           <el-input v-model="bookingFilters.keyword" placeholder="预约号" clearable />
           <el-select v-model="bookingFilters.status" placeholder="状态" clearable>
             <el-option label="已确认" value="CONFIRMED" />
@@ -34,13 +38,13 @@
             <el-option label="异常终止" value="EXCEPTION" />
           </el-select>
           <el-button type="primary" @click="loadBookings">查询</el-button>
-        </div>
+          </template>
         <el-table :data="bookings" data-testid="admin-training-bookings-table">
           <el-table-column prop="bookingNo" label="预约号" />
           <el-table-column prop="serviceItemName" label="训练项目" />
           <el-table-column prop="customerName" label="联系人" />
           <el-table-column label="状态">
-            <template slot-scope="{ row }"><el-tag :type="statusTagType(row.status)">{{ statusLabel(row.status) }}</el-tag></template>
+            <template slot-scope="{ row }"><StatusTag :status="row.status" :label="statusLabel(row.status)" /></template>
           </el-table-column>
           <el-table-column label="开始时间"><template slot-scope="{ row }">{{ formatTime(row.startAt) }}</template></el-table-column>
           <el-table-column label="操作" width="220">
@@ -50,6 +54,8 @@
             </template>
           </el-table-column>
         </el-table>
+          <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="bookingTotal" @current-change="changeBookingPage" /></template>
+        </AdminTableShell>
       </el-tab-pane>
     </el-tabs>
 
@@ -66,6 +72,16 @@
       </el-form>
       <span slot="footer"><el-button @click="showItemDialog = false">取消</el-button><el-button type="primary" @click="saveItem">保存</el-button></span>
     </el-dialog>
+
+    <ConfirmActionDialog
+      :visible.sync="removeDialogVisible"
+      title="停用训练项目"
+      description="确认停用该训练项目吗？"
+      warning="停用后用户将无法继续预约该项目。"
+      confirm-text="确认停用"
+      :loading="removingItem"
+      @confirm="confirmRemoveItem"
+    />
 
     <el-dialog title="新增训练资源与窗口" :visible.sync="showResourceDialog" width="640px">
       <el-form :model="resourceForm" label-width="110px">
@@ -92,9 +108,14 @@ import {
   listAdminTrainingBookings,
   transitionTrainingBooking
 } from '@/api/training'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
+import AdminTableShell from '@/components/ui/AdminTableShell.vue'
+import ConfirmActionDialog from '@/components/ui/ConfirmActionDialog.vue'
+import StatusTag from '@/components/ui/StatusTag.vue'
 
 export default {
   name: 'AdminTrainingView',
+  components: { AdminPageHeader, AdminTableShell, ConfirmActionDialog, StatusTag },
   data() {
     return {
       activeTab: 'items',
@@ -103,10 +124,14 @@ export default {
       itemFilters: { keyword: undefined },
       bookingFilters: { keyword: undefined, status: undefined },
       page: { page: 1, size: 20 },
+      bookingTotal: 0,
       showItemDialog: false,
       showResourceDialog: false,
       itemForm: {},
-      resourceForm: {}
+      resourceForm: {},
+      removeDialogVisible: false,
+      removingItem: false,
+      pendingRemoveItem: null
     }
   },
   created() {
@@ -126,6 +151,7 @@ export default {
         size: this.page.size
       })
       this.bookings = response.data.items || []
+      this.bookingTotal = response.data.total || 0
     },
     openItemForm(row) {
       this.itemForm = row ? { ...row } : { kind: 'TRAINING', status: 'ACTIVE', basePrice: 0 }
@@ -146,6 +172,25 @@ export default {
       await deleteTrainingItem(row.id)
       await this.loadItems()
       this.$message && this.$message.success('训练项目已停用')
+    },
+    requestRemoveItem(row) {
+      this.pendingRemoveItem = row
+      this.removeDialogVisible = true
+    },
+    async confirmRemoveItem() {
+      if (!this.pendingRemoveItem) return
+      this.removingItem = true
+      try {
+        await this.removeItem(this.pendingRemoveItem)
+        this.removeDialogVisible = false
+        this.pendingRemoveItem = null
+      } finally {
+        this.removingItem = false
+      }
+    },
+    changeBookingPage(page) {
+      this.page.page = page
+      this.loadBookings()
     },
     openResourceForm(item) {
       this.resourceForm = { serviceItemId: item.id, serviceItemName: item.name, name: '', capacity: 1, status: 'ACTIVE' }
@@ -196,6 +241,5 @@ export default {
 </script>
 
 <style scoped>
-.admin-training { max-width: 1120px; margin: 24px auto; }
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
+.admin-console-page { display: grid; gap: 20px; }
 </style>

@@ -1,17 +1,11 @@
 <template>
-  <section class="admin-users-view">
-    <header class="admin-users-view__head">
-      <div>
-        <h2>用户与角色管理</h2>
-        <p>管理用户状态、角色分配和自定义角色权限。</p>
-      </div>
-      <el-button size="small" type="primary" @click="showCreateRole = true">
-        新建角色
-      </el-button>
-    </header>
+  <section class="admin-console-page admin-users-view">
+    <AdminPageHeader eyebrow="权限与账号" title="用户与角色管理" description="管理用户状态、角色分配和自定义角色权限。">
+      <template #actions><el-button type="primary" @click="showCreateRole = true">新建角色</el-button></template>
+    </AdminPageHeader>
 
-    <el-card class="admin-card">
-      <div class="admin-users-view__toolbar">
+    <AdminTableShell title="用户列表" :total="total">
+      <template #filters>
         <el-input
           v-model.trim="filters.keyword"
           clearable
@@ -25,7 +19,7 @@
           <el-option label="锁定" value="LOCKED" />
         </el-select>
         <el-button type="primary" :loading="loading" @click="reload">查询</el-button>
-      </div>
+      </template>
 
       <el-table
         v-loading="loading"
@@ -38,7 +32,7 @@
         <el-table-column prop="nickname" label="昵称" min-width="120" />
         <el-table-column prop="status" label="状态" width="110">
           <template #default="{ row }">
-            <el-tag :type="statusTag(row.status)">{{ statusLabel(row.status) }}</el-tag>
+            <StatusTag :status="row.status" :label="statusLabel(row.status)" />
           </template>
         </el-table-column>
         <el-table-column label="角色" min-width="220">
@@ -65,7 +59,7 @@
               v-if="row.status === 'ACTIVE'"
               size="mini"
               type="warning"
-              @click="changeStatus(row, 'DISABLED')"
+              @click="requestStatusChange(row, 'DISABLED')"
             >
               禁用
             </el-button>
@@ -73,7 +67,7 @@
               v-else
               size="mini"
               type="success"
-              @click="changeStatus(row, 'ACTIVE')"
+              @click="requestStatusChange(row, 'ACTIVE')"
             >
               启用
             </el-button>
@@ -81,7 +75,7 @@
         </el-table-column>
       </el-table>
 
-      <footer class="admin-users-view__pager">
+      <template #pagination>
         <el-pagination
           background
           layout="prev, pager, next"
@@ -90,11 +84,10 @@
           :total="total"
           @current-change="onPageChange"
         />
-      </footer>
-    </el-card>
+      </template>
+    </AdminTableShell>
 
-    <el-card class="admin-card">
-      <h3>角色权限</h3>
+    <AdminTableShell title="角色权限" :total="roles.length">
       <el-table :data="roles" data-testid="role-table" empty-text="暂无角色">
         <el-table-column prop="code" label="角色编码" width="140" />
         <el-table-column prop="name" label="角色名称" width="160" />
@@ -119,7 +112,7 @@
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </AdminTableShell>
 
     <el-dialog title="新建自定义角色" :visible.sync="showCreateRole">
       <el-form label-width="96px" @submit.native.prevent="submitRole">
@@ -145,6 +138,17 @@
         <el-button type="primary" :loading="creatingRole" @click="submitRole">创建</el-button>
       </template>
     </el-dialog>
+
+    <ConfirmActionDialog
+      :visible.sync="statusDialogVisible"
+      :title="pendingStatus === 'DISABLED' ? '禁用用户' : '启用用户'"
+      :description="pendingStatus === 'DISABLED' ? '确认禁用该用户账号吗？' : '确认恢复该用户账号吗？'"
+      :warning="pendingStatus === 'DISABLED' ? '禁用后该用户将无法继续登录。' : ''"
+      :confirm-type="pendingStatus === 'DISABLED' ? 'danger' : 'primary'"
+      :confirm-text="pendingStatus === 'DISABLED' ? '确认禁用' : '确认启用'"
+      :loading="changingStatus"
+      @confirm="confirmStatusChange"
+    />
   </section>
 </template>
 
@@ -158,11 +162,16 @@ import {
   updateAdminUserStatus,
   updateRolePermissions
 } from '@/api/admin'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
+import AdminTableShell from '@/components/ui/AdminTableShell.vue'
+import ConfirmActionDialog from '@/components/ui/ConfirmActionDialog.vue'
+import StatusTag from '@/components/ui/StatusTag.vue'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export default {
   name: 'AdminUsersView',
+  components: { AdminPageHeader, AdminTableShell, ConfirmActionDialog, StatusTag },
   data() {
     return {
       loading: false,
@@ -182,7 +191,11 @@ export default {
         code: '',
         name: '',
         permissionCodes: []
-      }
+      },
+      statusDialogVisible: false,
+      changingStatus: false,
+      pendingStatus: '',
+      pendingStatusUser: null
     }
   },
   created() {
@@ -235,6 +248,23 @@ export default {
         this.loadUsers()
       }
     },
+    requestStatusChange(user, status) {
+      this.pendingStatusUser = user
+      this.pendingStatus = status
+      this.statusDialogVisible = true
+    },
+    async confirmStatusChange() {
+      if (!this.pendingStatusUser || !this.pendingStatus) return
+      this.changingStatus = true
+      try {
+        await this.changeStatus(this.pendingStatusUser, this.pendingStatus)
+        this.statusDialogVisible = false
+        this.pendingStatusUser = null
+        this.pendingStatus = ''
+      } finally {
+        this.changingStatus = false
+      }
+    },
     async assignRoles(user) {
       try {
         const response = await assignAdminUserRoles(user.id, { roleCodes: user.roleCodes })
@@ -284,42 +314,7 @@ export default {
 </script>
 
 <style scoped>
-.admin-users-view {
-  margin: 24px;
-}
-
-.admin-users-view__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.admin-users-view__head h2,
-.admin-users-view__head p {
-  margin: 0;
-}
-
-.admin-users-view__head p {
-  margin-top: 6px;
-  color: #606266;
-}
-
-.admin-card {
-  margin-bottom: 18px;
-}
-
-.admin-users-view__toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.admin-users-view__pager {
-  margin-top: 16px;
-  text-align: right;
-}
+.admin-console-page { display: grid; gap: 20px; }
 
 .hint {
   margin-left: 10px;

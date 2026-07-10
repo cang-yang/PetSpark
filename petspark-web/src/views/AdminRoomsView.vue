@@ -1,27 +1,31 @@
 <template>
-  <section class="admin-rooms">
-    <h2 data-testid="admin-rooms-title">房间管理</h2>
-    <div class="toolbar">
+  <section class="admin-console-page admin-rooms">
+    <AdminPageHeader eyebrow="寄养资源" title="房间管理" description="维护寄养房间容量与可用状态。">
+      <template #actions><el-button type="primary" @click="openCreate" data-testid="admin-rooms-create">新建房间</el-button></template>
+    </AdminPageHeader>
+    <AdminTableShell title="房间列表" :total="total">
+      <template #filters>
       <el-input v-model="filters.keyword" placeholder="房间编码或名称" clearable />
       <el-select v-model="filters.status" placeholder="状态" clearable>
         <el-option label="启用" value="ACTIVE" />
         <el-option label="停用" value="INACTIVE" />
       </el-select>
-      <el-button type="primary" @click="loadRooms">查询</el-button>
-      <el-button type="success" @click="openCreate" data-testid="admin-rooms-create">新建房间</el-button>
-    </div>
+      <el-button type="primary" @click="search">查询</el-button>
+      </template>
 
     <el-table :data="rooms" data-testid="admin-rooms-table">
       <el-table-column prop="code" label="编码" />
       <el-table-column prop="name" label="名称" />
       <el-table-column prop="capacity" label="容量" width="80" />
-      <el-table-column prop="status" label="状态" width="80" />
+      <el-table-column label="状态" width="110"><template #default="{ row }"><StatusTag :status="row.status" :label="row.status === 'ACTIVE' ? '启用' : '停用'" /></template></el-table-column>
       <el-table-column label="操作">
         <template slot-scope="{ row }">
           <el-button size="mini" @click="openEdit(row)">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
+      <template #pagination><el-pagination background layout="prev, pager, next" :current-page="page.page" :page-size="page.size" :total="total" @current-change="changePage" /></template>
+    </AdminTableShell>
 
     <el-dialog :title="editForm.id ? '编辑房间' : '新建房间'" :visible.sync="showEdit" width="480px">
       <el-form :model="editForm" label-width="80px">
@@ -40,9 +44,13 @@
 
 <script>
 import { listRooms, createRoom, updateRoom } from '@/api/boarding'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
+import AdminTableShell from '@/components/ui/AdminTableShell.vue'
+import StatusTag from '@/components/ui/StatusTag.vue'
 
 export default {
   name: 'AdminRoomsView',
+  components: { AdminPageHeader, AdminTableShell, StatusTag },
   data() {
     return {
       rooms: [],
@@ -75,6 +83,8 @@ export default {
         this.$message && this.$message.error(error.message)
       }
     },
+    search() { this.page.page = 1; this.loadRooms() },
+    changePage(page) { this.page.page = page; this.loadRooms() },
     openCreate() {
       this.editForm = this.emptyForm()
       this.showEdit = true
@@ -113,6 +123,5 @@ export default {
 </script>
 
 <style scoped>
-.admin-rooms { max-width: 960px; margin: 24px auto; }
-.toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
+.admin-console-page { display: grid; gap: 20px; }
 </style>

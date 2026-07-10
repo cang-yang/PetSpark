@@ -1,6 +1,6 @@
 <template>
   <section class="admin-dashboard">
-    <PageHeader title="统计仪表盘" description="查看平台核心指标与业务状态分布。" />
+    <AdminPageHeader eyebrow="运营总览" title="统计仪表盘" description="查看平台核心指标与业务状态分布。" />
 
     <LoadingState v-if="loading" data-testid="dashboard-loading" text="正在汇总平台数据…" />
     <ErrorState
@@ -41,7 +41,7 @@
 <script>
 import * as echarts from 'echarts'
 import { getDashboardSummary } from '@/api/dashboard'
-import PageHeader from '@/components/ui/PageHeader.vue'
+import AdminPageHeader from '@/components/ui/AdminPageHeader.vue'
 import LoadingState from '@/components/ui/LoadingState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import MetricCard from '@/components/ui/MetricCard.vue'
@@ -77,7 +77,7 @@ const STATUS_COLORS = {
 
 export default {
   name: 'AdminDashboardView',
-  components: { PageHeader, LoadingState, ErrorState, MetricCard },
+  components: { AdminPageHeader, LoadingState, ErrorState, MetricCard },
   data() {
     return {
       loading: false,
@@ -102,11 +102,11 @@ export default {
         const data = res.data || {}
         this.metrics = data.metrics || []
         this.distributions = data.distributions || []
-        this.$nextTick(() => this.renderCharts())
       } catch (e) {
         this.error = (e && e.message) || '加载仪表盘数据失败'
       } finally {
         this.loading = false
+        if (!this.error) this.$nextTick(() => this.renderCharts())
       }
     },
     renderCharts() {
@@ -145,13 +145,14 @@ export default {
 
 <style scoped>
 .admin-dashboard {
-  padding: 20px;
+  display: grid;
+  gap: 20px;
 }
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 4px;
 }
 .charts-grid {
   display: grid;
@@ -160,9 +161,9 @@ export default {
 }
 .chart-card {
   background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  padding: 16px;
+  border: 1px solid var(--ps-color-border);
+  border-radius: var(--ps-radius-md);
+  padding: 18px;
 }
 .chart-card h3 {
   margin: 0 0 12px 0;
