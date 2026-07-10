@@ -40,6 +40,8 @@ describe('HomeView', () => {
     await flush()
 
     expect(wrapper.vm.error).toBe('网络异常')
+    expect(wrapper.findComponent({ name: 'ErrorState' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'ErrorState' }).props('description')).toBe('网络异常')
   })
 })
 

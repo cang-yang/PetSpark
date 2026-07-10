@@ -12,7 +12,14 @@
       </el-carousel-item>
     </el-carousel>
 
-    <el-alert v-if="error" :title="error" type="warning" show-icon :closable="false" />
+    <ErrorState
+      v-if="error"
+      class="home-banner-error"
+      title="推荐内容暂时未加载"
+      :description="error"
+      action-text="重新加载"
+      @retry="loadBanners"
+    />
 
     <div class="home-card">
       <h2>欢迎来到 PetSpark</h2>
@@ -23,9 +30,11 @@
 
 <script>
 import { listActiveBanners } from '@/api/banner'
+import ErrorState from '@/components/ui/ErrorState.vue'
 
 export default {
   name: 'HomeView',
+  components: { ErrorState },
   data() {
     return {
       banners: [],
@@ -71,6 +80,28 @@ export default {
   overflow: hidden;
   background: #f5f7fa;
 }
+.home-banner-error {
+  min-height: 160px;
+  margin-bottom: 20px;
+}
+.home-banner-error::v-deep .ps-state__content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  max-width: 760px;
+  text-align: left;
+}
+.home-banner-error::v-deep .ps-state__icon,
+.home-banner-error::v-deep .ps-state__action {
+  margin: 0;
+}
+.home-banner-error::v-deep h2 {
+  font-size: 16px;
+}
+.home-banner-error::v-deep p {
+  margin-top: 2px;
+}
 .home-banner {
   position: relative;
   display: block;
@@ -109,5 +140,19 @@ export default {
   padding: 24px;
   background: #fff;
   border-radius: 8px;
+}
+@media (max-width: 600px) {
+  .home-view {
+    margin-top: 8px;
+    padding: 0;
+  }
+  .home-banner-error::v-deep .ps-state__content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .home-banner-error::v-deep .ps-state__icon,
+  .home-banner-error::v-deep .ps-state__action {
+    margin: 0 auto;
+  }
 }
 </style>

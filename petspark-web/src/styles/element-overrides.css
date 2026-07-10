@@ -1,0 +1,48 @@
+.el-button {
+  border-radius: var(--ps-radius-sm);
+  font-weight: 600;
+}
+
+.el-button--primary {
+  border-color: var(--ps-color-blue);
+  background: var(--ps-color-blue);
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  border-color: #1e5f9f;
+  background: #1e5f9f;
+}
+
+.ps-public-shell .el-button--primary,
+.ps-auth-shell .el-button--primary {
+  border-color: var(--ps-color-pink);
+  background: var(--ps-color-pink);
+}
+
+.ps-public-shell .el-button--primary:hover,
+.ps-public-shell .el-button--primary:focus,
+.ps-auth-shell .el-button--primary:hover,
+.ps-auth-shell .el-button--primary:focus {
+  border-color: var(--ps-color-pink-dark);
+  background: var(--ps-color-pink-dark);
+}
+
+.el-input__inner,
+.el-textarea__inner,
+.el-select .el-input__inner {
+  border-color: var(--ps-color-border);
+  border-radius: var(--ps-radius-sm);
+}
+
+.el-input__inner:focus,
+.el-textarea__inner:focus,
+.el-select .el-input.is-focus .el-input__inner {
+  border-color: var(--ps-color-pink);
+  box-shadow: var(--ps-focus-ring);
+}
+
+.el-card {
+  border-color: var(--ps-color-border);
+  border-radius: var(--ps-radius-md);
+}

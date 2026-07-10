@@ -1,53 +1,26 @@
 <template>
   <div id="app">
-    <header class="app-header">
-      <div>
-        <h1 data-testid="app-title">PetSpark</h1>
-        <p>派宠 · 智慧 AI 宠物管理平台</p>
-      </div>
-      <nav class="app-nav">
-        <span v-for="entry in publicNav" :key="entry.to">
-          <router-link :to="entry.to">{{ entry.text }}</router-link>
-        </span>
-        <template v-if="isAuthenticated">
-          <router-link
-            v-for="entry in memberNav"
-            :key="entry.to"
-            :to="entry.to"
-            :data-testid="entry.dataTestId">
-            {{ entry.text }}
-            <span
-              v-if="entry.badge === 'notifications' && notificationUnreadCount > 0"
-              class="nav-badge"
-              data-testid="nav-notifications-badge"
-            >{{ notificationUnreadCountText }}</span>
-          </router-link
-          >
-          <router-link
-            v-for="entry in adminNav"
-            :key="entry.to"
-            :to="entry.to"
-            :data-testid="entry.dataTestId">{{ entry.text }}</router-link
-          >
-          <span>{{ userNickname }}</span>
-          <button type="button" class="nav-button" @click="signOut">退出</button>
-        </template>
-        <template v-else>
-          <router-link to="/login">登录</router-link>
-          <router-link to="/register">注册</router-link>
-        </template>
-      </nav>
-    </header>
-    <main><router-view /></main>
+    <span class="ps-sr-only" data-testid="app-title">PetSpark</span>
+    <component
+      :is="layoutComponent"
+      v-bind="layoutProps"
+      @sign-out="signOut"
+    >
+      <router-view />
+    </component>
   </div>
 </template>
 
 <script>
 import { logout } from '@/api/auth'
 import navigation from '@/navigation'
+import PublicLayout from '@/layouts/PublicLayout.vue'
+import AdminLayout from '@/layouts/AdminLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
 
 export default {
   name: 'App',
+  components: { PublicLayout, AdminLayout, AuthLayout },
   data() {
     return {
       publicNav: navigation.publicNav,
@@ -57,6 +30,32 @@ export default {
     }
   },
   computed: {
+    routeLayout() {
+      return this.$route && this.$route.meta ? this.$route.meta.layout : 'public'
+    },
+    layoutComponent() {
+      if (this.routeLayout === 'auth') return AuthLayout
+      if (this.routeLayout === 'admin') return AdminLayout
+      return PublicLayout
+    },
+    layoutProps() {
+      if (this.routeLayout === 'auth') return {}
+      if (this.routeLayout === 'admin') {
+        return {
+          adminNav: this.adminNav,
+          userNickname: this.userNickname
+        }
+      }
+      return {
+        publicNav: this.publicNav,
+        memberNav: this.memberNav,
+        adminNav: this.adminNav,
+        isAuthenticated: this.isAuthenticated,
+        userNickname: this.userNickname,
+        notificationUnreadCount: this.notificationUnreadCount,
+        notificationUnreadCountText: this.notificationUnreadCountText
+      }
+    },
     isAuthenticated() {
       return Boolean(this.$store && this.$store.getters && this.$store.getters.isAuthenticated)
     },
@@ -116,15 +115,3 @@ export default {
   }
 }
 </script>
-
-<style>
-body { margin: 0; color: #24313d; background: #f5f7fa; font-family: "Microsoft YaHei", Arial, sans-serif; }
-.app-header { padding: 24px; color: #fff; background: #409eff; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
-.app-header h1, .app-header p { margin: 0; }
-.app-header p { margin-top: 8px; }
-.app-nav { display: flex; gap: 16px; align-items: center; }
-.app-nav a { color: #fff; text-decoration: none; font-weight: 600; position: relative; display: inline-flex; align-items: center; gap: 4px; }
-.app-nav a.router-link-exact-active { text-decoration: underline; }
-.nav-badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; color: #f56c6c; background: #fff; font-size: 11px; line-height: 16px; text-align: center; }
-.nav-button { padding: 0; color: #fff; background: transparent; border: 0; font: inherit; font-weight: 600; cursor: pointer; }
-</style>

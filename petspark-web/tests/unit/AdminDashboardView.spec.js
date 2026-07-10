@@ -42,9 +42,9 @@ describe('AdminDashboardView', () => {
 
     const metrics = wrapper.findAll('[data-testid^="metric-"]')
     expect(metrics.length).toBe(3)
-    const usersCard = wrapper.find('[data-testid="metric-users"]')
-    expect(usersCard.text()).toContain('5')
-    expect(usersCard.text()).toContain('注册用户')
+    const usersCard = wrapper.findAllComponents({ name: 'MetricCard' }).at(0)
+    expect(usersCard.props('value')).toBe(5)
+    expect(usersCard.props('label')).toBe('注册用户')
   })
 
   it('renders chart containers for each distribution', async () => {
@@ -67,7 +67,7 @@ describe('AdminDashboardView', () => {
     await flush()
 
     expect(wrapper.find('[data-testid="dashboard-error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="dashboard-error"]').text()).toContain('网络错误')
+    expect(wrapper.findComponent({ name: 'ErrorState' }).props('description')).toContain('网络错误')
   })
 
   it('shows loading indicator before data arrives', async () => {
@@ -77,6 +77,7 @@ describe('AdminDashboardView', () => {
     })
 
     expect(wrapper.find('[data-testid="dashboard-loading"]').exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'LoadingState' }).exists()).toBe(true)
   })
 })
 

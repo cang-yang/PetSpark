@@ -1,0 +1,24 @@
+@keyframes ps-pulse-soft {
+  0%, 100% { opacity: 0.45; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.ps-motion-lift {
+  transition: transform var(--ps-motion-normal) var(--ps-ease-out), box-shadow var(--ps-motion-normal) var(--ps-ease-out);
+}
+
+.ps-motion-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ps-shadow-float);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
