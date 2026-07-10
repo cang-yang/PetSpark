@@ -154,6 +154,9 @@ export default {
   gap: 16px;
   margin-bottom: 4px;
 }
+.metrics-grid .ps-metric-card {
+  min-width: 0;
+}
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
