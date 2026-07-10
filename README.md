@@ -20,11 +20,13 @@ PowerShell 中可先检查本机环境：
 
 该脚本只校验本机已有的 Java、Node 和 MySQL，不修改系统环境变量。默认复用正在运行的本机 `MySQL80` 服务。
 
-运行后端：
+运行后端（推荐统一入口，会加载 `.env.local`，并在存在时合并被 Git 忽略的 `.env.spark.local`）：
 
 ```powershell
-.\mvnw.cmd -pl petspark-server spring-boot:run
+.\scripts\start-local-server.ps1
 ```
+
+需要避开已占用端口时可使用 `-Port 8082`。脚本只向当前进程注入环境变量，不修改用户或系统环境。
 
 运行前端：
 
@@ -34,7 +36,7 @@ npm ci
 npm run serve
 ```
 
-默认情况下 AI 功能关闭；启动基础应用不需要星火密钥。真实密钥只能放入被 Git 忽略的 `.env.spark.local` 或部署环境变量，不得写入源码、示例配置或日志。
+默认情况下 AI 功能关闭；启动基础应用不需要星火密钥。真实密钥只能放入被 Git 忽略的 `.env.spark.local` 或部署环境变量，不得写入源码、示例配置或日志。本地文件只需提供 `SPARK_API_PASSWORD`、`SPARK_BASE_URL` 和 `SPARK_MODEL`；密码非空时统一加载脚本会在当前进程启用网关。若需要强制关闭，可在 `.env.spark.local` 中显式设置 `SPARK_ENABLED=false`。
 
 ## 验证命令
 

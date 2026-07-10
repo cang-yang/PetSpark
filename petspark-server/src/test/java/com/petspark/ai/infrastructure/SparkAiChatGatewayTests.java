@@ -107,7 +107,7 @@ class SparkAiChatGatewayTests {
                 RestClient.builder());
 
         assertThat(gateway.health().available()).isFalse();
-        assertThat(gateway.health().reason()).contains("disabled");
+        assertThat(gateway.health().reason()).contains("AI 服务未启用");
         assertThatThrownBy(() -> gateway.probe(new AiProbeRequest("system", "ping", false)))
                 .isInstanceOfSatisfying(BusinessException.class, ex ->
                         assertThat(ex.errorCode()).isEqualTo(ErrorCode.AI_DISABLED_001));
