@@ -56,6 +56,7 @@
       title="申请领养"
       :visible.sync="showApply"
       width="min(560px, 92vw)"
+      append-to-body
     >
       <div v-if="current" class="apply-form">
         <div class="apply-form__pet">

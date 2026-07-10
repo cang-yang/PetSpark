@@ -59,7 +59,7 @@
       </el-tab-pane>
     </el-tabs>
 
-    <el-dialog :title="itemForm.id ? '编辑训练项目' : '新增训练项目'" :visible.sync="showItemDialog" width="640px">
+    <el-dialog :title="itemForm.id ? '编辑训练项目' : '新增训练项目'" :visible.sync="showItemDialog" width="640px" append-to-body>
       <el-form :model="itemForm" label-width="100px">
         <el-form-item label="编码"><el-input v-model="itemForm.code" /></el-form-item>
         <el-form-item label="名称"><el-input v-model="itemForm.name" /></el-form-item>
@@ -83,7 +83,7 @@
       @confirm="confirmRemoveItem"
     />
 
-    <el-dialog title="新增训练资源与窗口" :visible.sync="showResourceDialog" width="640px">
+    <el-dialog title="新增训练资源与窗口" :visible.sync="showResourceDialog" width="640px" append-to-body>
       <el-form :model="resourceForm" label-width="110px">
         <el-form-item label="训练项目"><el-input :value="resourceForm.serviceItemName" disabled /></el-form-item>
         <el-form-item label="资源名称"><el-input v-model="resourceForm.name" /></el-form-item>

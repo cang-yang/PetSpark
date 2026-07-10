@@ -46,6 +46,7 @@
       title="订单详情"
       :visible.sync="showDetail"
       width="min(680px, 94vw)"
+      append-to-body
       ><div v-if="current" class="order-detail">
         <status-timeline :items="timelineItems" :active="timelineActive" />
         <dl class="detail-list">

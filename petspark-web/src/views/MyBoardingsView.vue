@@ -62,6 +62,7 @@
       title="取消预约"
       :visible.sync="showCancel"
       width="min(480px, 92vw)"
+      append-to-body
       ><el-form label-position="top"
         ><el-form-item label="取消原因"
           ><el-input

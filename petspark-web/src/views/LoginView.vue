@@ -88,7 +88,8 @@ export default {
         })
         await this.$store.dispatch('saveLogin', res.data)
         this.$message.success('登录成功')
-        this.$router.push('/')
+        const redirect = this.$route && this.$route.query ? this.$route.query.redirect : ''
+        this.$router.push(typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/')
       } catch (err) {
         this.error = err.message
         await this.loadCaptcha(true)

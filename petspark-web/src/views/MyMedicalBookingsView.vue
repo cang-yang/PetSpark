@@ -19,7 +19,7 @@
       <el-table-column label="操作"><template slot-scope="{ row }"><el-button size="mini" @click="openDetail(row)">详情</el-button></template></el-table-column>
     </el-table>
 
-    <el-dialog title="医疗预约详情" :visible.sync="showDetail" width="640px">
+    <el-dialog title="医疗预约详情" :visible.sync="showDetail" width="640px" append-to-body>
       <div v-if="current" class="booking-detail">
         <p><strong>预约号：</strong>{{ current.bookingNo }}</p>
         <p><strong>项目：</strong>{{ current.serviceItemName }}</p>

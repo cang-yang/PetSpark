@@ -3,6 +3,7 @@
     :visible.sync="visible"
     title="AI 服务协议"
     width="560px"
+    append-to-body
     :close-on-click-modal="false"
     data-testid="ai-consent-dialog"
     @close="onClose"

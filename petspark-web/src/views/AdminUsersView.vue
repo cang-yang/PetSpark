@@ -114,7 +114,7 @@
       </el-table>
     </AdminTableShell>
 
-    <el-dialog title="新建自定义角色" :visible.sync="showCreateRole">
+    <el-dialog title="新建自定义角色" :visible.sync="showCreateRole" append-to-body>
       <el-form label-width="96px" @submit.native.prevent="submitRole">
         <el-form-item label="角色编码">
           <el-input v-model.trim="roleForm.code" placeholder="例如 CUSTOM_OP" />

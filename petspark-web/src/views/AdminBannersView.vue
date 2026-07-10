@@ -45,7 +45,7 @@
       :total="total"
       @current-change="loadBanners" />
 
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="640px">
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="640px" append-to-body>
       <el-form :model="form" label-width="96px">
         <el-form-item label="标题"><el-input v-model="form.title" /></el-form-item>
         <el-form-item label="副标题"><el-input v-model="form.subtitle" /></el-form-item>

@@ -57,6 +57,7 @@
       title="领养申请详情"
       :visible.sync="showDetail"
       width="min(640px, 92vw)"
+      append-to-body
     >
       <div v-if="current" class="adoption-detail">
         <status-panel
