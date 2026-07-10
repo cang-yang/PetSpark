@@ -75,4 +75,12 @@ class BaselineMigrationIT extends AbstractIntegrationTest {
                 Integer.class);
         assertThat(indexCount).isGreaterThan(0);
     }
+
+    @Test
+    void defaultBannerUsesARepositoryOwnedImage() {
+        String imageUrl = jdbcTemplate.queryForObject(
+                "SELECT image_url FROM operation_banner WHERE id = '00000000-0000-0000-0000-000000000281'",
+                String.class);
+        assertThat(imageUrl).startsWith("/").doesNotContain("placehold.co");
+    }
 }

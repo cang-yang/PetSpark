@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -83,6 +84,18 @@ public class GlobalExceptionHandler {
         log.warn("type mismatch [{}] requestId={}: param={}", code.code(), RequestIdContext.current(), ex.getName());
         ErrorResponse body = new ErrorResponse(code.code(), "参数类型不匹配",
                 List.of(new FieldViolation(ex.getName(), "类型不匹配")));
+        return ResponseEntity.status(code.httpStatus()).body(body);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParameter(
+            MissingServletRequestParameterException ex, HttpServletRequest request) {
+        ensureRequestId(ex);
+        ErrorCode code = ErrorCode.VALIDATION_FIELD_001;
+        log.warn("missing request parameter [{}] requestId={}: param={}",
+                code.code(), RequestIdContext.current(), ex.getParameterName());
+        ErrorResponse body = new ErrorResponse(code.code(), code.defaultMessage(),
+                List.of(new FieldViolation(ex.getParameterName(), "缺少必填参数")));
         return ResponseEntity.status(code.httpStatus()).body(body);
     }
 

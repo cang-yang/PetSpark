@@ -44,6 +44,14 @@ class WebErrorContractTest extends AbstractControllerTest {
     }
 
     @Test
+    void missingRequiredRequestParameterReturns400() throws Exception {
+        mockMvc.perform(get("/test/contract/validation"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_FIELD_001.code()))
+                .andExpect(jsonPath("$.details[0].field").value("value"));
+    }
+
+    @Test
     void bodyValidationFailureReturns400WithFieldDetails() throws Exception {
         mockMvc.perform(post("/test/contract/body-validation")
                         .contentType(MediaType.APPLICATION_JSON)
