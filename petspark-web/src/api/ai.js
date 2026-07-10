@@ -36,6 +36,18 @@ export function listAiMessages(conversationId) {
 }
 
 /**
+ * 真实候选智能推荐（API-AI-007）。
+ * 服务端检索真实可见候选喂给模型排序+理由，再对模型输出做服务端再校验。
+ * AI 未启用或模型失败时走规则兜底排序。
+ *
+ * @param {object} payload { species, age, preference, candidateType, petId? }
+ * @returns {Promise<{data: {requestId, items: [{id, type, reason}], usage, boundaryNotice}}>}
+ */
+export function recommendAi(payload) {
+  return http.post('/api/v1/ai/recommend', payload)
+}
+
+/**
  * 流式发送消息。返回一个 controller 句柄，调用 .abort() 可取消流式（对应"流式取消"）。
  *
  * @param {string} conversationId 会话 ID

@@ -6,7 +6,10 @@ import com.petspark.ai.chat.AiChatDtos.AiConversationCreateRequest;
 import com.petspark.ai.chat.AiChatDtos.AiConversationView;
 import com.petspark.ai.chat.AiChatDtos.AiMessageRequest;
 import com.petspark.ai.chat.AiChatDtos.AiMessageView;
+import com.petspark.ai.chat.AiChatDtos.AiRecommendReplyView;
+import com.petspark.ai.chat.AiChatDtos.AiRecommendRequest;
 import com.petspark.ai.chat.AiChatDtos.AiStatusView;
+import com.petspark.ai.recommend.RecommendationService;
 import com.petspark.common.api.ApiResponse;
 import com.petspark.common.security.AuthenticatedUser;
 import jakarta.validation.Valid;
@@ -35,7 +38,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  *   <li>API-AI-004 {@code POST /ai/conversations/{id}/messages}：非流式发送消息；</li>
  *   <li>API-AI-005 {@code POST /ai/conversations/{id}/messages:stream}：SSE 流式发送；</li>
  *   <li>API-AI-006 {@code DELETE /ai/conversations/{id}}：软删会话与消息；</li>
- *   <li>API-AI-006b {@code GET /ai/conversations/{id}/messages}：列出会话历史消息。</li>
+ *   <li>API-AI-006b {@code GET /ai/conversations/{id}/messages}：列出会话历史消息；</li>
+ *   <li>API-AI-007 {@code POST /ai/recommend}：真实候选智能推荐（PET/GOODS/SERVICE）。</li>
  * </ul>
  *
  * <p>所有端点权限=登录（无 @RequirePermission）；资源归属在 {@link AiChatService} 内按
@@ -47,9 +51,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class AiChatController {
 
     private final AiChatService service;
+    private final RecommendationService recommendationService;
 
-    public AiChatController(AiChatService service) {
+    public AiChatController(AiChatService service, RecommendationService recommendationService) {
         this.service = service;
+        this.recommendationService = recommendationService;
     }
 
     @GetMapping("/status")
@@ -107,5 +113,19 @@ public class AiChatController {
             @AuthenticationPrincipal AuthenticatedUser user) {
         service.deleteConversation(id, user.getId());
         return ApiResponse.ok();
+    }
+
+    /**
+     * API-AI-007：真实候选智能推荐。
+     *
+     * <p>请求需登录 + 有效同意。服务端检索真实可见候选，喂给模型排序+给出理由，
+     * 再对模型输出做服务端再校验（NFR-AI-001：100% 展示项来自请求时仍有效的真实候选）。
+     * AI 未启用或模型失败时走确定性规则兜底排序。
+     */
+    @PostMapping("/recommend")
+    public ApiResponse<AiRecommendReplyView> recommend(
+            @Valid @RequestBody AiRecommendRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(recommendationService.recommend(user.getId(), request));
     }
 }

@@ -79,4 +79,27 @@ public final class AiChatDtos {
             int promptTokens,
             int completionTokens,
             int totalTokens) {}
+
+    // ---- PR-AI-03 真实候选智能推荐（API-AI-007）----
+
+    /** POST /ai/recommend 请求。candidateType 指明推荐对象类型。 */
+    public record AiRecommendRequest(
+            @NotBlank @Size(max = 32) String species,
+            @jakarta.validation.constraints.Min(0) int age,
+            @NotBlank @Size(max = 4000) String preference,
+            @NotBlank @Pattern(regexp = "PET|GOODS|SERVICE") String candidateType,
+            String petId) {}
+
+    /** 推荐结果单项：id + 对象类型 + 模型/规则给出的推荐理由。 */
+    public record AiRecommendItemView(
+            String id,
+            String type,
+            String reason) {}
+
+    /** POST /ai/recommend 响应。items 已通过服务端再校验，boundaryNotice 为边界提示。 */
+    public record AiRecommendReplyView(
+            String requestId,
+            java.util.List<AiRecommendItemView> items,
+            AiUsageView usage,
+            String boundaryNotice) {}
 }

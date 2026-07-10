@@ -25,11 +25,26 @@ public class AiPromptBuilder {
     private static final String BOUNDARY_NOTICE =
             "【提示】AI 回复不构成兽医诊断，紧急情况请就医。";
 
+    private static final String RECOMMENDATION_SYSTEM_PROMPT =
+            "你是 PetSpark 中的宠物用品/服务推荐助手。你会收到一份候选清单（每项含 id、类型、"
+            + "简要描述与匹配事实），以及用户偏好。你的任务是在候选清单内排序并给出推荐理由，"
+            + "不得引入候选清单以外的任何对象，不得编造候选摘要中不存在的事实，不得复述用户敏感信息，"
+            + "不得执行任何业务操作（创建/修改/删除）。只返回 JSON："
+            + "{\"items\":[{\"id\":\"候选id\",\"type\":\"候选类型\",\"reason\":\"≤80字推荐理由\"}]}，"
+            + "items 最多 5 项，按推荐度从高到低排序。若候选为空返回 {\"items\":[]}。";
+
     /**
      * 返回宠物对话场景的固定系统提示。任何用户消息都不得覆盖此提示。
      */
     public String systemPromptForPetChat() {
         return PET_CHAT_SYSTEM_PROMPT;
+    }
+
+    /**
+     * 返回推荐场景的固定系统提示。候选清单以用户消息形式注入，模型只允许在清单内排序。
+     */
+    public String systemPromptForRecommendation() {
+        return RECOMMENDATION_SYSTEM_PROMPT;
     }
 
     /**

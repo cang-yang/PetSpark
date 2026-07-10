@@ -25,7 +25,6 @@ export default {
     { to: 'my-orders', text: '我的订单', dataTestId: 'nav-my-orders' },
     { to: 'pets', text: '宠物', dataTestId: 'nav-pets' },
     { to: 'my-pets', text: '我的宠物', dataTestId: 'nav-my-pets' },
-    { to: 'ai-chat', text: 'AI 对话', dataTestId: 'nav-ai-chat' },
     { to: 'profile', text: '个人资料', dataTestId: 'nav-profile' },
     { to: 'notifications', text: '通知中心', dataTestId: 'nav-notifications', badge: 'notifications' }
   ],
