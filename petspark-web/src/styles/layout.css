@@ -172,6 +172,14 @@
   font-weight: 800;
 }
 
+.ps-state__image {
+  width: min(220px, 70%);
+  max-height: 160px;
+  margin: 0 auto 18px;
+  object-fit: contain;
+  border-radius: var(--ps-radius-md);
+}
+
 .ps-state h2 {
   margin: 0;
   font-size: 20px;
@@ -283,19 +291,4 @@
     max-width: 420px;
   }
 
-  .ps-auth-main .auth-card {
-    margin: 0;
-    padding: 28px;
-  }
-
-  .ps-auth-main .auth-card .el-button--primary {
-    width: 100%;
-    margin-bottom: 12px;
-  }
-
-  .ps-auth-main .auth-card .auth-link {
-    display: inline-block;
-    margin: 0 14px 0 0;
-    white-space: nowrap;
-  }
 }

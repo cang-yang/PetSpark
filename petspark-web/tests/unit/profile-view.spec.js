@@ -52,6 +52,7 @@ describe('ProfileView', () => {
     expect(wrapper.vm.form.nickname).toBe('阳阳')
     expect(wrapper.vm.form.phoneMasked).toBe('138****8000')
     expect(wrapper.vm.form.version).toBe(2)
+    expect(wrapper.findComponent({ name: 'PageHeader' }).exists()).toBe(true)
   })
 
   it('confirms avatar and saves whitelist fields', async () => {
@@ -86,6 +87,25 @@ describe('ProfileView', () => {
     })
     expect(commit).toHaveBeenCalledWith('setUser', expect.objectContaining({ nickname: '新昵称' }))
     expect(wrapper.vm.message).toBe('个人资料已保存')
+  })
+
+  it('uses shared loading and error states', async () => {
+    getMyProfile.mockReturnValueOnce(new Promise(() => {}))
+    const loadingWrapper = shallowMount(ProfileView, {
+      localVue,
+      stubs,
+      mocks: { $store: { commit: jest.fn(), state: { user: {} } } }
+    })
+    expect(loadingWrapper.findComponent({ name: 'LoadingState' }).exists()).toBe(true)
+
+    getMyProfile.mockRejectedValueOnce(new Error('资料加载失败'))
+    const errorWrapper = shallowMount(ProfileView, {
+      localVue,
+      stubs,
+      mocks: { $store: { commit: jest.fn(), state: { user: {} } } }
+    })
+    await flush()
+    expect(errorWrapper.findComponent({ name: 'ErrorState' }).props('description')).toBe('资料加载失败')
   })
 })
 

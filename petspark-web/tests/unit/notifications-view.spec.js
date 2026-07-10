@@ -72,7 +72,7 @@ describe('NotificationsView', () => {
     expect(wrapper.find('[data-testid="unread-dot"]').exists()).toBe(true)
   })
 
-  it('shows empty StatusPanel when no notifications', async () => {
+  it('shows a guided empty state when no notifications', async () => {
     listNotifications.mockResolvedValue({
       data: { items: [], page: 1, size: 10, total: 0, unreadCount: 0 }
     })
@@ -80,24 +80,22 @@ describe('NotificationsView', () => {
     const wrapper = mountView()
     await flushPromises()
 
-    // 空状态用 StatusPanel 表达；shallow 下 StatusPanel 被桩替，按 props 断言状态语义。
-    const panel = wrapper.findComponent({ name: 'StatusPanel' })
+    const panel = wrapper.findComponent({ name: 'EmptyState' })
     expect(panel.exists()).toBe(true)
-    expect(panel.props('status')).toBe('empty')
-    expect(panel.props('testId')).toBe('empty-panel')
+    expect(panel.props('title')).toBe('暂无通知')
+    expect(panel.props('imageAlt')).toContain('等待新消息')
     expect(wrapper.find('[data-testid="notification-list"]').exists()).toBe(false)
   })
 
-  it('shows error StatusPanel with retry when load fails', async () => {
+  it('shows the shared error state with retry when load fails', async () => {
     listNotifications.mockRejectedValue(new Error('请求失败'))
 
     const wrapper = mountView()
     await flushPromises()
 
-    const panel = wrapper.findComponent({ name: 'StatusPanel' })
+    const panel = wrapper.findComponent({ name: 'ErrorState' })
     expect(panel.exists()).toBe(true)
-    expect(panel.props('status')).toBe('error')
-    expect(panel.props('reason')).toContain('请求失败')
+    expect(panel.props('description')).toContain('请求失败')
   })
 
   it('syncs page and onlyUnread from URL query', async () => {

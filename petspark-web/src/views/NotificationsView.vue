@@ -1,8 +1,8 @@
 <template>
   <section class="notifications-view">
-    <header class="notifications-view__head">
-      <h2>通知中心</h2>
-      <div class="notifications-view__toolbar">
+    <PageHeader title="通知中心" description="集中查看预约、申请、订单和系统消息。">
+      <template #actions>
+        <div class="notifications-view__toolbar">
         <el-radio-group v-model="onlyUnread" size="small" @change="onFilterChange">
           <el-radio-button :label="false">全部</el-radio-button>
           <el-radio-button :label="true">仅未读</el-radio-button>
@@ -18,38 +18,30 @@
           全部已读
           <span v-if="unreadCount">（{{ unreadCount }}）</span>
         </el-button>
-      </div>
-    </header>
+        </div>
+      </template>
+    </PageHeader>
 
     <!-- 区分骨架加载 / 空状态 / 错误 / 正常内容，不用一个空表覆盖所有情况（§11）。 -->
-    <div v-if="loading" class="notifications-view__skeleton" data-testid="skeleton">
-      <el-skeleton :rows="3" animated />
-    </div>
+    <LoadingState v-if="loading" data-testid="skeleton" text="正在整理通知…" />
 
-    <status-panel
+    <ErrorState
       v-else-if="error"
-      status="error"
-      status-label="加载失败"
-      status-class="error"
-      :reason="error"
-      role="系统"
-      next-step="请稍后重试，或联系管理员查看服务状态"
-      test-id="error-panel"
-    >
-      <template #actions>
-        <el-button size="small" @click="load">重试</el-button>
-      </template>
-    </status-panel>
+      data-testid="error-panel"
+      title="通知暂时无法加载"
+      :description="error"
+      @retry="load"
+    />
 
-    <status-panel
+    <EmptyState
       v-else-if="!items.length"
-      status="empty"
-      :status-label="onlyUnread ? '暂无未读通知' : '暂无通知'"
-      status-class="info"
-      :reason="onlyUnread ? '当前筛选下没有未读通知' : '还没有任何通知'"
-      role="系统"
-      :next-step="onlyUnread ? '可切换到「全部」查看历史通知' : '稍后回来查看新通知'"
-      test-id="empty-panel"
+      data-testid="empty-panel"
+      :title="onlyUnread ? '暂无未读通知' : '暂无通知'"
+      :description="onlyUnread ? '当前筛选下没有未读通知，可以查看全部历史消息。' : '新的预约、申请和订单消息会显示在这里。'"
+      :action-text="onlyUnread ? '查看全部通知' : ''"
+      :image="emptyNotification"
+      image-alt="小猫在安静的信箱旁等待新消息"
+      @action="showAll"
     />
 
     <ul v-else class="notification-list" data-testid="notification-list">
@@ -110,7 +102,11 @@
 
 <script>
 import { listNotifications, markNotificationRead, markAllNotificationsRead } from '@/api/notifications'
-import StatusPanel from '@/components/StatusPanel.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import LoadingState from '@/components/ui/LoadingState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import emptyNotification from '@/assets/illustrations/empty-notification.jpg'
 
 const DEFAULT_SIZE = 10
 
@@ -157,13 +153,14 @@ const TARGET_ROUTES = {
 /**
  * 通知中心（API-NOTIFY-001~003，§10.1 路由 /notifications，权限=登录）。
  * 列表、未读筛选、分页与 URL 查询参数同步（§11）；首次进入区分加载/空/错误/正常状态（§11）；
- * 空与错误状态用 StatusPanel 表达当前状态、原因、责任角色和下一步（NFR-UX-001）。
+ * 空与错误状态使用统一状态组件说明当前情况并提供下一步动作（NFR-UX-001）。
  */
 export default {
   name: 'NotificationsView',
-  components: { StatusPanel },
+  components: { PageHeader, LoadingState, ErrorState, EmptyState },
   data() {
     return {
+      emptyNotification,
       loading: false,
       error: '',
       items: [],
@@ -227,6 +224,10 @@ export default {
       this.page = 1
       this.syncToRoute()
       this.load()
+    },
+    showAll() {
+      this.onlyUnread = false
+      this.onFilterChange()
     },
     onPageChange(next) {
       this.page = next
@@ -330,23 +331,10 @@ export default {
 <style scoped>
 .notifications-view {
   max-width: 860px;
-  margin: 24px auto;
+  margin: 0 auto;
   padding: 24px;
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(36, 49, 61, 0.06);
-}
-
-.notifications-view__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.notifications-view__head h2 {
-  margin: 0;
+  border-radius: var(--ps-radius-lg);
 }
 
 .notifications-view__toolbar {
@@ -422,5 +410,12 @@ export default {
 .notifications-view__pager {
   margin-top: 16px;
   text-align: right;
+}
+@media (max-width: 680px) {
+  .notifications-view { padding: 20px 16px; }
+  .notifications-view__toolbar { align-items: stretch; flex-direction: column; }
+  .notification-item { flex-direction: column; }
+  .notification-item__meta { flex-wrap: wrap; }
+  .notification-item__action { width: 100%; }
 }
 </style>
