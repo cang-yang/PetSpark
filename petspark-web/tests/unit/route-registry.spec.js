@@ -64,7 +64,7 @@ describe('frontend route registry baseline', () => {
     'goods', 'goods-detail', 'my-orders',
     'pets', 'my-pets', 'pet-health',
     'adoptions', 'my-adoptions', 'admin-adoptions',
-    'ai-chat', 'ai-recommend',
+    'ai-chat', 'ai-recommend', 'ai-care-qa',
     'profile',
     'admin-users', 'admin-system', 'admin-goods', 'admin-pets', 'admin-orders',
     'boarding-new', 'my-boarding', 'admin-rooms', 'admin-boarding',
@@ -81,7 +81,7 @@ describe('frontend route registry baseline', () => {
     '/goods', '/goods/:id', '/my/orders',
     '/pets', '/my/pets', '/my/pets/:id/health',
     '/adoptions', '/my/adoptions', '/admin/adoptions',
-    '/ai/chat', '/ai/recommend',
+    '/ai/chat', '/ai/recommend', '/ai/care-qa',
     '/profile',
     '/admin/users', '/admin/system', '/admin/goods', '/admin/pets', '/admin/orders',
     '/boarding/new', '/my/boarding', '/admin/rooms', '/admin/boarding',
@@ -111,7 +111,7 @@ describe('frontend route registry baseline', () => {
     expect(catalogRoutes.length).toBe(5)
     expect(petRoutes.length).toBe(4)
     expect(adoptionRoutes.length).toBe(3)
-    expect(aiRoutes.length).toBe(2)
+    expect(aiRoutes.length).toBe(3)
     expect(systemRoutes.length).toBe(2)
     expect(boardingRoutes.length).toBe(4)
     expect(serviceRoutes.length).toBe(4)
@@ -139,7 +139,7 @@ describe('navigation registry baseline', () => {
   it('keeps all pre-refactor member nav entries by name', () => {
     const memberNames = navigation.memberNav.map((e) => e.to)
     const expected = [
-      'goods', 'my-orders', 'pets', 'my-pets', 'ai-chat', 'ai-recommend', 'profile', 'notifications',
+      'goods', 'my-orders', 'pets', 'my-pets', 'ai-chat', 'ai-recommend', 'ai-care-qa', 'profile', 'notifications',
       'adoptions', 'my-adoptions',
       'boarding-new', 'my-boarding',
       'services', 'my-service-bookings',

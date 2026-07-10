@@ -27,6 +27,22 @@ export function sendAiMessage(conversationId, message) {
   return http.post(`/api/v1/ai/conversations/${conversationId}/messages`, { message })
 }
 
+/**
+ * 护理问答场景可用性查询（PR-AI-04 / API-AI-004c）。
+ * 返回 { enabled: boolean, scene: 'CARE_QA' }。
+ */
+export function getCareQaStatus() {
+  return http.get('/api/v1/ai/care-qa/status')
+}
+
+/**
+ * 护理问答非流式发送（PR-AI-04 / API-AI-004b）。返回结构化 CareQaReplyView：
+ * { requestId, riskLevel, generalAdvice, warningSigns, seekHelp, disclaimer, usage }。
+ */
+export function sendCareQaMessage(conversationId, message) {
+  return http.post(`/api/v1/ai/conversations/${conversationId}/messages:care-qa`, { message })
+}
+
 export function deleteAiConversation(conversationId) {
   return http.delete(`/api/v1/ai/conversations/${conversationId}`)
 }

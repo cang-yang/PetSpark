@@ -15,6 +15,10 @@ petspark:
     # 测试用固定密钥；IT 不依赖真实加解密强度，只要 encrypt/decrypt 对称可用。
     message-secret: test-only-petspark-ai-message-secret-32bytes
     rate-limit-per-minute: 10
+    # 护理问答场景开关默认关闭（PR-AI-04）。需要打开的测试通过 @TestPropertySource
+    # 或 properties 属性单独覆盖 petspark.ai.care-qa.enabled=true。
+    care-qa:
+      enabled: false
   notification:
     dispatcher:
       # 测试中禁用后台轮询（间隔拉到 1 小时，相当于不在短测试内触发），

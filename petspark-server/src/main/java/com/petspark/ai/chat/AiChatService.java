@@ -8,10 +8,12 @@ import com.petspark.ai.chat.AiChatDtos.AiConversationView;
 import com.petspark.ai.chat.AiChatDtos.AiMessageRequest;
 import com.petspark.ai.chat.AiChatDtos.AiStatusView;
 import com.petspark.ai.chat.AiChatDtos.AiUsageView;
+import com.petspark.ai.chat.AiChatDtos.CareQaReplyView;
 import com.petspark.ai.chat.AiChatRepository.AiCallRecordRow;
 import com.petspark.ai.chat.AiChatRepository.AiConsentRow;
 import com.petspark.ai.chat.AiChatRepository.AiConvRow;
 import com.petspark.ai.chat.AiChatRepository.AiMessageRow;
+import com.petspark.ai.chat.CareQaOutputPolicy.CareQaReplyPayload;
 import com.petspark.ai.infrastructure.AiChatGateway;
 import com.petspark.ai.infrastructure.AiChatRequest;
 import com.petspark.ai.infrastructure.AiChatResult;
@@ -58,7 +60,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class AiChatService {
 
     private static final Logger log = LoggerFactory.getLogger(AiChatService.class);
-    private static final String SCENE = "PET_CHAT";
+    private static final String SCENE_PET_CHAT = "PET_CHAT";
+    private static final String SCENE_CARE_QA = "CARE_QA";
     private static final String PROVIDER = "spark";
     private static final int CONVERSATION_TTL_DAYS = 30;
     private static final int MAX_OUTPUT_TOKENS = 1024;
@@ -71,6 +74,9 @@ public class AiChatService {
     private final AiSafetyPolicy safetyPolicy;
     private final AiPromptBuilder promptBuilder;
     private final SparkAiProperties properties;
+    private final CareQaProperties careQaProperties;
+    private final CareQaOutputPolicy careQaOutputPolicy;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
     private final AiAuditWriter auditWriter;
     private final Clock clock;
@@ -86,6 +92,9 @@ public class AiChatService {
             AiSafetyPolicy safetyPolicy,
             AiPromptBuilder promptBuilder,
             SparkAiProperties properties,
+            CareQaProperties careQaProperties,
+            CareQaOutputPolicy careQaOutputPolicy,
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper,
             JdbcTemplate jdbcTemplate,
             AiAuditWriter auditWriter,
             Clock clock,
@@ -96,6 +105,9 @@ public class AiChatService {
         this.safetyPolicy = safetyPolicy;
         this.promptBuilder = promptBuilder;
         this.properties = properties;
+        this.careQaProperties = careQaProperties;
+        this.careQaOutputPolicy = careQaOutputPolicy;
+        this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
         this.auditWriter = auditWriter;
         this.clock = clock;
@@ -108,7 +120,16 @@ public class AiChatService {
         String policyVersion = repository.findActiveConsent(userId)
                 .map(AiConsentRow::policyVersion).orElse(null);
         String reason = enabled ? "" : properties.unavailableReason();
-        return new AiStatusView(enabled, SCENE, consentGranted, policyVersion, reason);
+        // status 的 scene 字段保持 PET_CHAT，向后兼容已有前端；护理问答的可用性通过
+        // 独立端点或扩展字段查询，这里不改 PET_CHAT 语义以避免破坏既有契约。
+        return new AiStatusView(enabled, SCENE_PET_CHAT, consentGranted, policyVersion, reason);
+    }
+
+    /**
+     * 护理问答场景可用性（PR-AI-04）。全局 AI 可用 且 护理问答开关打开 时才可用。
+     */
+    public boolean isCareQaAvailable() {
+        return properties.isAvailable() && careQaProperties.isEnabled();
     }
 
     @Transactional
@@ -140,7 +161,7 @@ public class AiChatService {
         // 同意校验先于降级（启用）校验：未同意时无论 AI 是否启用都应返回 AI_CONSENT_001，
         // 与 AI 设计文档的 "Consent & Ownership Guard" 优先一致，避免降级掩盖未同意语义。
         requireConsent(userId);
-        requireEnabled();
+        requireEnabledForScene(req.scene());
         String petId = req.petId() == null || req.petId().isBlank() ? null : req.petId().trim();
         if (petId != null) {
             verifyPetAccessible(petId, userId);
@@ -156,6 +177,23 @@ public class AiChatService {
     }
 
     /**
+     * 护理问答非流式发送（PR-AI-04）。返回结构化 {@link CareQaReplyView}。
+     * 路由：会话 scene 必须为 CARE_QA，否则回退到 {@link #doChat} 的 PET_CHAT 路径。
+     */
+    @Transactional
+    public CareQaReplyView sendCareQa(String conversationId, AiMessageRequest req, String userId) {
+        AiConvRow conv = repository.findConversation(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND_001));
+        if (!conv.userId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_OWNERSHIP_001);
+        }
+        if (!SCENE_CARE_QA.equals(conv.scene())) {
+            throw new BusinessException(ErrorCode.BUSINESS_RULE_001, "该会话不是护理问答场景");
+        }
+        return doCareQaChat(conversationId, req, userId, conv);
+    }
+
+    /**
      * 流式发送：MVP 实现先用 {@link #doChat} 同步完成，再以 SSE 事件序列输出。
      *
      * <p>真正的分块流式（增量 delta）需要供应商原生支持 stream=true 与异步解析；
@@ -168,17 +206,39 @@ public class AiChatService {
         emitter.onTimeout(emitter::complete);
         emitter.onError(ex -> log.debug("ai stream emitter error userId={} reason={}", userId, ex.toString()));
         try {
-            AiChatReplyView reply = doChat(conversationId, req, userId);
-            emit(emitter, "meta", java.util.Map.of(
-                    "requestId", reply.requestId(),
-                    "model", properties.model(),
-                    "scene", SCENE));
-            emit(emitter, "delta", java.util.Map.of("content", reply.content()));
-            emit(emitter, "usage", java.util.Map.of(
-                    "promptTokens", reply.usage().promptTokens(),
-                    "completionTokens", reply.usage().completionTokens(),
-                    "totalTokens", reply.usage().totalTokens()));
-            emit(emitter, "done", java.util.Map.of());
+            AiConvRow conv = repository.findConversation(conversationId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND_001));
+            if (SCENE_CARE_QA.equals(conv.scene())) {
+                CareQaReplyView reply = doCareQaChat(conversationId, req, userId, conv);
+                emit(emitter, "meta", java.util.Map.of(
+                        "requestId", reply.requestId(),
+                        "model", properties.model(),
+                        "scene", SCENE_CARE_QA,
+                        "riskLevel", reply.riskLevel()));
+                emit(emitter, "delta", java.util.Map.of(
+                        "riskLevel", reply.riskLevel(),
+                        "generalAdvice", reply.generalAdvice(),
+                        "warningSigns", reply.warningSigns(),
+                        "seekHelp", reply.seekHelp(),
+                        "disclaimer", reply.disclaimer()));
+                emit(emitter, "usage", java.util.Map.of(
+                        "promptTokens", reply.usage().promptTokens(),
+                        "completionTokens", reply.usage().completionTokens(),
+                        "totalTokens", reply.usage().totalTokens()));
+                emit(emitter, "done", java.util.Map.of());
+            } else {
+                AiChatReplyView reply = doChat(conversationId, req, userId);
+                emit(emitter, "meta", java.util.Map.of(
+                        "requestId", reply.requestId(),
+                        "model", properties.model(),
+                        "scene", conv.scene()));
+                emit(emitter, "delta", java.util.Map.of("content", reply.content()));
+                emit(emitter, "usage", java.util.Map.of(
+                        "promptTokens", reply.usage().promptTokens(),
+                        "completionTokens", reply.usage().completionTokens(),
+                        "totalTokens", reply.usage().totalTokens()));
+                emit(emitter, "done", java.util.Map.of());
+            }
             emitter.complete();
         } catch (BusinessException ex) {
             emitError(emitter, ex.errorCode().code(), ex.getMessage());
@@ -225,6 +285,21 @@ public class AiChatService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND_001));
         if (!conv.userId().equals(userId)) {
             throw new BusinessException(ErrorCode.ACCESS_OWNERSHIP_001);
+        }
+        // 场景路由：CARE_QA 走独立分支（jsonOutput + 输出策略 + 护理问答视图）；
+        // 其他场景保持 PET_CHAT 原路径，字节不变。
+        if (SCENE_CARE_QA.equals(conv.scene())) {
+            // doChat 被现有 PET_CHAT 测试与 send() 复用，CARE_QA 走 doCareQaChat 后
+            // 把结构化结果包装回 AiChatReplyView（content=JSON 字符串）以兼容既有契约。
+            CareQaReplyView careView = doCareQaChat(conversationId, req, userId, conv);
+            String jsonContent;
+            try {
+                jsonContent = objectMapper.writeValueAsString(careView);
+            } catch (Exception ex) {
+                log.warn("care-qa reply serialization failed requestId={}", careView.requestId(), ex);
+                throw new BusinessException(ErrorCode.AI_OUTPUT_001);
+            }
+            return new AiChatReplyView(careView.requestId(), jsonContent, careView.disclaimer(), careView.usage());
         }
         requireConsent(userId);
         enforceRateLimit(userId);
@@ -313,6 +388,111 @@ public class AiChatService {
         return new AiChatReplyView(requestId, result.content(), promptBuilder.boundaryNotice(), usageView);
     }
 
+    /**
+     * 护理问答对话流程（PR-AI-04 / 06A §6.4）。
+     *
+     * <p>与 PET_CHAT {@link #doChat} 的差异：
+     * <ul>
+     *   <li>使用 {@link AiPromptBuilder#systemPromptForCareQa()} 固定系统提示；</li>
+     *   <li>{@code jsonOutput=true}，要求模型返回严格 JSON；</li>
+     *   <li>输出经 {@link CareQaOutputPolicy#parseAndValidate} 校验：违规或高风险输入 →
+     *       固定 URGENT 兜底，不回显模型原文；</li>
+     *   <li>视图为 {@link CareQaReplyView}，前端按 riskLevel 渲染；固定非诊断声明
+     *       由服务层附加，模型无法抑制；</li>
+     *   <li>场景开关：调用方已通过 {@link #requireEnabledForScene} 或
+     *       {@link #isCareQaAvailable} 校验，这里再做一次防御性检查。</li>
+     * </ul>
+     *
+     * <p>同意与限流复用 PET_CHAT 的 {@link #requireConsent} / {@link #enforceRateLimit}，
+     * 保持用户级治理一致。注入检查与降级失败记录路径与 PET_CHAT 相同（审计独立事务）。
+     */
+    private CareQaReplyView doCareQaChat(String conversationId, AiMessageRequest req, String userId, AiConvRow conv) {
+        requireConsent(userId);
+        enforceRateLimit(userId);
+
+        // 防御性场景开关：即使通过路由进入，开关关闭也立即降级。
+        if (!isCareQaAvailable()) {
+            throw new BusinessException(ErrorCode.AI_DISABLED_001, "护理问答场景暂未开放");
+        }
+
+        String rawInput = req.message() == null ? "" : req.message();
+        String sanitized = safetyPolicy.sanitizeUserInput(rawInput);
+        String safetyLabel = safetyPolicy.safetyLabelFor(rawInput);
+
+        if (safetyPolicy.isInjection(rawInput)) {
+            String userMsgId = UUID.randomUUID().toString();
+            auditWriter.insertFailedUserMessage(userMsgId, conversationId,
+                    crypto.encrypt(sanitized), "INJECTION");
+            String injectionRequestId = UUID.randomUUID().toString();
+            auditWriter.recordCall(injectionRequestId, userId, conv.scene(), PROVIDER, properties.model(),
+                    0, 0, "REJECTED", ErrorCode.AI_SAFETY_001.code(), 0, sanitized, null);
+            throw new BusinessException(ErrorCode.AI_SAFETY_001);
+        }
+
+        boolean highRiskInput = careQaOutputPolicy.isHighRiskInput(rawInput);
+
+        // 上下文：护理问答同样取最近 N 条历史拼对话。
+        List<AiMessageRow> history = repository.findRecentMessages(conversationId, promptBuilder.MAX_CONTEXT_MESSAGES);
+        List<AiMessage> messages = new ArrayList<>(history.size() + 1);
+        for (AiMessageRow row : history) {
+            String plain = crypto.decrypt(row.contentCiphertext());
+            if (plain == null) {
+                continue;
+            }
+            messages.add(new AiMessage(row.role(), plain));
+        }
+        messages.add(new AiMessage("user", sanitized));
+
+        String requestId = UUID.randomUUID().toString();
+        AiChatRequest request = new AiChatRequest(
+                requestId,
+                promptBuilder.systemPromptForCareQa(),
+                messages,
+                MAX_OUTPUT_TOKENS,
+                TEMPERATURE,
+                true);
+        long started = System.currentTimeMillis();
+        AiChatResult result;
+        try {
+            result = gateway.chat(request);
+        } catch (BusinessException ex) {
+            int latency = (int) (System.currentTimeMillis() - started);
+            auditWriter.recordCall(requestId, userId, conv.scene(), PROVIDER, properties.model(),
+                    0, 0, "FAILURE", ex.errorCode().code(), latency, sanitized, null);
+            String userMsgId = UUID.randomUUID().toString();
+            auditWriter.insertFailedUserMessage(userMsgId, conversationId,
+                    crypto.encrypt(sanitized), safetyLabel);
+            throw ex;
+        }
+        int latency = (int) (System.currentTimeMillis() - started);
+        AiUsage usage = result.usage() == null ? AiUsage.empty() : result.usage();
+
+        // 输出策略：解析 + 校验 + 违规降级。高风险输入强制 URGENT。
+        CareQaReplyPayload payload = careQaOutputPolicy.parseAndValidate(result.content(), highRiskInput);
+
+        // 持久化用户与助手消息。助手消息存 payload 的 JSON（便于历史回放结构化结果）。
+        String userMsgId = UUID.randomUUID().toString();
+        repository.insertMessage(userMsgId, conversationId, "user",
+                crypto.encrypt(sanitized), safetyLabel, usage.promptTokens());
+        String assistantMsgId = UUID.randomUUID().toString();
+        String assistantPersist;
+        try {
+            assistantPersist = objectMapper.writeValueAsString(payload);
+        } catch (Exception ex) {
+            log.warn("care-qa payload serialization failed requestId={} reason={}", requestId, ex.toString());
+            assistantPersist = "";
+        }
+        repository.insertMessage(assistantMsgId, conversationId, "assistant",
+                crypto.encrypt(assistantPersist), "OK", usage.completionTokens());
+
+        recordCall(requestId, userId, conv.scene(), usage.promptTokens(), usage.completionTokens(),
+                "SUCCESS", null, latency, sanitized);
+
+        AiUsageView usageView = new AiUsageView(usage.promptTokens(), usage.completionTokens(), usage.totalTokens());
+        return new CareQaReplyView(requestId, payload.riskLevel(), payload.generalAdvice(),
+                payload.warningSigns(), payload.seekHelp(), promptBuilder.careQaDisclaimer(), usageView);
+    }
+
     private void recordCall(String requestId, String userId, String scene, int promptTokens, int completionTokens,
             String outcome, String errorCode, int latencyMs, String sanitizedInput) {
         try {
@@ -337,6 +517,32 @@ public class AiChatService {
     }
 
     private void requireEnabled() {
+        if (!properties.isAvailable()) {
+            throw new BusinessException(ErrorCode.AI_DISABLED_001,
+                    properties.unavailableReason().isBlank() ? ErrorCode.AI_DISABLED_001.defaultMessage()
+                            : properties.unavailableReason());
+        }
+    }
+
+    /**
+     * 按场景校验启用状态（PR-AI-04）。
+     *
+     * <p>PET_CHAT 等既有场景仅校验全局 AI 可用性（保持原有行为不变）；
+     * CARE_QA 在此基础上额外要求护理问答独立开关 {@code petspark.ai.care-qa.enabled=true}，
+     * 默认关闭，上线门禁通过前任何 CARE_QA 会话创建/发送都返回 AI_DISABLED_001。
+     */
+    private void requireEnabledForScene(String scene) {
+        if (SCENE_CARE_QA.equals(scene)) {
+            if (!properties.isAvailable() || !careQaProperties.isEnabled()) {
+                throw new BusinessException(ErrorCode.AI_DISABLED_001,
+                        careQaProperties.isEnabled()
+                                ? (properties.unavailableReason().isBlank()
+                                        ? ErrorCode.AI_DISABLED_001.defaultMessage()
+                                        : properties.unavailableReason())
+                                : "护理问答场景暂未开放");
+            }
+            return;
+        }
         if (!properties.isAvailable()) {
             throw new BusinessException(ErrorCode.AI_DISABLED_001,
                     properties.unavailableReason().isBlank() ? ErrorCode.AI_DISABLED_001.defaultMessage()

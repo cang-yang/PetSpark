@@ -77,3 +77,7 @@ petspark:
     message-secret: ${AI_MESSAGE_SECRET:dev-only-change-me-petspark-ai-message-secret}
     # 单用户每分钟调用次数上限（内存滑动窗口）；0/负数回退为 10。
     rate-limit-per-minute: ${AI_RATE_LIMIT_PER_MINUTE:10}
+    # 护理问答场景独立开关（PR-AI-04 / REQ-AI-004）。默认关闭，上线门禁通过前保持 false。
+    # 全局 AI 可用（enabled=true 且 api-password 已配置）且本开关打开时护理问答才可用。
+    care-qa:
+      enabled: ${AI_CARE_QA_ENABLED:false}
