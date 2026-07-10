@@ -1,14 +1,21 @@
 <template>
   <section class="profile-view">
-    <h2>个人资料</h2>
+    <PageHeader title="个人资料" description="更新公开昵称、联系方式、头像与个人简介。" />
     <el-alert
-      v-if="message"
+      v-if="message && !loadError"
       :title="message"
       :type="messageType"
       show-icon
       class="message"
     />
-    <el-card v-loading="loading" class="profile-card">
+    <LoadingState v-if="loading" text="正在读取个人资料…" />
+    <ErrorState
+      v-else-if="loadError"
+      title="个人资料暂时无法加载"
+      :description="loadError"
+      @retry="load"
+    />
+    <el-card v-else class="profile-card">
       <el-form label-width="96px" @submit.native.prevent="save">
         <el-form-item label="用户名">
           <span>{{ form.username }}</span>
@@ -52,11 +59,17 @@
 
 <script>
 import { getMyProfile, updateMyProfile } from '@/api/users'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import LoadingState from '@/components/ui/LoadingState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
 
 export default {
   name: 'ProfileView',
   components: {
-    ImageUploader: () => import('@/components/ImageUploader.vue')
+    ImageUploader: () => import('@/components/ImageUploader.vue'),
+    PageHeader,
+    LoadingState,
+    ErrorState
   },
   data() {
     return {
@@ -64,6 +77,7 @@ export default {
       saving: false,
       message: '',
       messageType: 'success',
+      loadError: '',
       form: {
         id: '',
         username: '',
@@ -85,12 +99,12 @@ export default {
     async load() {
       this.loading = true
       this.message = ''
+      this.loadError = ''
       try {
         const response = await getMyProfile()
         this.applyProfile(response.data)
       } catch (err) {
-        this.messageType = 'error'
-        this.message = err.message
+        this.loadError = err.message
       } finally {
         this.loading = false
       }
@@ -143,21 +157,21 @@ export default {
 
 <style scoped>
 .profile-view {
-  margin: 24px;
+  max-width: 860px;
+  margin: 0 auto;
 }
 
 .profile-card {
-  max-width: 760px;
+  border: 0;
 }
 
 .message {
-  max-width: 760px;
   margin-bottom: 16px;
 }
 
 .hint {
   margin: 6px 0 0;
-  color: #909399;
+  color: var(--ps-color-muted);
   font-size: 12px;
 }
 </style>

@@ -18,12 +18,14 @@ describe('HomeView', () => {
     const push = jest.fn()
     const wrapper = shallowMount(HomeView, {
       mocks: { $router: { push } },
-      stubs: ['el-carousel', 'el-carousel-item', 'el-alert']
+      stubs: ['el-carousel', 'el-carousel-item', 'el-alert', 'router-link']
     })
     await flush()
 
     expect(listActiveBanners).toHaveBeenCalledWith({ limit: 5 })
     expect(wrapper.vm.banners[0].title).toBe('夏日服务季')
+    expect(wrapper.findComponent({ name: 'PageHero' }).exists()).toBe(true)
+    expect(wrapper.findAllComponents({ name: 'FeatureCard' }).length).toBeGreaterThanOrEqual(6)
 
     const event = { preventDefault: jest.fn() }
     wrapper.vm.handleBannerClick(event, wrapper.vm.banners[0])
@@ -35,7 +37,7 @@ describe('HomeView', () => {
     listActiveBanners.mockRejectedValue(new Error('网络异常'))
     const wrapper = shallowMount(HomeView, {
       mocks: { $router: { push: jest.fn() } },
-      stubs: ['el-carousel', 'el-carousel-item', 'el-alert']
+      stubs: ['el-carousel', 'el-carousel-item', 'el-alert', 'router-link']
     })
     await flush()
 

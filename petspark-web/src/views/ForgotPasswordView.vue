@@ -1,6 +1,10 @@
 <template>
-  <section class="auth-card">
-    <h2>重置密码</h2>
+  <AuthPanel
+    title="找回访问权限"
+    description="验证注册邮箱后，设置一组新的安全密码。"
+    :image-src="loginDog"
+    image-alt="阳光下安静陪伴主人的狗狗"
+  >
     <el-steps :active="step" finish-status="success" simple>
       <el-step title="验证邮箱" />
       <el-step title="设置新密码" />
@@ -34,16 +38,20 @@
 
     <el-alert v-if="error" :title="error" type="error" show-icon class="auth-alert" />
     <router-link class="back-link" to="/login">返回登录</router-link>
-  </section>
+  </AuthPanel>
 </template>
 
 <script>
 import { issueCaptcha, requestPasswordResetCode, resetPassword } from '@/api/auth'
+import AuthPanel from '@/components/ui/AuthPanel.vue'
+import loginDog from '@/assets/illustrations/login-dog.jpg'
 
 export default {
   name: 'ForgotPasswordView',
+  components: { AuthPanel },
   data() {
     return {
+      loginDog,
       step: 0,
       email: '',
       captchaAnswer: '',
@@ -66,7 +74,7 @@ export default {
         this.captcha = response.data
         this.captchaAnswer = ''
       } catch (err) {
-        this.error = err.message
+        this.error = '验证码暂时不可用，请稍后重试'
       } finally {
         this.captchaLoading = false
       }
@@ -107,15 +115,6 @@ export default {
 </script>
 
 <style scoped>
-.auth-card {
-  max-width: 460px;
-  margin: 32px auto;
-  padding: 28px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(36, 49, 61, 0.08);
-}
-
 .captcha-line {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -124,7 +123,7 @@ export default {
 
 .hint {
   margin: 6px 0 0;
-  color: #909399;
+  color: var(--ps-color-muted);
   font-size: 12px;
 }
 
@@ -135,5 +134,6 @@ export default {
 
 .back-link {
   display: inline-block;
+  color: var(--ps-color-muted);
 }
 </style>

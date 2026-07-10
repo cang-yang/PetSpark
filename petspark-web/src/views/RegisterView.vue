@@ -1,7 +1,11 @@
 <template>
-  <section class="auth-card">
-    <h2>注册 PetSpark</h2>
-    <el-form label-position="top" @submit.native.prevent>
+  <AuthPanel
+    title="创建你的 PetSpark 账号"
+    description="从第一份宠物档案开始，把日常照顾安排得更清楚。"
+    :image-src="loginDog"
+    image-alt="阳光下安静陪伴主人的狗狗"
+  >
+    <el-form class="auth-form" label-position="top" @submit.native.prevent>
       <el-form-item label="用户名">
         <el-input v-model.trim="form.username" autocomplete="username" />
       </el-form-item>
@@ -30,19 +34,25 @@
         show-icon
         class="auth-alert"
       />
-      <el-button type="primary" :loading="submitting" @click="submit">注册</el-button>
-      <router-link class="auth-link" to="/login">已有账号？去登录</router-link>
+      <div class="auth-actions">
+        <el-button type="primary" :loading="submitting" @click="submit">注册</el-button>
+        <router-link class="auth-link" to="/login">已有账号？去登录</router-link>
+      </div>
     </el-form>
-  </section>
+  </AuthPanel>
 </template>
 
 <script>
 import { issueCaptcha, register } from '@/api/auth'
+import AuthPanel from '@/components/ui/AuthPanel.vue'
+import loginDog from '@/assets/illustrations/login-dog.jpg'
 
 export default {
   name: 'RegisterView',
+  components: { AuthPanel },
   data() {
     return {
+      loginDog,
       captchaLoading: false,
       submitting: false,
       error: '',
@@ -63,15 +73,15 @@ export default {
     this.loadCaptcha()
   },
   methods: {
-    async loadCaptcha() {
+    async loadCaptcha(preserveError = false) {
       this.captchaLoading = true
-      this.error = ''
+      if (!preserveError) this.error = ''
       try {
         const res = await issueCaptcha(this.clientHash())
         this.captcha = res.data
         this.form.captchaAnswer = ''
       } catch (err) {
-        this.error = err.message
+        if (!preserveError) this.error = '验证码暂时不可用，请稍后重试'
       } finally {
         this.captchaLoading = false
       }
@@ -88,7 +98,7 @@ export default {
         this.$router.push('/login')
       } catch (err) {
         this.error = err.message
-        this.loadCaptcha()
+        await this.loadCaptcha(true)
       } finally {
         this.submitting = false
       }
@@ -101,15 +111,6 @@ export default {
 </script>
 
 <style scoped>
-.auth-card {
-  max-width: 460px;
-  margin: 32px auto;
-  padding: 28px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(36, 49, 61, 0.08);
-}
-
 .captcha-line {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -118,7 +119,7 @@ export default {
 
 .hint {
   margin: 6px 0 0;
-  color: #909399;
+  color: var(--ps-color-muted);
   font-size: 12px;
 }
 
@@ -126,7 +127,10 @@ export default {
   margin-bottom: 16px;
 }
 
-.auth-link {
-  margin-left: 16px;
+.auth-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.auth-actions .el-button { min-width: 108px; }
+.auth-link { color: var(--ps-color-muted); font-size: 13px; }
+@media (max-width: 460px) {
+  .auth-actions .el-button { width: 100%; }
 }
 </style>

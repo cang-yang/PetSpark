@@ -17,11 +17,14 @@ describe('UI foundation components', () => {
       propsData: {
         title: '还没有宠物档案',
         description: '添加第一只宠物后，就能记录健康与日常。',
-        actionText: '添加宠物'
+        actionText: '添加宠物',
+        image: '/empty-pet.jpg',
+        imageAlt: '等待新档案的小狗'
       }
     })
 
     expect(wrapper.text()).toContain('还没有宠物档案')
+    expect(wrapper.get('img').attributes('alt')).toBe('等待新档案的小狗')
     expect(wrapper.get('[data-testid="empty-state-action"]').text()).toBe('添加宠物')
   })
 
