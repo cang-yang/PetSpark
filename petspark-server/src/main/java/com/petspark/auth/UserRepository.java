@@ -27,6 +27,10 @@ public class UserRepository {
     }
 
     public void insert(SysUser user) {
+        insertWithRole(user, DEFAULT_ROLE_ID);
+    }
+
+    public void insertWithRole(SysUser user, String roleId) {
         jdbcTemplate.update("""
                 INSERT INTO sys_user (id, username, email, password_hash, nickname, status, token_version)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -41,7 +45,7 @@ public class UserRepository {
         jdbcTemplate.update("""
                 INSERT INTO sys_user_role (user_id, role_id)
                 VALUES (?, ?)
-                """, user.id(), DEFAULT_ROLE_ID);
+                """, user.id(), roleId);
     }
 
     public Optional<SysUser> findByPrincipal(String principal) {
