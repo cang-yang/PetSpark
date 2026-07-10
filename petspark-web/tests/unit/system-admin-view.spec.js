@@ -27,6 +27,9 @@ describe('SystemAdminView', () => {
     'el-option': true,
     'el-row': true,
     'el-select': true,
+    'el-switch': true,
+    'el-tabs': true,
+    'el-tab-pane': true,
     'el-table': true,
     'el-table-column': true
   }
@@ -77,6 +80,46 @@ describe('SystemAdminView', () => {
       version: 1
     })
     expect(wrapper.vm.configs[0].version).toBe(2)
+  })
+
+  it('maps configuration and dictionary values to readable Chinese labels', async () => {
+    listSystemConfigs.mockResolvedValue({
+      data: [
+        { configKey: 'feature.registration.enabled', configValue: 'true', valueType: 'BOOLEAN', version: 1 },
+        { configKey: 'site.notice', configValue: '公告', valueType: 'STRING', version: 1 }
+      ]
+    })
+    listDictTypes.mockResolvedValue({ data: [{ code: 'PET_GENDER', name: 'Pet Gender' }] })
+    listDictItems.mockResolvedValue({ data: [{ itemKey: 'MALE', itemLabel: 'Male' }] })
+
+    const wrapper = mountView()
+    await flush()
+
+    expect(wrapper.vm.configMeta(wrapper.vm.configs[0]).label).toBe('开放用户注册')
+    expect(wrapper.vm.booleanConfigValue(wrapper.vm.configs[0])).toBe(true)
+    expect(wrapper.vm.dictTypeLabel(wrapper.vm.dictTypes[0])).toBe('宠物性别')
+    expect(wrapper.vm.dictItemLabel(wrapper.vm.dictItems[0])).toBe('雄性')
+  })
+
+  it('localizes audit module, action and role while retaining technical codes', async () => {
+    const wrapper = mountView()
+    await flush()
+
+    expect(wrapper.vm.auditModuleLabel('system')).toBe('系统设置')
+    expect(wrapper.vm.auditActionLabel('update')).toBe('更新')
+    expect(wrapper.vm.roleLabel('ADMIN')).toBe('平台管理员')
+  })
+
+  it('rolls a setting back to its persisted value when saving fails', async () => {
+    updateSystemConfig.mockRejectedValueOnce(new Error('保存失败'))
+    const wrapper = mountView()
+    await flush()
+
+    wrapper.vm.configs[0].configValue = '尚未保存的新公告'
+    await wrapper.vm.saveConfig(wrapper.vm.configs[0])
+
+    expect(wrapper.vm.configs[0].configValue).toBe('公告')
+    expect(wrapper.vm.$message.error).toHaveBeenCalledWith('保存失败')
   })
 })
 

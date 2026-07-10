@@ -25,15 +25,23 @@ describe('AdminUsersView', () => {
   localVue.directive('loading', {})
 
   const stubs = {
+    'el-alert': true,
     'el-button': true,
     'el-card': true,
     'el-dialog': true,
+    'el-drawer': true,
+    'el-checkbox': true,
+    'el-checkbox-group': true,
+    'el-collapse': true,
+    'el-collapse-item': true,
     'el-form': true,
     'el-form-item': true,
     'el-input': true,
     'el-option': true,
     'el-pagination': true,
     'el-select': true,
+    'el-tabs': true,
+    'el-tab-pane': true,
     'el-table': true,
     'el-table-column': true,
     'el-tag': true
@@ -82,7 +90,10 @@ describe('AdminUsersView', () => {
     return shallowMount(AdminUsersView, {
       localVue,
       stubs,
-      mocks: { $message: { success: jest.fn(), error: jest.fn() } }
+      mocks: {
+        $message: { success: jest.fn(), error: jest.fn() },
+        $confirm: jest.fn().mockResolvedValue('confirm')
+      }
     })
   }
 
@@ -131,6 +142,69 @@ describe('AdminUsersView', () => {
       permissionCodes: ['user:read']
     })
     expect(wrapper.vm.showCreateRole).toBe(false)
+  })
+
+  it('stages role assignment in a drawer and saves only after confirmation', async () => {
+    const wrapper = mountView()
+    await flush()
+
+    wrapper.vm.openRoleAssignment(wrapper.vm.users[0])
+
+    expect(wrapper.vm.roleAssignmentVisible).toBe(true)
+    expect(wrapper.vm.roleAssignmentForm.roleCodes).toEqual(['ADMIN'])
+    expect(assignAdminUserRoles).not.toHaveBeenCalled()
+
+    wrapper.vm.roleAssignmentForm.roleCodes = ['ADMIN', 'OP']
+    await wrapper.vm.saveRoleAssignment()
+
+    expect(assignAdminUserRoles).toHaveBeenCalledWith('u-1', { roleCodes: ['ADMIN', 'OP'] })
+    expect(wrapper.vm.roleAssignmentVisible).toBe(false)
+  })
+
+  it('presents Chinese role terminology and groups permissions by resource', async () => {
+    listPermissions.mockResolvedValue({
+      data: [
+        permission,
+        { code: 'user:update', resource: 'user', action: 'update', description: '修改用户' },
+        { code: 'goods:read', resource: 'goods', action: 'read', description: '查看商品' }
+      ]
+    })
+    const wrapper = mountView()
+    await flush()
+
+    expect(wrapper.vm.roleMeta('ADMIN').label).toBe('平台管理员')
+    expect(wrapper.vm.permissionGroups.map(group => group.resource)).toEqual(['goods', 'user'])
+    expect(wrapper.vm.permissionGroups.find(group => group.resource === 'user').permissions).toHaveLength(2)
+    expect(wrapper.vm.permissionLabel(permission)).toBe('查看用户')
+  })
+
+  it('uses the custom role name instead of exposing its technical code in the user list', async () => {
+    listRoles.mockResolvedValue({
+      data: [role, { id: 'r-2', code: 'CUSTOM_OP', name: '内容运营专员', builtIn: false, permissionCodes: [] }]
+    })
+    const wrapper = mountView()
+    await flush()
+
+    expect(wrapper.vm.roleMeta('CUSTOM_OP').label).toBe('内容运营专员')
+  })
+
+  it('requires an explicit warning confirmation before adding the administrator role', async () => {
+    listAdminUsers.mockResolvedValue({
+      data: { items: [{ ...user, roleCodes: ['USER'] }], page: 1, size: 10, total: 1 }
+    })
+    const wrapper = mountView()
+    await flush()
+
+    wrapper.vm.openRoleAssignment(wrapper.vm.users[0])
+    wrapper.vm.roleAssignmentForm.roleCodes = ['USER', 'ADMIN']
+    await wrapper.vm.saveRoleAssignment()
+
+    expect(wrapper.vm.$confirm).toHaveBeenCalledWith(
+      expect.stringContaining('平台管理员'),
+      '高风险角色变更',
+      expect.objectContaining({ type: 'warning' })
+    )
+    expect(assignAdminUserRoles).toHaveBeenCalledWith('u-1', { roleCodes: ['USER', 'ADMIN'] })
   })
 })
 
