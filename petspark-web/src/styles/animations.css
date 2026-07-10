@@ -12,6 +12,17 @@
   box-shadow: var(--ps-shadow-float);
 }
 
+.ps-page-enter-active,
+.ps-page-leave-active {
+  transition: opacity 260ms ease, transform 320ms var(--ps-ease-out);
+}
+
+.ps-page-enter,
+.ps-page-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

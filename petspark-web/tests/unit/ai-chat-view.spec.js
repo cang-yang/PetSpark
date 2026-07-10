@@ -71,6 +71,19 @@ describe('AiChatView', () => {
     expect(getAiStatus).toHaveBeenCalled()
     expect(wrapper.find('[data-testid="ai-degradation-banner"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="new-conversation"]').attributes('disabled')).toBeTruthy()
+    expect(wrapper.text()).toContain('不替代兽医诊断')
+  })
+
+  it('offers example prompts and a guided illustrated empty state', async () => {
+    getAiStatus.mockResolvedValue({
+      data: { enabled: true, consentGranted: true, degradationReason: '' }
+    })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-testid="example-prompt"]')).toHaveLength(3)
+    expect(wrapper.find('[data-testid="ai-empty-state"]').exists()).toBe(true)
   })
 
   it('shows consent-required panel when enabled but not consented', async () => {
@@ -134,6 +147,29 @@ describe('AiChatView', () => {
     const last = wrapper.vm.messages[wrapper.vm.messages.length - 1]
     expect(last.role).toBe('assistant')
     expect(last.content).toContain('你好呀')
+  })
+
+  it('starts and can cancel a streaming reply when stream mode is enabled', async () => {
+    getAiStatus.mockResolvedValue({
+      data: { enabled: true, consentGranted: true, degradationReason: '' }
+    })
+    createAiConversation.mockResolvedValue({ data: { id: 'c-stream', scene: 'PET_CHAT', title: '流式话题', status: 'ACTIVE' } })
+    listAiMessages.mockResolvedValue({ data: [] })
+    const abort = jest.fn()
+    streamAiMessage.mockReturnValue({ abort })
+
+    const wrapper = mountView()
+    await flushPromises()
+    wrapper.find('[data-testid="new-conversation"]').vm.$emit('click')
+    await flushPromises()
+    await wrapper.setData({ text: '请流式回答', streamMode: true })
+    wrapper.find('[data-testid="send-message"]').vm.$emit('click')
+    await wrapper.vm.$nextTick()
+
+    expect(streamAiMessage).toHaveBeenCalledWith('c-stream', '请流式回答', expect.any(Object))
+    wrapper.find('[data-testid="stop-stream"]').vm.$emit('click')
+    expect(abort).toHaveBeenCalled()
+    expect(wrapper.vm.streaming).toBe(false)
   })
 
   it('deletes a conversation', async () => {

@@ -89,4 +89,31 @@ describe('App', () => {
     wrapper.destroy()
     jest.useRealTimers()
   })
+
+  it.each([
+    ['/pets', 'companion'],
+    ['/boarding/new', 'service'],
+    ['/ai/chat', 'ai']
+  ])('passes the %s route atmosphere to the public shell', async (path, scene) => {
+    jest.useFakeTimers()
+    const localVue = createLocalVue()
+    localVue.use(VueRouter)
+    const router = new VueRouter({ routes: [{ path, meta: { layout: 'public' } }] })
+    await router.push(path)
+    const wrapper = shallowMount(App, {
+      localVue,
+      router,
+      mocks: {
+        $store: {
+          getters: { isAuthenticated: false },
+          state: { user: null, notificationUnreadCount: 0 },
+          dispatch: jest.fn()
+        }
+      }
+    })
+
+    expect(wrapper.findComponent(PublicLayout).props('scene')).toBe(scene)
+    wrapper.destroy()
+    jest.useRealTimers()
+  })
 })
