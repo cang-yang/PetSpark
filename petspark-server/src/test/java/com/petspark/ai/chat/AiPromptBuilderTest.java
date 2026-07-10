@@ -49,4 +49,25 @@ class AiPromptBuilderTest {
         assertThat(AiPromptBuilder.MAX_USER_INPUT_CHARS)
                 .isEqualTo(AiSafetyPolicy.MAX_USER_INPUT_CHARS);
     }
+
+    @Test
+    void systemPromptForRecommendationIsFixedAndContainsGuardrails() {
+        String prompt = builder.systemPromptForRecommendation();
+        assertThat(prompt).isNotBlank();
+        // 推荐场景关键约束：候选集内排序、不编造事实、不复述敏感信息、不执行业务操作。
+        assertThat(prompt).contains("候选清单内排序");
+        assertThat(prompt).contains("不得编造候选摘要中不存在的事实");
+        assertThat(prompt).contains("不得复述用户敏感信息");
+        assertThat(prompt).contains("不得执行任何业务操作");
+        // 输出格式约束：JSON only，items 最多 5 项。
+        assertThat(prompt).contains("只返回 JSON");
+        assertThat(prompt).contains("items 最多 5 项");
+    }
+
+    @Test
+    void recommendationSystemPromptIsStableAcrossCalls() {
+        String a = builder.systemPromptForRecommendation();
+        String b = builder.systemPromptForRecommendation();
+        assertThat(a).isEqualTo(b);
+    }
 }

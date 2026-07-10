@@ -23,7 +23,8 @@ import {
   sendAiMessage,
   deleteAiConversation,
   listAiMessages,
-  streamAiMessage
+  streamAiMessage,
+  recommendAi
 } from '@/api/ai'
 
 function makeStreamResponse(chunks) {
@@ -85,6 +86,12 @@ describe('ai API', () => {
   it('listAiMessages GETs messages', () => {
     listAiMessages('c-1')
     expect(http.get).toHaveBeenCalledWith('/api/v1/ai/conversations/c-1/messages')
+  })
+
+  it('recommendAi POSTs /api/v1/ai/recommend', () => {
+    const payload = { species: '狗', age: 36, preference: '活泼', candidateType: 'GOODS' }
+    recommendAi(payload)
+    expect(http.post).toHaveBeenCalledWith('/api/v1/ai/recommend', payload)
   })
 
   it('streamAiMessage parses SSE events and dispatches handlers', async () => {

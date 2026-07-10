@@ -100,6 +100,7 @@ public enum ErrorCode {
     AI_SAFETY_001(422, "AI_SAFETY_001", "输入违反安全策略，已拒答"),
     AI_CONTEXT_001(422, "AI_CONTEXT_001", "上下文超限，请缩短输入"),
     AI_OUTPUT_001(502, "AI_OUTPUT_001", "AI 输出格式无效"),
+    AI_CANDIDATE_001(422, "AI_CANDIDATE_001", "推荐对象失效或不在候选集"),
 
     // 外部服务 502/503
     AI_PROVIDER_001(503, "AI_PROVIDER_001", "AI 服务暂不可用"),
