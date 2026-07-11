@@ -38,6 +38,8 @@ npm run serve
 
 默认情况下 AI 功能关闭；启动基础应用不需要星火密钥。真实密钥只能放入被 Git 忽略的 `.env.spark.local` 或部署环境变量，不得写入源码、示例配置或日志。本地文件只需提供 `SPARK_API_PASSWORD`、`SPARK_BASE_URL` 和 `SPARK_MODEL`；密码非空时统一加载脚本会在当前进程启用网关。若需要强制关闭，可在 `.env.spark.local` 中显式设置 `SPARK_ENABLED=false`。
 
+演示账号和演示业务数据同样默认关闭。需要本地展示时，在被 Git 忽略的 `.env.local` 中同时设置 `PETSPARK_DEMO_USERS_ENABLED=true`、两组演示账号密码以及 `PETSPARK_DEMO_DATA_ENABLED=true`；可用 `PETSPARK_DEMO_DATA_FUTURE_DAYS` 控制补齐的未来预约天数。演示填充使用稳定标识并重复执行安全，不会覆盖或删除自行创建的数据；不得把真实密码写入仓库。
+
 ## 验证命令
 
 ```powershell

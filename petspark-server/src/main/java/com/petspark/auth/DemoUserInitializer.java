@@ -3,11 +3,12 @@ package com.petspark.auth;
 import java.util.UUID;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.Ordered;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-public class DemoUserInitializer implements ApplicationRunner {
+public class DemoUserInitializer implements ApplicationRunner, Ordered {
 
     static final String ADMIN_ROLE_ID = "00000000-0000-0000-0000-000000000102";
 
@@ -31,6 +32,11 @@ public class DemoUserInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         initialize();
+    }
+
+    @Override
+    public int getOrder() {
+        return 100;
     }
 
     void initialize() {

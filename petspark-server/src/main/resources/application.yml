@@ -58,6 +58,10 @@ petspark:
     member-email: ${PETSPARK_DEMO_MEMBER_EMAIL:demo@petspark.local}
     member-nickname: ${PETSPARK_DEMO_MEMBER_NICKNAME:演示用户}
     member-password: ${PETSPARK_DEMO_MEMBER_PASSWORD:}
+  demo-data:
+    # 仅用于本地展示/验收；默认关闭，且必须同时显式开启 demo-users。
+    enabled: ${PETSPARK_DEMO_DATA_ENABLED:false}
+    future-days: ${PETSPARK_DEMO_DATA_FUTURE_DAYS:7}
   file:
     storage-root: ${FILE_STORAGE_ROOT:./data/files}
   auth:
