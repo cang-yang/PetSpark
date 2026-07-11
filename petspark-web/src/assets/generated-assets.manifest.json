@@ -65,6 +65,90 @@
       "bytes": 55068,
       "sha256": "cb21d30d1cd16fcd6bea4c252a266c3f4c9ee04ff69ef57815ca58ca8d9e5c01",
       "usage": "AI assistant pages atmospheric background"
+    },
+    {
+      "path": "public/demo/cards/pet-doubao.webp",
+      "dimensions": "800x600",
+      "bytes": 45132,
+      "sha256": "d621365e7938455f2857607c5f17e70726ac78093bdab2c9d70546904d0682d8",
+      "usage": "Demo pet card: Doubao the corgi"
+    },
+    {
+      "path": "public/demo/cards/pet-juzi.webp",
+      "dimensions": "800x600",
+      "bytes": 71290,
+      "sha256": "2d472da6abb6bc43179348a2b4823c7ff81bac02dfced05ea11a45f7d14d37ed",
+      "usage": "Demo pet card: Juzi the orange tabby"
+    },
+    {
+      "path": "public/demo/cards/pet-kele.webp",
+      "dimensions": "800x600",
+      "bytes": 78844,
+      "sha256": "cb9afe3fce282983ad4389b855715bbd69cabeba24c834c914b145d636a8b875",
+      "usage": "Demo pet card: Kele the golden retriever"
+    },
+    {
+      "path": "public/demo/cards/pet-naitang.webp",
+      "dimensions": "800x600",
+      "bytes": 51806,
+      "sha256": "a478bef157f0b36c9cf1c16328643c4ed2cae152cbbdec40112bc4e4a1be2a03",
+      "usage": "Demo pet card: Naitang the British Shorthair"
+    },
+    {
+      "path": "public/demo/cards/goods-dog-food.webp",
+      "dimensions": "800x600",
+      "bytes": 38512,
+      "sha256": "05343dd4fe2c28e6b6bfefe3794b0dec6e42916e42b6de90e7c1aea1de55f181",
+      "usage": "Demo goods card: premium dog food"
+    },
+    {
+      "path": "public/demo/cards/goods-cat-food.webp",
+      "dimensions": "800x600",
+      "bytes": 39904,
+      "sha256": "2b7d74042871da2fdddd9cef63f7d6856066cba2bb0f0ef5daed9314552e9768",
+      "usage": "Demo goods card: balanced cat food"
+    },
+    {
+      "path": "public/demo/cards/goods-treat.webp",
+      "dimensions": "800x600",
+      "bytes": 74514,
+      "sha256": "737208c9fe630be1f87cd4fadacf667815d2962a2a11cc939c05da51d19d90d0",
+      "usage": "Demo goods card: freeze-dried treats"
+    },
+    {
+      "path": "public/demo/cards/goods-bed.webp",
+      "dimensions": "800x600",
+      "bytes": 95904,
+      "sha256": "a2bffd5d4d3eb568b750f9dba4f00c28ca45a4db2248114c63231c2ad550dabd",
+      "usage": "Demo goods card: cozy pet bed"
+    },
+    {
+      "path": "public/demo/cards/goods-leash.webp",
+      "dimensions": "800x600",
+      "bytes": 63486,
+      "sha256": "15aaf80b3b657eae5bd06a427811d782c1120ebff622baff34b050fd5578794b",
+      "usage": "Demo goods card: reflective leash and collar"
+    },
+    {
+      "path": "public/demo/cards/goods-toy.webp",
+      "dimensions": "800x600",
+      "bytes": 70410,
+      "sha256": "0277d25b2f3e5f3abdbdd1cbec38924e8f9ff121018b4516ef10bdbf79423fd5",
+      "usage": "Demo goods card: enrichment snuffle toy"
+    },
+    {
+      "path": "public/demo/cards/goods-dental.webp",
+      "dimensions": "800x600",
+      "bytes": 28300,
+      "sha256": "06d07a9d3a781b63ab4cfac98432f24e87dbaa01af00599666ab06fb03f9e20c",
+      "usage": "Demo goods card: pet dental kit"
+    },
+    {
+      "path": "public/demo/cards/goods-comb.webp",
+      "dimensions": "800x600",
+      "bytes": 72238,
+      "sha256": "697a8b75aa122f6b51d5702ee9d1e9eea5464d78cdacc6fda65a7433d280fdd8",
+      "usage": "Demo goods card: de-shedding grooming comb"
     }
   ]
 }
