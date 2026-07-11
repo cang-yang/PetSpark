@@ -61,10 +61,16 @@
         :key="pet.id"
         :pet="pet"
         status="我的伙伴"
-        :detail-to="`/my/pets/${pet.id}/health`"
+        :detail-to="`/pets/${pet.id}`"
         :data-testid="`my-pet-${pet.id}`"
       >
         <template #actions>
+          <router-link
+            class="profile-link"
+            :to="`/pets/${pet.id}`"
+            :data-testid="`pet-detail-link-${pet.id}`"
+            >查看完整档案</router-link
+          >
           <router-link
             class="health-link"
             :to="`/my/pets/${pet.id}/health`"
@@ -195,6 +201,12 @@ export default {
 }
 .health-link {
   color: var(--ps-color-pink);
+  font-weight: 700;
+  text-decoration: none;
+}
+.profile-link {
+  margin-right: auto;
+  color: var(--ps-color-text);
   font-weight: 700;
   text-decoration: none;
 }

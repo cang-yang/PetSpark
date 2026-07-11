@@ -66,7 +66,7 @@ describe('frontend route registry baseline', () => {
   const baselineNames = [
     'home', 'login', 'register', 'forgot-password', 'notifications',
     'goods', 'goods-detail', 'my-orders',
-    'pets', 'my-pets', 'pet-health',
+    'pets', 'pet-detail', 'my-pets', 'pet-health',
     'adoptions', 'my-adoptions', 'admin-adoptions',
     'ai-chat', 'ai-recommend', 'ai-care-qa',
     'profile',
@@ -84,7 +84,7 @@ describe('frontend route registry baseline', () => {
   const expectedPaths = [
     '/', '/login', '/register', '/forgot-password', '/notifications',
     '/goods', '/goods/:id', '/my/orders',
-    '/pets', '/my/pets', '/my/pets/:id/health',
+    '/pets', '/pets/:id', '/my/pets', '/my/pets/:id/health',
     '/adoptions', '/my/adoptions', '/admin/adoptions',
     '/ai/chat', '/ai/recommend', '/ai/care-qa',
     '/profile',
@@ -115,7 +115,7 @@ describe('frontend route registry baseline', () => {
   it('keeps the modular split across modules with expected counts', () => {
     expect(commonRoutes.length).toBeGreaterThanOrEqual(6)
     expect(catalogRoutes.length).toBe(5)
-    expect(petRoutes.length).toBe(4)
+    expect(petRoutes.length).toBe(5)
     expect(adoptionRoutes.length).toBe(3)
     expect(aiRoutes.length).toBe(3)
     expect(systemRoutes.length).toBe(2)

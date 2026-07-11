@@ -44,6 +44,7 @@
         :pet="pet"
         :status="adoptionLabel(pet.adoptionStatus)"
         :description="pet.description || '每一位伙伴都有自己的性格与生活习惯。'"
+        :detail-to="`/pets/${pet.id}`"
       >
         <template #details
           ><span class="ps-sr-only">{{ pet.name }}</span></template

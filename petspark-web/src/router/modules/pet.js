@@ -3,6 +3,7 @@
  */
 export default [
   { path: '/pets', name: 'pets', component: () => import('../../views/PetsView.vue') },
+  { path: '/pets/:id', name: 'pet-detail', component: () => import('../../views/PetDetailView.vue') },
   { path: '/my/pets', name: 'my-pets', component: () => import('../../views/MyPetsView.vue') },
   { path: '/my/pets/:id/health', name: 'pet-health', component: () => import('../../views/PetHealthView.vue') },
   { path: '/admin/pets', name: 'admin-pets', component: () => import('../../views/AdminPetsView.vue') }
