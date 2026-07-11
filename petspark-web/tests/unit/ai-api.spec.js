@@ -123,6 +123,22 @@ describe('ai API', () => {
     expect(handlers.onError).not.toHaveBeenCalled()
   })
 
+  it('streamAiMessage parses CRLF SSE frames and completes only once', async () => {
+    const chunks = [
+      'event:delta\r\ndata:{"content":"及时回复"}\r\n\r\n',
+      'event:done\r\ndata:{}\r\n\r\n'
+    ]
+    global.fetch.mockResolvedValue(makeStreamResponse(chunks))
+    const handlers = { onDelta: jest.fn(), onDone: jest.fn(), onError: jest.fn() }
+
+    streamAiMessage('c-1', 'hello', handlers)
+    await flushPromises()
+
+    expect(handlers.onDelta).toHaveBeenCalledWith({ content: '及时回复' })
+    expect(handlers.onDone).toHaveBeenCalledTimes(1)
+    expect(handlers.onError).not.toHaveBeenCalled()
+  })
+
   it('streamAiMessage dispatches error event', async () => {
     const chunks = ['event:error\ndata:{"code":"AI_DISABLED_001","message":"AI 服务未启用"}\n\n']
     global.fetch.mockResolvedValue(makeStreamResponse(chunks))
@@ -130,6 +146,20 @@ describe('ai API', () => {
     streamAiMessage('c-1', 'hello', handlers)
     await flushPromises()
     expect(handlers.onError).toHaveBeenCalledWith('AI 服务未启用')
+  })
+
+  it('streamAiMessage aborts and reports a friendly timeout instead of hanging forever', () => {
+    jest.useFakeTimers()
+    global.fetch.mockReturnValue(new Promise(() => {}))
+    const handlers = { onError: jest.fn(), onDone: jest.fn() }
+    const controller = streamAiMessage('c-timeout', 'hello', handlers)
+
+    jest.advanceTimersByTime(40000)
+
+    expect(controller.signal.aborted).toBe(true)
+    expect(handlers.onError).toHaveBeenCalledWith('AI 响应超时，请稍后重试')
+    expect(handlers.onDone).not.toHaveBeenCalled()
+    jest.useRealTimers()
   })
 
   it('streamAiMessage includes Authorization header from store', async () => {

@@ -16,8 +16,20 @@ describe('route layout metadata', () => {
     const source = [{ path: '/admin/pets', meta: { permission: 'pet:read' } }]
     const decorated = withLayoutMeta(source)
 
-    expect(decorated[0].meta).toEqual({ permission: 'pet:read', layout: 'admin' })
+    expect(decorated[0].meta).toEqual({ permission: 'pet:read', layout: 'admin', requiresAuth: true })
     expect(source[0].meta).toEqual({ permission: 'pet:read' })
+  })
+
+  it.each([
+    ['/', false],
+    ['/login', false],
+    ['/register', false],
+    ['/forgot-password', false],
+    ['/ai/chat', true],
+    ['/admin/users', true]
+  ])('marks %s authentication requirement as %s', (path, expected) => {
+    const decorated = withLayoutMeta([{ path }])
+    expect(decorated[0].meta.requiresAuth).toBe(expected)
   })
 
   it('keeps an explicitly selected layout', () => {

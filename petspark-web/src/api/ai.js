@@ -73,6 +73,27 @@ export function recommendAi(payload) {
  */
 export function streamAiMessage(conversationId, message, handlers = {}) {
   const controller = new AbortController()
+  const nativeAbort = controller.abort.bind(controller)
+  const responseTimeoutMs = 40000
+  let settled = false
+  let timeoutId
+  const finish = (type, payload) => {
+    if (settled) return
+    settled = true
+    if (timeoutId) clearTimeout(timeoutId)
+    if (type === 'done' && handlers.onDone) handlers.onDone(payload)
+    if (type === 'error' && handlers.onError) handlers.onError(payload)
+  }
+  timeoutId = setTimeout(() => {
+    nativeAbort()
+    finish('error', 'AI 响应超时，请稍后重试')
+  }, responseTimeoutMs)
+  controller.abort = () => {
+    if (settled) return
+    settled = true
+    if (timeoutId) clearTimeout(timeoutId)
+    nativeAbort()
+  }
   const token = store.state.accessToken
   const baseUrl = process.env.VUE_APP_API_BASE_URL || ''
   fetch(`${baseUrl}/api/v1/ai/conversations/${conversationId}/messages:stream`, {
@@ -101,26 +122,33 @@ export function streamAiMessage(conversationId, message, handlers = {}) {
       const decoder = new TextDecoder('utf-8')
       let buffer = ''
       const dispatch = parseSseChunks()
+      const eventHandlers = {
+        ...handlers,
+        onDone: (payload) => finish('done', payload),
+        onError: (message) => finish('error', message)
+      }
       function pump() {
         reader.read().then(({ done, value }) => {
           if (done) {
-            if (handlers.onDone) handlers.onDone()
+            buffer += decoder.decode()
+            if (buffer) dispatch(buffer, eventHandlers)
+            finish('done')
             return
           }
           buffer += decoder.decode(value, { stream: true })
-          const { rest } = dispatch(buffer, handlers)
+          const { rest } = dispatch(buffer, eventHandlers)
           buffer = rest
           pump()
         }).catch((err) => {
           if (err && err.name === 'AbortError') return
-          if (handlers.onError) handlers.onError(err.message || '流式中断')
+          finish('error', err.message || '流式中断')
         })
       }
       pump()
     })
     .catch((err) => {
       if (err && err.name === 'AbortError') return
-      if (handlers.onError) handlers.onError(err.message || '流式连接失败')
+      finish('error', err.message || '流式连接失败')
     })
   return controller
 }
@@ -131,7 +159,7 @@ export function streamAiMessage(conversationId, message, handlers = {}) {
  */
 function parseSseChunks() {
   return (buffer, handlers) => {
-    let rest = buffer
+    let rest = buffer.replace(/\r\n/g, '\n')
     const sep = '\n\n'
     let idx
     while ((idx = rest.indexOf(sep)) !== -1) {

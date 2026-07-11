@@ -10,6 +10,7 @@ import com.petspark.file.FileObjectRepository;
 import com.petspark.health.HealthRecordRepository.HealthRecordRow;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -56,13 +57,13 @@ class HealthRecordService {
     @Transactional
     PageResult<HealthRecordView> listForPet(String petId, HealthQuery query, AuthenticatedUser requester) {
         PetOwnership pet = loadPet(petId);
-        boolean authorized = pet.ownerId.equals(requester.getId())
+        boolean authorized = Objects.equals(pet.ownerId, requester.getId())
                 || hasAuthority(requester, PERM_HEALTH_MANAGE)
                 || hasAuthority(requester, PERM_HEALTH_CORRECT);
         if (!authorized) {
             throw new BusinessException(ErrorCode.ACCESS_OWNERSHIP_001);
         }
-        boolean revealDetail = pet.ownerId.equals(requester.getId())
+        boolean revealDetail = Objects.equals(pet.ownerId, requester.getId())
                 || hasAuthority(requester, PERM_HEALTH_MANAGE)
                 || hasAuthority(requester, PERM_HEALTH_CORRECT);
         var pageRows = records.findByPet(petId, query.getRecordType(), query.getPage(), query.getSize());
@@ -75,7 +76,7 @@ class HealthRecordService {
     @Transactional
     HealthRecordView create(String petId, HealthRecordRequest req, AuthenticatedUser author) {
         PetOwnership pet = loadPet(petId);
-        boolean authorized = pet.ownerId.equals(author.getId())
+        boolean authorized = Objects.equals(pet.ownerId, author.getId())
                 || hasAuthority(author, PERM_HEALTH_MANAGE);
         if (!authorized) {
             throw new BusinessException(ErrorCode.HEALTH_SCOPE_001);
@@ -122,7 +123,7 @@ class HealthRecordService {
         HealthRecordRow row = records.findById(recordId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND_001));
         PetOwnership pet = loadPet(row.petId());
-        boolean authorized = pet.ownerId.equals(actor.getId())
+        boolean authorized = Objects.equals(pet.ownerId, actor.getId())
                 || hasAuthority(actor, PERM_PRIVACY_MANAGE);
         if (!authorized) {
             throw new BusinessException(ErrorCode.ACCESS_OWNERSHIP_001);
@@ -156,7 +157,7 @@ class HealthRecordService {
         if (!StringUtils.hasText(attachmentFileId)) {
             return;
         }
-        boolean owner = pet.ownerId != null && pet.ownerId.equals(actor.getId());
+        boolean owner = Objects.equals(pet.ownerId, actor.getId());
         boolean ok = owner
                 ? files.existsActiveOwned(attachmentFileId, actor.getId())
                 : files.existsAvailable(attachmentFileId);

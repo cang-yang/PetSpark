@@ -16,6 +16,7 @@ import strayRoutes from './modules/stray'
 import bannerRoutes from './modules/banner'
 import dashboardRoutes from './modules/dashboard'
 import { withLayoutMeta } from './layout'
+import store from '@/store'
 
 Vue.use(VueRouter)
 
@@ -43,7 +44,27 @@ const routes = withLayoutMeta([
   ...dashboardRoutes
 ])
 
-export default new VueRouter({
+const router = new VueRouter({
   mode: 'history',
   routes
 })
+
+router.beforeEach((to, from, next) => {
+  const requiresAuth = to.matched.some((record) => record.meta && record.meta.requiresAuth)
+  if (requiresAuth && !store.getters.isAuthenticated) {
+    next({ path: '/login', query: { redirect: to.fullPath } })
+    return
+  }
+  next()
+})
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('petspark:auth-required', (event) => {
+    const redirect = event.detail && event.detail.redirect ? event.detail.redirect : router.currentRoute.fullPath
+    if (router.currentRoute.path !== '/login') {
+      router.replace({ path: '/login', query: { redirect } }).catch(() => {})
+    }
+  })
+}
+
+export default router
