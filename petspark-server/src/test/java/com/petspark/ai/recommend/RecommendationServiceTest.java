@@ -177,6 +177,25 @@ class RecommendationServiceTest {
                 anyString(), any());
     }
 
+    @Test
+    void markdownFencedJsonIsParsedAsModelOutput() throws Exception {
+        List<Candidate> candidates = twoCandidates();
+        when(retriever.retrieve(anyString(), org.mockito.ArgumentMatchers.anyInt(), anyString()))
+                .thenReturn(candidates);
+        when(retriever.isStillValid("g-1", "u")).thenReturn(true);
+        when(gateway.chat(any(AiChatRequest.class))).thenReturn(new AiChatResult("r-1", """
+                ```json
+                {"items":[{"id":"g-1","type":"GOODS","reason":"适合活泼幼犬互动"}]}
+                ```
+                """, AiUsage.empty(), "spark-x"));
+
+        grantConsent("u");
+        AiRecommendReplyView reply = service.recommend("u", req("活泼"));
+
+        assertThat(reply.items()).hasSize(1);
+        assertThat(reply.items().get(0).reason()).isEqualTo("适合活泼幼犬互动");
+    }
+
     // ---- 验收条件 4：越权 reason 被拒绝 ----
 
     @Test

@@ -3,6 +3,7 @@ jest.mock('@/api/ai', () => ({
   grantAiConsent: jest.fn(),
   withdrawAiConsent: jest.fn(),
   createAiConversation: jest.fn(),
+  listAiConversations: jest.fn(),
   sendAiMessage: jest.fn(),
   deleteAiConversation: jest.fn(),
   listAiMessages: jest.fn(),
@@ -16,6 +17,7 @@ import AiChatView from '@/views/AiChatView.vue'
 import {
   getAiStatus,
   createAiConversation,
+  listAiConversations,
   sendAiMessage,
   listAiMessages,
   deleteAiConversation,
@@ -53,6 +55,8 @@ describe('AiChatView', () => {
   beforeEach(() => {
     getAiStatus.mockReset()
     createAiConversation.mockReset()
+    listAiConversations.mockReset()
+    listAiConversations.mockResolvedValue({ data: [] })
     sendAiMessage.mockReset()
     listAiMessages.mockReset()
     deleteAiConversation.mockReset()
@@ -84,6 +88,22 @@ describe('AiChatView', () => {
 
     expect(wrapper.findAll('[data-testid="example-prompt"]')).toHaveLength(3)
     expect(wrapper.find('[data-testid="ai-empty-state"]').exists()).toBe(true)
+  })
+
+  it('restores persisted conversations after entering the page again', async () => {
+    getAiStatus.mockResolvedValue({ data: { enabled: true, consentGranted: true, degradationReason: '' } })
+    listAiConversations.mockResolvedValue({
+      data: [{ id: 'persisted-1', scene: 'PET_CHAT', title: '昨天的话题', status: 'ACTIVE' }]
+    })
+    listAiMessages.mockResolvedValue({ data: [{ id: 'm-1', role: 'assistant', content: '历史回答' }] })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(listAiConversations).toHaveBeenCalled()
+    expect(wrapper.vm.currentId).toBe('persisted-1')
+    expect(wrapper.text()).toContain('昨天的话题')
+    expect(listAiMessages).toHaveBeenCalledWith('persisted-1')
   })
 
   it('shows consent-required panel when enabled but not consented', async () => {
