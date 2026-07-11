@@ -14,6 +14,22 @@ spring:
     url: ${DB_URL:jdbc:mysql://localhost:3306/petspark?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          connectiontimeout: ${MAIL_CONNECTION_TIMEOUT_MS:5000}
+          timeout: ${MAIL_READ_TIMEOUT_MS:5000}
+          writetimeout: ${MAIL_WRITE_TIMEOUT_MS:5000}
+          ssl:
+            enable: ${MAIL_SSL_ENABLED:false}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLED:true}
   servlet:
     multipart:
       max-file-size: 6MB
@@ -74,9 +90,16 @@ petspark:
       expires-in-seconds: ${REFRESH_TOKEN_EXPIRES_IN_SECONDS:604800}
     password-reset:
       ttl-seconds: ${PASSWORD_RESET_TTL_SECONDS:600}
+      resend-cooldown-seconds: ${PASSWORD_RESET_CODE_RESEND_COOLDOWN_SECONDS:60}
       mail:
         enabled: ${PASSWORD_RESET_MAIL_ENABLED:false}
         from: ${PASSWORD_RESET_MAIL_FROM:}
+    registration:
+      ttl-seconds: ${REGISTRATION_CODE_TTL_SECONDS:600}
+      resend-cooldown-seconds: ${REGISTRATION_CODE_RESEND_COOLDOWN_SECONDS:60}
+      mail:
+        enabled: ${REGISTRATION_MAIL_ENABLED:false}
+        from: ${REGISTRATION_MAIL_FROM:}
   notification:
     dispatcher:
       batch-size: ${NOTIFY_DISPATCHER_BATCH_SIZE:20}

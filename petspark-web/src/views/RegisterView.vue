@@ -7,10 +7,10 @@
   >
     <el-form class="auth-form" label-position="top" @submit.native.prevent>
       <el-form-item label="用户名">
-        <el-input v-model.trim="form.username" autocomplete="username" />
+        <el-input v-model.trim="form.username" autocomplete="username" placeholder="设置用于登录的用户名" />
       </el-form-item>
-      <el-form-item label="邮箱">
-        <el-input v-model.trim="form.email" autocomplete="email" />
+      <el-form-item label="邮箱账号">
+        <el-input v-model.trim="form.email" type="email" autocomplete="email" placeholder="name@example.com" />
       </el-form-item>
       <el-form-item label="昵称">
         <el-input v-model.trim="form.nickname" />
@@ -24,6 +24,14 @@
           <el-input v-model.trim="form.captchaAnswer" placeholder="请输入答案" />
           <el-button :loading="captchaLoading" @click="loadCaptcha">
             {{ captcha.challengeText || '获取验证码' }}
+          </el-button>
+        </div>
+      </el-form-item>
+      <el-form-item label="邮箱验证码">
+        <div class="captcha-line">
+          <el-input v-model.trim="form.emailCode" maxlength="6" placeholder="请输入 6 位验证码" />
+          <el-button :loading="emailCodeLoading" :disabled="emailCodeCooldown > 0" @click="sendEmailCode">
+            {{ emailCodeCooldown > 0 ? `${emailCodeCooldown} 秒后重发` : '发送邮箱验证码' }}
           </el-button>
         </div>
       </el-form-item>
@@ -43,7 +51,7 @@
 </template>
 
 <script>
-import { issueCaptcha, register } from '@/api/auth'
+import { issueCaptcha, register, requestRegistrationCode } from '@/api/auth'
 import AuthPanel from '@/components/ui/AuthPanel.vue'
 import loginDog from '@/assets/illustrations/login-dog.jpg'
 
@@ -55,6 +63,9 @@ export default {
       loginDog,
       captchaLoading: false,
       submitting: false,
+      emailCodeLoading: false,
+      emailCodeCooldown: 0,
+      cooldownTimer: null,
       error: '',
       captcha: {
         captchaId: '',
@@ -63,6 +74,7 @@ export default {
       form: {
         username: '',
         email: '',
+        emailCode: '',
         nickname: '',
         password: '',
         captchaAnswer: ''
@@ -71,6 +83,9 @@ export default {
   },
   created() {
     this.loadCaptcha()
+  },
+  beforeDestroy() {
+    if (this.cooldownTimer) window.clearInterval(this.cooldownTimer)
   },
   methods: {
     async loadCaptcha(preserveError = false) {
@@ -86,19 +101,50 @@ export default {
         this.captchaLoading = false
       }
     },
+    async sendEmailCode() {
+      this.emailCodeLoading = true
+      this.error = ''
+      try {
+        await requestRegistrationCode({
+          email: this.form.email,
+          captchaId: this.captcha.captchaId,
+          captchaAnswer: this.form.captchaAnswer
+        })
+        this.$message.success('验证码已发送，请检查邮箱')
+        this.startCooldown()
+      } catch (err) {
+        this.error = err.message
+      } finally {
+        this.emailCodeLoading = false
+        await this.loadCaptcha(true)
+      }
+    },
+    startCooldown() {
+      this.emailCodeCooldown = 60
+      if (this.cooldownTimer) window.clearInterval(this.cooldownTimer)
+      this.cooldownTimer = window.setInterval(() => {
+        this.emailCodeCooldown -= 1
+        if (this.emailCodeCooldown <= 0) {
+          window.clearInterval(this.cooldownTimer)
+          this.cooldownTimer = null
+        }
+      }, 1000)
+    },
     async submit() {
       this.submitting = true
       this.error = ''
       try {
         await register({
-          ...this.form,
-          captchaId: this.captcha.captchaId
+          username: this.form.username,
+          email: this.form.email,
+          emailCode: this.form.emailCode,
+          password: this.form.password,
+          nickname: this.form.nickname
         })
         this.$message.success('注册成功，请登录')
         this.$router.push('/login')
       } catch (err) {
         this.error = err.message
-        await this.loadCaptcha(true)
       } finally {
         this.submitting = false
       }

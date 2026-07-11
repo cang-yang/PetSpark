@@ -104,6 +104,7 @@ public enum ErrorCode {
 
     // 外部服务 502/503
     AI_PROVIDER_001(503, "AI_PROVIDER_001", "AI 服务暂不可用"),
+    EMAIL_SERVICE_001(503, "EMAIL_SERVICE_001", "邮件服务暂不可用"),
     EXTERNAL_SERVICE_001(502, "EXTERNAL_SERVICE_001", "外部服务调用失败"),
 
     // 兜底 500

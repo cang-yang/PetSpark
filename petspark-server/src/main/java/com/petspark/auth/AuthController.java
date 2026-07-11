@@ -20,13 +20,16 @@ public class AuthController {
     private final CaptchaService captchaService;
     private final AuthCookieService cookieService;
     private final PasswordResetService passwordResetService;
+    private final RegistrationService registrationService;
 
     public AuthController(AuthService authService, CaptchaService captchaService,
-            AuthCookieService cookieService, PasswordResetService passwordResetService) {
+            AuthCookieService cookieService, PasswordResetService passwordResetService,
+            RegistrationService registrationService) {
         this.authService = authService;
         this.captchaService = captchaService;
         this.cookieService = cookieService;
         this.passwordResetService = passwordResetService;
+        this.registrationService = registrationService;
     }
 
     @PostMapping("/captcha")
@@ -37,6 +40,12 @@ public class AuthController {
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ApiResponse.ok(authService.register(request));
+    }
+
+    @PostMapping("/registration-codes")
+    public ApiResponse<Void> requestRegistrationCode(@Valid @RequestBody RegistrationCodeRequest request) {
+        registrationService.requestCode(request);
+        return ApiResponse.ok();
     }
 
     @PostMapping("/login")

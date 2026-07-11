@@ -16,18 +16,26 @@ public class VerificationCodeRepository {
     }
 
     public void insert(String id, String principal, String codeHash, Instant expiresAt) {
+        insert(id, "PASSWORD_RESET", principal, codeHash, expiresAt);
+    }
+
+    public void insert(String id, String purpose, String principal, String codeHash, Instant expiresAt) {
         jdbcTemplate.update("""
                 INSERT INTO auth_verification_code
                     (id, purpose, principal, code_hash, expires_at)
-                VALUES (?, 'PASSWORD_RESET', ?, ?, ?)
-                """, id, principal, codeHash, Timestamp.from(expiresAt));
+                VALUES (?, ?, ?, ?, ?)
+                """, id, purpose, principal, codeHash, Timestamp.from(expiresAt));
     }
 
     public Optional<VerificationCodeRecord> findLatestPasswordReset(String principal) {
+        return findLatest("PASSWORD_RESET", principal);
+    }
+
+    public Optional<VerificationCodeRecord> findLatest(String purpose, String principal) {
         return jdbcTemplate.query("""
                 SELECT id, code_hash, expires_at, consumed_at, attempt_count
                 FROM auth_verification_code
-                WHERE purpose = 'PASSWORD_RESET' AND principal = ?
+                WHERE purpose = ? AND principal = ?
                 ORDER BY created_at DESC
                 LIMIT 1
                 """, rs -> {
@@ -41,7 +49,16 @@ public class VerificationCodeRepository {
                     rs.getTimestamp("expires_at").toInstant(),
                     consumed == null ? null : consumed.toInstant(),
                     rs.getInt("attempt_count")));
-        }, principal);
+        }, purpose, principal);
+    }
+
+    public boolean issuedSince(String purpose, String principal, Instant since) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM auth_verification_code
+                WHERE purpose = ? AND principal = ? AND created_at >= ?
+                """, Integer.class, purpose, principal, Timestamp.from(since));
+        return count != null && count > 0;
     }
 
     public void recordFailure(String id) {
