@@ -60,3 +60,30 @@ jobs:
         run: npm run test:unit -- --runInBand
       - name: Build production bundle
         run: npm run build
+
+  deployment-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Validate production definitions
+        run: |
+          bash -n deploy/bootstrap-vps.sh deploy/deploy.sh
+          cp deploy/.env.production.example /tmp/petspark-production.env
+          docker compose --env-file /tmp/petspark-production.env -f docker-compose.prod.yml config --quiet
+      - name: Build backend production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: petspark-server/Dockerfile
+          push: false
+          cache-from: type=gha,scope=petspark-server
+          cache-to: type=gha,mode=max,scope=petspark-server
+      - name: Build frontend production image
+        uses: docker/build-push-action@v6
+        with:
+          context: petspark-web
+          file: petspark-web/Dockerfile
+          push: false
+          cache-from: type=gha,scope=petspark-web
+          cache-to: type=gha,mode=max,scope=petspark-web

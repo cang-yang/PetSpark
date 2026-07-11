@@ -33,6 +33,7 @@ node_modules/
 .env.*
 !.env.example
 !petspark-web/.env.example
+!deploy/.env.production.example
 application-local.yml
 application-local.properties
 

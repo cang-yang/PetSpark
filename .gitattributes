@@ -1,0 +1,4 @@
+deploy/*.sh text eol=lf
+petspark-server/Dockerfile text eol=lf
+petspark-web/Dockerfile text eol=lf
+petspark-web/nginx/*.conf text eol=lf
