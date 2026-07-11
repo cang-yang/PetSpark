@@ -245,7 +245,7 @@ public class RecommendationService {
 
         JsonNode root;
         try {
-            root = objectMapper.readTree(content);
+            root = objectMapper.readTree(stripMarkdownFence(content));
         } catch (Exception ex) {
             log.debug("recommend json parse failed reason={}", ex.toString());
             return List.of();
@@ -317,6 +317,19 @@ public class RecommendationService {
         }
 
         return validated;
+    }
+
+    private String stripMarkdownFence(String content) {
+        String normalized = content.trim();
+        if (!normalized.startsWith("```")) {
+            return normalized;
+        }
+        int firstLineEnd = normalized.indexOf('\n');
+        int closingFence = normalized.lastIndexOf("```");
+        if (firstLineEnd < 0 || closingFence <= firstLineEnd) {
+            return normalized;
+        }
+        return normalized.substring(firstLineEnd + 1, closingFence).trim();
     }
 
     // ---- 规则兜底排序 ----

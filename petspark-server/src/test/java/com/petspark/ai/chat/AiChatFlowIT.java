@@ -182,6 +182,23 @@ class AiChatFlowIT extends AbstractControllerTest {
     }
 
     @Test
+    void listConversationsReturnsOnlyCurrentUsersPersistentSessions() throws Exception {
+        String first = insertConversationDirect(ownerId, "PET_CHAT", null, "IT-persistent-first");
+        String second = insertConversationDirect(ownerId, "PET_CHAT", null, "IT-persistent-second");
+        insertConversationDirect(otherId, "PET_CHAT", null, "IT-other-user");
+
+        mockMvc.perform(get("/api/v1/ai/conversations")
+                        .header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[*].id").value(
+                        org.hamcrest.Matchers.containsInAnyOrder(first, second)))
+                .andExpect(jsonPath("$.data[*].title").value(
+                        org.hamcrest.Matchers.containsInAnyOrder("IT-persistent-first", "IT-persistent-second")))
+                .andExpect(jsonPath("$.data[0].createdAt").isNotEmpty());
+    }
+
+    @Test
     void otherUserCannotAccessConversation() throws Exception {
         grantConsent(ownerToken);
         String convId = insertConversationDirect(ownerId, "PET_CHAT", null, "IT-iso");

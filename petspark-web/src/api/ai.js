@@ -23,6 +23,10 @@ export function createAiConversation(payload) {
   return http.post('/api/v1/ai/conversations', payload)
 }
 
+export function listAiConversations() {
+  return http.get('/api/v1/ai/conversations')
+}
+
 export function sendAiMessage(conversationId, message) {
   return http.post(`/api/v1/ai/conversations/${conversationId}/messages`, { message })
 }
@@ -60,7 +64,7 @@ export function listAiMessages(conversationId) {
  * @returns {Promise<{data: {requestId, items: [{id, type, reason}], usage, boundaryNotice}}>}
  */
 export function recommendAi(payload) {
-  return http.post('/api/v1/ai/recommend', payload)
+  return http.post('/api/v1/ai/recommend', payload, { timeout: 40000 })
 }
 
 /**

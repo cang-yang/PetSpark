@@ -20,6 +20,7 @@ import {
   grantAiConsent,
   withdrawAiConsent,
   createAiConversation,
+  listAiConversations,
   sendAiMessage,
   sendCareQaMessage,
   getCareQaStatus,
@@ -75,6 +76,11 @@ describe('ai API', () => {
     expect(http.post).toHaveBeenCalledWith('/api/v1/ai/conversations', { scene: 'PET_CHAT', title: 't' })
   })
 
+  it('listAiConversations GETs persistent conversations with an extended timeout for AI requests', () => {
+    listAiConversations()
+    expect(http.get).toHaveBeenCalledWith('/api/v1/ai/conversations')
+  })
+
   it('sendAiMessage POSTs messages', () => {
     sendAiMessage('c-1', 'hi')
     expect(http.post).toHaveBeenCalledWith('/api/v1/ai/conversations/c-1/messages', { message: 'hi' })
@@ -93,7 +99,7 @@ describe('ai API', () => {
   it('recommendAi POSTs /api/v1/ai/recommend', () => {
     const payload = { species: '狗', age: 36, preference: '活泼', candidateType: 'GOODS' }
     recommendAi(payload)
-    expect(http.post).toHaveBeenCalledWith('/api/v1/ai/recommend', payload)
+    expect(http.post).toHaveBeenCalledWith('/api/v1/ai/recommend', payload, { timeout: 40000 })
   })
 
   it('streamAiMessage parses SSE events and dispatches handlers', async () => {

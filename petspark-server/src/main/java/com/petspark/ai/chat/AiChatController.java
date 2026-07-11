@@ -88,6 +88,12 @@ public class AiChatController {
         return ApiResponse.ok(service.createConversation(user.getId(), request));
     }
 
+    @GetMapping("/conversations")
+    public ApiResponse<List<AiConversationView>> listConversations(
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return ApiResponse.ok(service.listConversations(user.getId()));
+    }
+
     @PostMapping("/conversations/{id}/messages")
     public ApiResponse<AiChatReplyView> sendMessage(
             @PathVariable String id,

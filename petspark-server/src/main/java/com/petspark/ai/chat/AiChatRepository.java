@@ -45,6 +45,7 @@ public class AiChatRepository {
             String petId,
             String title,
             String status,
+            Instant createdAt,
             Instant expiresAt,
             Instant deletedAt) {}
 
@@ -124,7 +125,7 @@ public class AiChatRepository {
 
     public Optional<AiConvRow> findConversation(String id) {
         return jdbcTemplate.query("""
-                SELECT id, user_id, scene, pet_id, title, status, expires_at, deleted_at
+                SELECT id, user_id, scene, pet_id, title, status, created_at, expires_at, deleted_at
                 FROM ai_conversation
                 WHERE id = ? AND deleted_at IS NULL
                 """, rs -> rs.next() ? Optional.of(new AiConvRow(
@@ -134,8 +135,28 @@ public class AiChatRepository {
                 rs.getString("pet_id"),
                 rs.getString("title"),
                 rs.getString("status"),
+                tsToInstant(rs.getTimestamp("created_at")),
                 tsToInstant(rs.getTimestamp("expires_at")),
                 tsToInstant(rs.getTimestamp("deleted_at")))) : Optional.empty(), id);
+    }
+
+    public List<AiConvRow> findActiveConversationsForUser(String userId, int limit) {
+        return jdbcTemplate.query("""
+                SELECT id, user_id, scene, pet_id, title, status, created_at, expires_at, deleted_at
+                FROM ai_conversation
+                WHERE user_id = ? AND deleted_at IS NULL AND status = 'ACTIVE'
+                ORDER BY updated_at DESC, created_at DESC
+                LIMIT ?
+                """, (rs, rowNum) -> new AiConvRow(
+                rs.getString("id"),
+                rs.getString("user_id"),
+                rs.getString("scene"),
+                rs.getString("pet_id"),
+                rs.getString("title"),
+                rs.getString("status"),
+                tsToInstant(rs.getTimestamp("created_at")),
+                tsToInstant(rs.getTimestamp("expires_at")),
+                tsToInstant(rs.getTimestamp("deleted_at"))), userId, limit);
     }
 
     public int softDeleteConversation(String id) {

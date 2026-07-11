@@ -176,6 +176,14 @@ public class AiChatService {
         return doChat(conversationId, req, userId);
     }
 
+    /** 返回当前用户最近的未删除会话，供页面刷新或重新登录后恢复历史入口。 */
+    @Transactional(readOnly = true)
+    public List<AiConversationView> listConversations(String userId) {
+        return repository.findActiveConversationsForUser(userId, 50).stream()
+                .map(this::toConvView)
+                .toList();
+    }
+
     /**
      * 护理问答非流式发送（PR-AI-04）。返回结构化 {@link CareQaReplyView}。
      * 路由：会话 scene 必须为 CARE_QA，否则回退到 {@link #doChat} 的 PET_CHAT 路径。
@@ -588,7 +596,7 @@ public class AiChatService {
 
     private AiConversationView toConvView(AiConvRow row) {
         return new AiConversationView(row.id(), row.scene(), row.petId(), row.title(),
-                row.status(), null, row.expiresAt());
+                row.status(), row.createdAt(), row.expiresAt());
     }
 
     private void emit(SseEmitter emitter, String eventName, Object payload) {

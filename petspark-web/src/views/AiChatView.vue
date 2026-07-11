@@ -169,6 +169,7 @@ import {
   grantAiConsent,
   withdrawAiConsent,
   createAiConversation,
+  listAiConversations,
   sendAiMessage,
   deleteAiConversation,
   listAiMessages,
@@ -228,6 +229,18 @@ export default {
         this.enabled = !!view.enabled
         this.consentGranted = !!view.consentGranted
         this.degradationReason = view.degradationReason || ''
+        if (this.consentGranted) await this.restoreConversations()
+      } catch (err) {
+        this.$message.error(err.message)
+      }
+    },
+    async restoreConversations() {
+      try {
+        const res = await listAiConversations()
+        this.conversations = res.data || []
+        if (this.conversations.length) {
+          await this.selectConversation(this.conversations[0].id)
+        }
       } catch (err) {
         this.$message.error(err.message)
       }
@@ -252,9 +265,9 @@ export default {
         this.$message.error(err.message)
       }
     },
-    selectConversation(id) {
+    async selectConversation(id) {
       this.currentId = id
-      this.loadMessages(id)
+      await this.loadMessages(id)
     },
     async loadMessages(id) {
       this.messages = []
