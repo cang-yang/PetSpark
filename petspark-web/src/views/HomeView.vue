@@ -88,14 +88,12 @@ import PageHero from '@/components/ui/PageHero.vue'
 import FeatureCard from '@/components/ui/FeatureCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import heroPets from '@/assets/illustrations/hero-pets.jpg'
-import boardingBanner from '@/assets/placeholders/service-boarding.png'
-import adoptionBanner from '@/assets/placeholders/pet-dog.png'
-import careBanner from '@/assets/illustrations/login-dog.jpg'
 
 const FALLBACK_BANNERS = [
-  { id: 'fallback-boarding', title: '安心寄养计划', subtitle: '提前安排房间与照护，让短暂分别也放心', imageUrl: boardingBanner, targetUrl: '/boarding/new', requiresAuth: true },
-  { id: 'fallback-adoption', title: '给等待一个温暖的家', subtitle: '认识正在寻找新家庭的小伙伴', imageUrl: adoptionBanner, targetUrl: '/adoptions' },
-  { id: 'fallback-care', title: '日常健康与护理', subtitle: '记录成长变化，及时安排专业服务', imageUrl: careBanner, targetUrl: '/services' }
+  { id: 'fallback-boarding', title: '安心寄养计划', subtitle: '提前安排房间与照护，让短暂分别也放心', imageUrl: '/demo/banners/banner-boarding-comfort.webp', targetUrl: '/boarding/new', requiresAuth: true },
+  { id: 'fallback-grooming', title: '温柔焕新护理', subtitle: '专业洗护与造型，让舒适从每个细节开始', imageUrl: '/demo/banners/banner-grooming-care.webp', targetUrl: '/beauty' },
+  { id: 'fallback-wellness', title: '健康守护日', subtitle: '体检、护理问答与就医建议一站了解', imageUrl: '/demo/banners/banner-vet-wellness.webp', targetUrl: '/medical' },
+  { id: 'fallback-adoption', title: '给等待一个温暖的家', subtitle: '认识正在寻找新家庭的小伙伴', imageUrl: '/demo/banners/banner-adoption-day.webp', targetUrl: '/adoptions' }
 ]
 
 export default {
