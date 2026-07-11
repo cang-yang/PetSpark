@@ -1,7 +1,7 @@
 <template>
   <section>
     <el-card v-if="goods">
-      <img v-if="goods.coverUrl" class="cover" :src="goods.coverUrl" :alt="goods.name" />
+      <img class="cover" :src="goodsCover" :alt="goods.name" @error="useGoodsFallback" />
       <h2>{{ goods.name }}</h2>
       <p>{{ goods.description }}</p>
       <p>SKU：{{ goods.sku }}</p>
@@ -34,6 +34,8 @@
 <script>
 import { getGoods } from '@/api/catalog'
 import { createOrder, previewOrder } from '@/api/orders'
+import goodsPlaceholder from '@/assets/placeholders/pet-cat.png'
+import { getDemoGoodsImage } from '@/utils/demoContentAssets'
 
 export default {
   name: 'GoodsDetailView',
@@ -49,7 +51,18 @@ export default {
   created() {
     this.loadGoods()
   },
+  computed: {
+    goodsCover() {
+      return (this.goods && (this.goods.coverUrl || getDemoGoodsImage(this.goods))) || goodsPlaceholder
+    }
+  },
   methods: {
+    useGoodsFallback(event) {
+      if (event && event.target && event.target.dataset.fallbackApplied !== 'true') {
+        event.target.dataset.fallbackApplied = 'true'
+        event.target.src = goodsPlaceholder
+      }
+    },
     async loadGoods() {
       try {
         const response = await getGoods(this.$route.params.id)

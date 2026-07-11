@@ -40,8 +40,9 @@
       >
         <router-link :to="`/goods/${item.id}`" class="goods-card__visual"
           ><img
-            :src="item.coverUrl || goodsPlaceholder"
+            :src="goodsImage(item)"
             :alt="item.name"
+            @error="useGoodsFallback"
           /><span :class="['stock', { 'stock--low': item.stock < 5 }]">{{
             item.stock > 0 ? `库存 ${item.stock}` : '暂时缺货'
           }}</span></router-link
@@ -74,6 +75,7 @@ import LoadingState from '@/components/ui/LoadingState.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import goodsPlaceholder from '@/assets/placeholders/pet-cat.png'
+import { getDemoGoodsImage } from '@/utils/demoContentAssets'
 export default {
   name: 'GoodsListView',
   components: { PageHeader, FilterBar, LoadingState, EmptyState, ErrorState },
@@ -92,6 +94,15 @@ export default {
     this.loadGoods()
   },
   methods: {
+    goodsImage(item) {
+      return item.coverUrl || getDemoGoodsImage(item) || this.goodsPlaceholder
+    },
+    useGoodsFallback(event) {
+      if (event && event.target && event.target.dataset.fallbackApplied !== 'true') {
+        event.target.dataset.fallbackApplied = 'true'
+        event.target.src = this.goodsPlaceholder
+      }
+    },
     async loadGoods() {
       this.loading = true
       this.error = ''

@@ -67,7 +67,10 @@ public class FileService {
     public StoredFile read(String id, String requesterId) {
         FileObject file = repository.findAvailable(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND_001));
-        requireOwner(file, requesterId);
+        boolean owner = requesterId != null && file.ownerId().equals(requesterId);
+        if (!owner && !repository.isPubliclyReferenced(id)) {
+            throw new org.springframework.security.access.AccessDeniedException("file owner or public reference required");
+        }
         return new StoredFile(file.mediaType(), file.originalName(), storage.read(file.objectKey()));
     }
 

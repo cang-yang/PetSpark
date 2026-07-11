@@ -1,0 +1,154 @@
+{
+  "generatedAt": "2026-07-11",
+  "generationMode": "OpenAI built-in image generation",
+  "style": "PetSpark warm premium editorial pet-care visual system; original, text-free, watermark-free",
+  "assets": [
+    {
+      "path": "public/demo/banners/banner-boarding-comfort.webp",
+      "dimensions": "1600x480",
+      "bytes": 58198,
+      "sha256": "76de31c28443399ae6986db5ca7a5bbff3c648811624f2ed726bdc467bd0c6c5",
+      "usage": "Homepage carousel: pet boarding"
+    },
+    {
+      "path": "public/demo/banners/banner-grooming-care.webp",
+      "dimensions": "1600x480",
+      "bytes": 36660,
+      "sha256": "ef276cdbd3820085ad7c59a27b38bb1783cd116beb0c9a51c33e35a6f3dda7fa",
+      "usage": "Homepage carousel: pet grooming"
+    },
+    {
+      "path": "public/demo/banners/banner-vet-wellness.webp",
+      "dimensions": "1600x480",
+      "bytes": 38510,
+      "sha256": "adb5f50d72e555d17688987b52a0f47854592a354452f4164ea68623b6173de3",
+      "usage": "Homepage carousel: veterinary wellness"
+    },
+    {
+      "path": "public/demo/banners/banner-adoption-day.webp",
+      "dimensions": "1600x480",
+      "bytes": 42794,
+      "sha256": "cd491c329d6b58f7f3da9465e2729b2bcc0ba672ce85e148986d54f1a8d07a89",
+      "usage": "Homepage carousel: adoption day"
+    },
+    {
+      "path": "src/assets/scenes/scene-home-warm.webp",
+      "dimensions": "1920x1080",
+      "bytes": 59530,
+      "sha256": "e93bc25f6cec2f2ba421fd75436ef5a850b950d4d1beb5f7bf2062e375e9fa9b",
+      "usage": "Public homepage atmospheric background"
+    },
+    {
+      "path": "src/assets/scenes/scene-health-wellness.webp",
+      "dimensions": "1920x1080",
+      "bytes": 60136,
+      "sha256": "90399b6051b3569e581dbeb71d48296d794fd151234a80032d1b59b5f12956ee",
+      "usage": "Pet health and medical pages atmospheric background"
+    },
+    {
+      "path": "src/assets/scenes/scene-adoption-hope.webp",
+      "dimensions": "1920x1080",
+      "bytes": 97314,
+      "sha256": "056f4c0eb3f83fc673325051c2ac98bd2af40214cc7ea0af4b4a4c367664fc4e",
+      "usage": "Adoption and rescue pages atmospheric background"
+    },
+    {
+      "path": "src/assets/scenes/scene-services-care.webp",
+      "dimensions": "1920x1080",
+      "bytes": 60160,
+      "sha256": "7ae75766eebf3681e16317aba1ef78d9c037d1e49c595142419782722c71268d",
+      "usage": "Pet services pages atmospheric background"
+    },
+    {
+      "path": "src/assets/scenes/scene-ai-companion.webp",
+      "dimensions": "1920x1080",
+      "bytes": 55068,
+      "sha256": "cb21d30d1cd16fcd6bea4c252a266c3f4c9ee04ff69ef57815ca58ca8d9e5c01",
+      "usage": "AI assistant pages atmospheric background"
+    },
+    {
+      "path": "public/demo/cards/pet-doubao.webp",
+      "dimensions": "800x600",
+      "bytes": 45132,
+      "sha256": "d621365e7938455f2857607c5f17e70726ac78093bdab2c9d70546904d0682d8",
+      "usage": "Demo pet card: Doubao the corgi"
+    },
+    {
+      "path": "public/demo/cards/pet-juzi.webp",
+      "dimensions": "800x600",
+      "bytes": 71290,
+      "sha256": "2d472da6abb6bc43179348a2b4823c7ff81bac02dfced05ea11a45f7d14d37ed",
+      "usage": "Demo pet card: Juzi the orange tabby"
+    },
+    {
+      "path": "public/demo/cards/pet-kele.webp",
+      "dimensions": "800x600",
+      "bytes": 78844,
+      "sha256": "cb9afe3fce282983ad4389b855715bbd69cabeba24c834c914b145d636a8b875",
+      "usage": "Demo pet card: Kele the golden retriever"
+    },
+    {
+      "path": "public/demo/cards/pet-naitang.webp",
+      "dimensions": "800x600",
+      "bytes": 51806,
+      "sha256": "a478bef157f0b36c9cf1c16328643c4ed2cae152cbbdec40112bc4e4a1be2a03",
+      "usage": "Demo pet card: Naitang the British Shorthair"
+    },
+    {
+      "path": "public/demo/cards/goods-dog-food.webp",
+      "dimensions": "800x600",
+      "bytes": 38512,
+      "sha256": "05343dd4fe2c28e6b6bfefe3794b0dec6e42916e42b6de90e7c1aea1de55f181",
+      "usage": "Demo goods card: premium dog food"
+    },
+    {
+      "path": "public/demo/cards/goods-cat-food.webp",
+      "dimensions": "800x600",
+      "bytes": 39904,
+      "sha256": "2b7d74042871da2fdddd9cef63f7d6856066cba2bb0f0ef5daed9314552e9768",
+      "usage": "Demo goods card: balanced cat food"
+    },
+    {
+      "path": "public/demo/cards/goods-treat.webp",
+      "dimensions": "800x600",
+      "bytes": 74514,
+      "sha256": "737208c9fe630be1f87cd4fadacf667815d2962a2a11cc939c05da51d19d90d0",
+      "usage": "Demo goods card: freeze-dried treats"
+    },
+    {
+      "path": "public/demo/cards/goods-bed.webp",
+      "dimensions": "800x600",
+      "bytes": 95904,
+      "sha256": "a2bffd5d4d3eb568b750f9dba4f00c28ca45a4db2248114c63231c2ad550dabd",
+      "usage": "Demo goods card: cozy pet bed"
+    },
+    {
+      "path": "public/demo/cards/goods-leash.webp",
+      "dimensions": "800x600",
+      "bytes": 63486,
+      "sha256": "15aaf80b3b657eae5bd06a427811d782c1120ebff622baff34b050fd5578794b",
+      "usage": "Demo goods card: reflective leash and collar"
+    },
+    {
+      "path": "public/demo/cards/goods-toy.webp",
+      "dimensions": "800x600",
+      "bytes": 70410,
+      "sha256": "0277d25b2f3e5f3abdbdd1cbec38924e8f9ff121018b4516ef10bdbf79423fd5",
+      "usage": "Demo goods card: enrichment snuffle toy"
+    },
+    {
+      "path": "public/demo/cards/goods-dental.webp",
+      "dimensions": "800x600",
+      "bytes": 28300,
+      "sha256": "06d07a9d3a781b63ab4cfac98432f24e87dbaa01af00599666ab06fb03f9e20c",
+      "usage": "Demo goods card: pet dental kit"
+    },
+    {
+      "path": "public/demo/cards/goods-comb.webp",
+      "dimensions": "800x600",
+      "bytes": 72238,
+      "sha256": "697a8b75aa122f6b51d5702ee9d1e9eea5464d78cdacc6fda65a7433d280fdd8",
+      "usage": "Demo goods card: de-shedding grooming comb"
+    }
+  ]
+}

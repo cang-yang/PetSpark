@@ -71,6 +71,41 @@ public class FileObjectRepository {
         return count != null && count > 0;
     }
 
+    /**
+     * 只有已确认且被当前公开业务对象引用的图片才允许匿名读取。
+     * 上传中的文件、私有宠物图片以及下架商品图片均不会因此暴露。
+     */
+    public boolean isPubliclyReferenced(String id) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM file_object f
+                WHERE f.id = ?
+                  AND f.status = 'ACTIVE'
+                  AND f.deleted_at IS NULL
+                  AND (
+                    EXISTS (
+                        SELECT 1
+                        FROM goods g
+                        JOIN goods_category c ON c.id = g.category_id
+                        WHERE g.cover_file_id = f.id
+                          AND g.status = 'ACTIVE'
+                          AND g.deleted_at IS NULL
+                          AND c.status = 'ACTIVE'
+                          AND c.deleted_at IS NULL
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM pet_image pi
+                        JOIN pet p ON p.id = pi.pet_id
+                        WHERE pi.file_id = f.id
+                          AND p.public_status = 'PUBLISHED'
+                          AND p.deleted_at IS NULL
+                    )
+                  )
+                """, Integer.class, id);
+        return count != null && count > 0;
+    }
+
     public Optional<String> findStatusForOwner(String id, String ownerId) {
         return jdbcTemplate.query("""
                 SELECT status

@@ -30,18 +30,18 @@
 </template>
 
 <script>
-import heroPets from '@/assets/illustrations/hero-pets.jpg'
-import petCat from '@/assets/placeholders/pet-cat.png'
-import petDog from '@/assets/placeholders/pet-dog.png'
-import serviceBoarding from '@/assets/placeholders/service-boarding.png'
-import aiEmptyChat from '@/assets/illustrations/ai-empty-chat.webp'
+import homeWarm from '@/assets/scenes/scene-home-warm.webp'
+import healthWellness from '@/assets/scenes/scene-health-wellness.webp'
+import adoptionHope from '@/assets/scenes/scene-adoption-hope.webp'
+import servicesCare from '@/assets/scenes/scene-services-care.webp'
+import aiCompanion from '@/assets/scenes/scene-ai-companion.webp'
 
 const ARTWORK = {
-  home: heroPets,
-  care: petDog,
-  companion: petCat,
-  service: serviceBoarding,
-  ai: aiEmptyChat
+  home: homeWarm,
+  care: healthWellness,
+  companion: adoptionHope,
+  service: servicesCare,
+  ai: aiCompanion
 }
 
 export default {

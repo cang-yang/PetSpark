@@ -13,6 +13,7 @@ import catPlaceholder from '@/assets/placeholders/pet-cat.png'
 import dogPlaceholder from '@/assets/placeholders/pet-dog.png'
 import rabbitPlaceholder from '@/assets/placeholders/pet-rabbit.png'
 import birdPlaceholder from '@/assets/placeholders/pet-bird.png'
+import { getDemoPetImage } from '@/utils/demoContentAssets'
 
 const PLACEHOLDERS = {
   CAT: catPlaceholder,
@@ -50,6 +51,7 @@ export default {
         this.pet.coverUrl ||
         this.pet.avatarUrl ||
         this.pet.imageUrl ||
+        getDemoPetImage(this.pet) ||
         this.fallbackSource
       )
     },
