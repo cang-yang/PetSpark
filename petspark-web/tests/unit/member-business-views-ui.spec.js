@@ -1,5 +1,6 @@
 jest.mock('@/api/pets', () => ({
   listPets: jest.fn(),
+  getPet: jest.fn(),
   createMyPet: jest.fn(),
 }))
 jest.mock('@/api/health', () => ({

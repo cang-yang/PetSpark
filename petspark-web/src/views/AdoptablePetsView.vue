@@ -48,6 +48,7 @@
           formatTime(pet.infoUpdatedAt) || '近期更新'
         }`"
         action-text="申请领养"
+        :detail-to="`/pets/${pet.id}`"
         @action="openApply"
       />
     </section>
@@ -96,6 +97,7 @@
 
 <script>
 import { listAdoptablePets, createAdoptionApplication } from '@/api/adoption'
+import { getPet } from '@/api/pets'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import FilterBar from '@/components/ui/FilterBar.vue'
 import LoadingState from '@/components/ui/LoadingState.vue'
@@ -148,6 +150,15 @@ export default {
         })
         this.pets = response.data.items || []
         this.total = response.data.total || 0
+        const requestedPetId = this.$route && this.$route.query && this.$route.query.petId
+        if (requestedPetId && !this.showApply) {
+          let requestedPet = this.pets.find((pet) => pet.id === requestedPetId)
+          if (!requestedPet) {
+            const detail = await getPet(requestedPetId)
+            requestedPet = detail.data
+          }
+          if (requestedPet && requestedPet.adoptionStatus === 'AVAILABLE') this.openApply(requestedPet)
+        }
       } catch (error) {
         this.error =
           error.response?.data?.message ||

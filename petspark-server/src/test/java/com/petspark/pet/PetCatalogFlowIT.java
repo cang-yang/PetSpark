@@ -86,6 +86,55 @@ class PetCatalogFlowIT extends AbstractControllerTest {
     }
 
     @Test
+    void petProfileFieldsArePersistedAndVisibleWithoutLeakingOwnerContactDetails() throws Exception {
+        String breed = breed("IT-Border-Collie", "ACTIVE");
+        String result = mockMvc.perform(post("/api/v1/pets/mine").header("Authorization", bearer(ownerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"IT-Nova",
+                                  "species":"DOG",
+                                  "breedId":"%s",
+                                  "birthDate":"2024-05-10",
+                                  "description":"喜欢追逐飞盘，也愿意安静陪伴。",
+                                  "color":"黑白",
+                                  "behaviorTraits":"聪明、亲人、精力充沛",
+                                  "sterilizationStatus":"STERILIZED",
+                                  "trainingLevel":"INTERMEDIATE",
+                                  "specialNeeds":"每天需要两次户外活动",
+                                  "registeredAt":"2026-07-11"
+                                }
+                                """.formatted(breed)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.color").value("黑白"))
+                .andExpect(jsonPath("$.data.behaviorTraits").value("聪明、亲人、精力充沛"))
+                .andExpect(jsonPath("$.data.sterilizationStatus").value("STERILIZED"))
+                .andExpect(jsonPath("$.data.trainingLevel").value("INTERMEDIATE"))
+                .andExpect(jsonPath("$.data.specialNeeds").value("每天需要两次户外活动"))
+                .andExpect(jsonPath("$.data.registeredAt").value("2026-07-11"))
+                .andReturn().getResponse().getContentAsString();
+
+        String petId = objectMapper.readTree(result).path("data").path("id").asText();
+        jdbcTemplate.update("UPDATE pet SET public_status = 'PUBLISHED' WHERE id = ?", petId);
+        mockMvc.perform(get("/api/v1/pets/{id}", petId).header("Authorization", bearer(otherToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.name").value("IT-Nova"))
+                .andExpect(jsonPath("$.data.ownerUserId").doesNotExist())
+                .andExpect(jsonPath("$.data.color").value("黑白"));
+    }
+
+    @Test
+    void petProfileRejectsUnsupportedLifecycleMetadata() throws Exception {
+        mockMvc.perform(post("/api/v1/pets/mine").header("Authorization", bearer(ownerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"IT-Invalid","species":"DOG",
+                                 "sterilizationStatus":"MAYBE","trainingLevel":"EXPERT"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void adminPermissionsBreedRulesStateMachineAndVersionConflictAreEnforced() throws Exception {
         mockMvc.perform(post("/api/v1/admin/breeds").header("Authorization", bearer(adminToken))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"species\":\"DOG\",\"name\":\"IT-Beagle\"}"))

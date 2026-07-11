@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -31,6 +32,8 @@ record PetImageView(String fileId, int sortOrder, boolean coverFlag, String prev
 record PetView(String id, String name, String species, String breedId, String breedName, String sex,
                LocalDate birthDate, String description, String ownershipType, String ownerUserId,
                String adoptionStatus, String boardingStatus, String publicStatus, int version,
+               String color, String behaviorTraits, String sterilizationStatus, String trainingLevel,
+               String specialNeeds, LocalDate registeredAt, boolean ownedByCurrentUser,
                List<PetImageView> images) {}
 record BatchPetStatusResult(String petId, boolean success, String code, String message, PetView pet) {}
 record BreedRequest(@NotBlank @Size(max = 32) String species, @NotBlank @Size(max = 64) String name,
@@ -38,7 +41,11 @@ record BreedRequest(@NotBlank @Size(max = 32) String species, @NotBlank @Size(ma
 record PetSaveRequest(@NotBlank @Size(max = 64) String name, @NotBlank @Size(max = 32) String species,
                       String breedId, String sex, LocalDate birthDate, @Size(max = 1000) String description,
                       String ownershipType, String ownerUserId, String adoptionStatus, String boardingStatus,
-                      String publicStatus, Integer version, List<String> imageIds) {}
+                      String publicStatus, Integer version, List<String> imageIds,
+                      @Size(max = 64) String color, @Size(max = 500) String behaviorTraits,
+                      @Pattern(regexp = "UNKNOWN|STERILIZED|INTACT") String sterilizationStatus,
+                      @Pattern(regexp = "UNASSESSED|BASIC|INTERMEDIATE|ADVANCED") String trainingLevel,
+                      @Size(max = 1000) String specialNeeds, LocalDate registeredAt) {}
 record PetStatusRequest(String adoptionStatus, String boardingStatus, String publicStatus,
                         @NotBlank String reason, @NotNull Integer version) {}
 record DeletePetRequest(@NotNull Integer version) {}

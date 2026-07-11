@@ -66,14 +66,18 @@ class PetRepository {
     void insertPet(String id, PetSaveRequest request, String ownerId, boolean admin) {
         jdbcTemplate.update("""
                 INSERT INTO pet (id, name, species, breed_id, sex, birth_date, description, ownership_type,
-                                 owner_user_id, adoption_status, boarding_status, public_status, info_updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3))
+                                 owner_user_id, adoption_status, boarding_status, public_status, info_updated_at,
+                                 color, behavior_traits, sterilization_status, training_level, special_needs, registered_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), ?, ?, ?, ?, ?, ?)
                 """, id, request.name(), request.species(), blankToNull(request.breedId()), valueOr(request.sex(), "UNKNOWN"),
                 request.birthDate() == null ? null : Date.valueOf(request.birthDate()), request.description(),
                 admin ? valueOr(request.ownershipType(), "PLATFORM") : "USER",
                 admin ? blankToNull(request.ownerUserId()) : ownerId,
                 valueOr(request.adoptionStatus(), "NOT_FOR_ADOPTION"), valueOr(request.boardingStatus(), "NONE"),
-                admin ? valueOr(request.publicStatus(), "PRIVATE") : "PRIVATE");
+                admin ? valueOr(request.publicStatus(), "PRIVATE") : "PRIVATE",
+                blankToNull(request.color()), blankToNull(request.behaviorTraits()),
+                valueOr(request.sterilizationStatus(), "UNKNOWN"), valueOr(request.trainingLevel(), "UNASSESSED"),
+                blankToNull(request.specialNeeds()), request.registeredAt() == null ? null : Date.valueOf(request.registeredAt()));
     }
 
     int updatePet(String id, PetSaveRequest request) {
@@ -81,13 +85,18 @@ class PetRepository {
                 UPDATE pet
                 SET name = ?, species = ?, breed_id = ?, sex = ?, birth_date = ?, description = ?,
                     ownership_type = ?, owner_user_id = ?, adoption_status = ?, boarding_status = ?,
-                    public_status = ?, info_updated_at = CURRENT_TIMESTAMP(3), version = version + 1
+                    public_status = ?, color = ?, behavior_traits = ?, sterilization_status = ?,
+                    training_level = ?, special_needs = ?, registered_at = ?,
+                    info_updated_at = CURRENT_TIMESTAMP(3), version = version + 1
                 WHERE id = ? AND version = ? AND deleted_at IS NULL
                 """, request.name(), request.species(), blankToNull(request.breedId()), valueOr(request.sex(), "UNKNOWN"),
                 request.birthDate() == null ? null : Date.valueOf(request.birthDate()), request.description(),
                 valueOr(request.ownershipType(), "PLATFORM"), blankToNull(request.ownerUserId()),
                 valueOr(request.adoptionStatus(), "NOT_FOR_ADOPTION"), valueOr(request.boardingStatus(), "NONE"),
-                valueOr(request.publicStatus(), "PRIVATE"), id, request.version());
+                valueOr(request.publicStatus(), "PRIVATE"), blankToNull(request.color()),
+                blankToNull(request.behaviorTraits()), valueOr(request.sterilizationStatus(), "UNKNOWN"),
+                valueOr(request.trainingLevel(), "UNASSESSED"), blankToNull(request.specialNeeds()),
+                request.registeredAt() == null ? null : Date.valueOf(request.registeredAt()), id, request.version());
     }
 
     int updateStatus(String id, String adoptionStatus, String boardingStatus, String publicStatus, int version) {
@@ -165,11 +174,15 @@ class PetRepository {
                 rs -> {
                     rs.next();
                     Date birthDate = rs.getDate("birth_date");
+                    Date registeredAt = rs.getDate("registered_at");
                     return new PetView(rs.getString("id"), rs.getString("name"), rs.getString("species"),
                             rs.getString("breed_id"), rs.getString("breed_name"), rs.getString("sex"),
                             birthDate == null ? null : birthDate.toLocalDate(), rs.getString("description"),
                             rs.getString("ownership_type"), rs.getString("owner_user_id"), rs.getString("adoption_status"),
-                            rs.getString("boarding_status"), rs.getString("public_status"), rs.getInt("version"), images(id));
+                            rs.getString("boarding_status"), rs.getString("public_status"), rs.getInt("version"),
+                            rs.getString("color"), rs.getString("behavior_traits"), rs.getString("sterilization_status"),
+                            rs.getString("training_level"), rs.getString("special_needs"),
+                            registeredAt == null ? null : registeredAt.toLocalDate(), false, images(id));
                 }, id);
     }
 

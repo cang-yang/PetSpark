@@ -20,7 +20,9 @@ class PetService {
     }
 
     PageResult<PetView> publicPets(PetQuery query, String userId) {
-        return pets.findPets(query, false, userId);
+        PageResult<PetView> page = pets.findPets(query, false, userId);
+        return new PageResult<>(page.getItems().stream().map(pet -> withOwnership(pet, userId)).toList(),
+                page.getPage(), page.getSize(), page.getTotal());
     }
 
     PageResult<PetView> adminPets(PetQuery query) {
@@ -32,7 +34,7 @@ class PetService {
         if (!"PUBLISHED".equals(pet.publicStatus()) && !userId.equals(pet.ownerUserId())) {
             throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND_001);
         }
-        return pet;
+        return withOwnership(pet, userId);
     }
 
     PetView get(String id) {
@@ -68,7 +70,7 @@ class PetService {
         String id = UUID.randomUUID().toString();
         pets.insertPet(id, request, userId, false);
         pets.replaceImages(id, request.imageIds());
-        return get(id);
+        return withOwnership(get(id), userId);
     }
 
     @Transactional
@@ -83,7 +85,7 @@ class PetService {
             throw new BusinessException(ErrorCode.VERSION_CONFLICT_001);
         }
         pets.replaceImages(id, request.imageIds());
-        return get(id);
+        return withOwnership(get(id), userId);
     }
 
     @Transactional
@@ -190,5 +192,13 @@ class PetService {
         if (!legal) {
             throw new BusinessException(ErrorCode.PET_STATE_001);
         }
+    }
+
+    private PetView withOwnership(PetView pet, String userId) {
+        boolean mine = userId != null && userId.equals(pet.ownerUserId());
+        return new PetView(pet.id(), pet.name(), pet.species(), pet.breedId(), pet.breedName(), pet.sex(),
+                pet.birthDate(), pet.description(), pet.ownershipType(), mine ? pet.ownerUserId() : null, pet.adoptionStatus(),
+                pet.boardingStatus(), pet.publicStatus(), pet.version(), pet.color(), pet.behaviorTraits(),
+                pet.sterilizationStatus(), pet.trainingLevel(), pet.specialNeeds(), pet.registeredAt(), mine, pet.images());
     }
 }
