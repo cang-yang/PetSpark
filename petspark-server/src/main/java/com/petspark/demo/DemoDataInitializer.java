@@ -60,6 +60,7 @@ public class DemoDataInitializer implements ApplicationRunner, Ordered {
         String memberId = exactUserId(demoUsers.getMemberUsername(), demoUsers.getMemberEmail(), "演示用户");
 
         seedBreedsAndPets(memberId);
+        seedHealthSummaries(adminId, memberId);
         seedCatalog();
         seedRooms();
         seedBeautyAvailability();
@@ -72,19 +73,46 @@ public class DemoDataInitializer implements ApplicationRunner, Ordered {
         String corgi = ensureBreed("DOG", "威尔士柯基犬", "聪明活泼，需要规律运动与体重管理。");
         String british = ensureBreed("CAT", "英国短毛猫", "性格稳定，适合室内陪伴。");
         String domestic = ensureBreed("CAT", "中华田园猫", "适应力强，活泼亲人。");
+        String labrador = ensureBreed("DOG", "拉布拉多寻回犬", "友善稳重，喜欢互动与户外活动。");
+        String maineCoon = ensureBreed("CAT", "缅因猫", "体型较大、性格温和，需要规律梳毛。");
 
         insertPet("pet:member:doubao", "豆包", "DOG", corgi, "MALE", LocalDate.now(clock).minusYears(3),
-                "演示用户的家庭成员，喜欢散步和嗅闻游戏。", "USER", memberId,
+                "演示用户的家庭成员，喜欢散步和嗅闻游戏。", "黄白", "亲人、好奇、食物驱动",
+                "STERILIZED", "INTERMEDIATE", "需要控制体重并避免高处跳跃。",
+                LocalDate.now(clock).minusYears(2).minusMonths(8), "USER", memberId,
                 "NOT_FOR_ADOPTION", "PRIVATE");
         insertPet("pet:public:orange", "橘子", "CAT", domestic, "FEMALE", LocalDate.now(clock).minusYears(2),
-                "亲人爱撒娇，已完成基础体检，正在等待稳定的新家。", "PLATFORM", null,
-                "AVAILABLE", "PUBLISHED");
+                "亲人爱撒娇，已完成基础体检，正在等待稳定的新家。", "橘白", "亲人、爱玩逗猫棒",
+                "STERILIZED", "BASIC", "换粮需至少七天渐进过渡。",
+                LocalDate.now(clock).minusMonths(10), "PLATFORM", null, "AVAILABLE", "PUBLISHED");
         insertPet("pet:public:cola", "可乐", "DOG", golden, "MALE", LocalDate.now(clock).minusYears(4),
-                "性格开朗，喜欢和人互动，适合有规律陪伴时间的家庭。", "PLATFORM", null,
-                "AVAILABLE", "PUBLISHED");
+                "性格开朗，喜欢和人互动，适合有规律陪伴时间的家庭。", "金色", "开朗、稳重、喜欢捡球",
+                "STERILIZED", "INTERMEDIATE", "每天需要两次中等强度散步。",
+                LocalDate.now(clock).minusYears(1).minusMonths(3), "PLATFORM", null, "AVAILABLE", "PUBLISHED");
         insertPet("pet:public:milky", "奶糖", "CAT", british, "FEMALE", LocalDate.now(clock).minusYears(1),
-                "安静好奇，已完成驱虫和疫苗基础评估。", "PLATFORM", null,
-                "AVAILABLE", "PUBLISHED");
+                "安静好奇，已完成驱虫和疫苗基础评估。", "蓝灰", "安静、慢热、喜欢高处观察",
+                "INTACT", "BASIC", "初次见面请放慢动作，避免强行抱起。",
+                LocalDate.now(clock).minusMonths(5), "PLATFORM", null, "AVAILABLE", "PUBLISHED");
+        insertPet("pet:public:pingan", "平安", "DOG", labrador, "FEMALE", LocalDate.now(clock).minusYears(3),
+                "喜欢与人并肩散步，能够响应基础口令。", "奶油黄", "友善、稳定、喜欢陪伴",
+                "STERILIZED", "INTERMEDIATE", "进食速度较快，建议使用慢食碗。",
+                LocalDate.now(clock).minusMonths(8), "PLATFORM", null, "AVAILABLE", "PUBLISHED");
+        insertPet("pet:public:mumu", "木木", "CAT", maineCoon, "MALE", LocalDate.now(clock).minusYears(2),
+                "温和从容，喜欢梳毛和窗边晒太阳。", "棕虎斑", "温和、独立、适应室内生活",
+                "STERILIZED", "BASIC", "长毛需要每周至少三次梳理。",
+                LocalDate.now(clock).minusMonths(6), "PLATFORM", null, "AVAILABLE", "PUBLISHED");
+    }
+
+    private void seedHealthSummaries(String adminId, String memberId) {
+        LocalDate today = LocalDate.now(clock);
+        insertHealthSummary("health:doubao:wellness", "pet:member:doubao", "CHECKUP", today.minusDays(18),
+                "基础体检指标平稳，建议继续保持体重管理。", "MEMBER", memberId);
+        insertHealthSummary("health:orange:vaccine", "pet:public:orange", "VACCINATION", today.minusDays(36),
+                "已完成本阶段疫苗记录核验。", "ADMIN", adminId);
+        insertHealthSummary("health:cola:dental", "pet:public:cola", "DENTAL", today.minusDays(24),
+                "口腔基础检查完成，建议保持每周洁齿护理。", "ADMIN", adminId);
+        insertHealthSummary("health:milky:deworming", "pet:public:milky", "DEWORMING", today.minusDays(12),
+                "已完成常规驱虫记录核验。", "ADMIN", adminId);
     }
 
     private void seedCatalog() {
@@ -187,19 +215,48 @@ public class DemoDataInitializer implements ApplicationRunner, Ordered {
     }
 
     private void insertPet(String key, String name, String species, String breedId, String sex,
-            LocalDate birthDate, String description, String ownershipType, String ownerId,
+            LocalDate birthDate, String description, String color, String behaviorTraits,
+            String sterilizationStatus, String trainingLevel, String specialNeeds, LocalDate registeredAt,
+            String ownershipType, String ownerId,
             String adoptionStatus, String publicStatus) {
         String id = id(key);
         if (exists("pet", id)) {
+            jdbc.update("""
+                    UPDATE pet SET
+                        color = COALESCE(color, ?), behavior_traits = COALESCE(behavior_traits, ?),
+                        sterilization_status = CASE WHEN sterilization_status = 'UNKNOWN' THEN ? ELSE sterilization_status END,
+                        training_level = CASE WHEN training_level = 'UNASSESSED' THEN ? ELSE training_level END,
+                        special_needs = COALESCE(special_needs, ?), registered_at = COALESCE(registered_at, ?)
+                    WHERE id = ?
+                      AND color IS NULL AND behavior_traits IS NULL
+                      AND sterilization_status = 'UNKNOWN' AND training_level = 'UNASSESSED'
+                      AND special_needs IS NULL AND registered_at IS NULL
+                    """, color, behaviorTraits, sterilizationStatus, trainingLevel, specialNeeds,
+                    Date.valueOf(registeredAt), id);
             return;
         }
         jdbc.update("""
                 INSERT INTO pet
                     (id, name, species, breed_id, sex, birth_date, description, ownership_type,
-                     owner_user_id, adoption_status, boarding_status, public_status, info_updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'NONE', ?, CURRENT_TIMESTAMP(3))
+                     owner_user_id, adoption_status, boarding_status, public_status, info_updated_at,
+                     color, behavior_traits, sterilization_status, training_level, special_needs, registered_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'NONE', ?, CURRENT_TIMESTAMP(3), ?, ?, ?, ?, ?, ?)
                 """, id, name, species, breedId, sex, Date.valueOf(birthDate), description,
-                ownershipType, ownerId, adoptionStatus, publicStatus);
+                ownershipType, ownerId, adoptionStatus, publicStatus, color, behaviorTraits,
+                sterilizationStatus, trainingLevel, specialNeeds, Date.valueOf(registeredAt));
+    }
+
+    private void insertHealthSummary(String key, String petKey, String recordType, LocalDate occurredOn,
+            String summary, String sourceRole, String authorId) {
+        String recordId = id(key);
+        if (!exists("pet_health_record", recordId)) {
+            jdbc.update("""
+                    INSERT INTO pet_health_record
+                        (id, pet_id, record_type, occurred_on, summary, detail_ciphertext,
+                         source_role, author_id, status, version)
+                    VALUES (?, ?, ?, ?, ?, NULL, ?, ?, 'ACTIVE', 0)
+                    """, recordId, id(petKey), recordType, Date.valueOf(occurredOn), summary, sourceRole, authorId);
+        }
     }
 
     private String ensureCategory(String code, String name, int sortOrder) {
