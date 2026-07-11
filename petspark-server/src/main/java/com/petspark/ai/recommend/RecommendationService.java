@@ -312,7 +312,7 @@ public class RecommendationService {
                 safeReason = safeReason.substring(0, MAX_REASON_CHARS);
             }
 
-            validated.add(new AiRecommendItemView(id, type, safeReason));
+            validated.add(toView(candidateById.get(id), safeReason));
             seenIds.add(id);
         }
 
@@ -357,9 +357,15 @@ public class RecommendationService {
                 break;
             }
             String reason = buildRuleReason(c);
-            items.add(new AiRecommendItemView(c.id(), c.type(), reason));
+            items.add(toView(c, reason));
         }
         return items;
+    }
+
+    private AiRecommendItemView toView(Candidate candidate, String reason) {
+        return new AiRecommendItemView(candidate.id(), candidate.type(), reason,
+                candidate.displayName(), candidate.imageUrl(), candidate.subtitle(),
+                candidate.price(), candidate.targetPath());
     }
 
     private int matchScore(Candidate c, String prefLower) {

@@ -1,6 +1,7 @@
 package com.petspark.ai.recommend;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * 推荐候选值对象（PR-AI-03）。
@@ -15,5 +16,14 @@ public record Candidate(
         String id,
         String type,
         String publicSummary,
-        List<String> matchedFacts) {
+        List<String> matchedFacts,
+        String displayName,
+        String imageUrl,
+        String subtitle,
+        BigDecimal price,
+        String targetPath) {
+    Candidate(String id, String type, String publicSummary, List<String> matchedFacts) {
+        this(id, type, publicSummary, matchedFacts, id, null, null, null,
+                "/" + type.toLowerCase(java.util.Locale.ROOT) + "/" + id);
+    }
 }

@@ -39,18 +39,20 @@ public class PetCandidateRetriever implements CandidateRetriever {
         // species 非空时按物种过滤（精确匹配，species 列已为 VARCHAR(32)）。
         boolean hasSpecies = species != null && !species.isBlank();
         String sql = """
-                SELECT id, name, species, sex, public_status, adoption_status
-                FROM pet
-                WHERE deleted_at IS NULL
-                  AND (owner_user_id = ? OR public_status = 'PUBLISHED')
+                SELECT p.id, p.name, p.species, p.sex, p.public_status, p.adoption_status,
+                       (SELECT pi.file_id FROM pet_image pi WHERE pi.pet_id = p.id
+                        ORDER BY pi.cover_flag DESC, pi.sort_order ASC LIMIT 1) AS image_file_id
+                FROM pet p
+                WHERE p.deleted_at IS NULL
+                  AND (p.owner_user_id = ? OR p.public_status = 'PUBLISHED')
                 """;
         List<Object> params = new ArrayList<>();
         params.add(userId);
         if (hasSpecies) {
-            sql += " AND species = ?";
+            sql += " AND p.species = ?";
             params.add(species.trim());
         }
-        sql += " ORDER BY created_at DESC LIMIT ?";
+        sql += " ORDER BY p.created_at DESC LIMIT ?";
         params.add(MAX_CANDIDATES);
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -76,7 +78,10 @@ public class PetCandidateRetriever implements CandidateRetriever {
             }
 
             String summary = truncate(name + "（" + sp + "）", 120);
-            return new Candidate(id, "PET", summary, facts);
+            String imageFileId = rs.getString("image_file_id");
+            return new Candidate(id, "PET", summary, facts, name,
+                    imageFileId == null ? null : "/api/v1/files/" + imageFileId,
+                    sp, null, "/pets/" + id);
         }, params.toArray());
     }
 

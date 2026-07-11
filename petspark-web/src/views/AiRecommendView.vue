@@ -88,11 +88,19 @@
             class="ai-recommend-view__item"
             :data-testid="`recommend-item-${idx}`"
           >
+            <img class="ai-recommend-view__item-image" :src="item.imageUrl || fallbackImage(item.type)" :alt="item.displayName" />
+            <div class="ai-recommend-view__item-content">
             <div class="ai-recommend-view__item-head">
+              <strong>{{ item.displayName }}</strong>
               <span class="ai-recommend-view__item-type">{{ typeLabel(item.type) }}</span>
-              <span class="ai-recommend-view__item-id">{{ item.id }}</span>
             </div>
+            <p v-if="item.subtitle" class="ai-recommend-view__item-subtitle">{{ item.subtitle }}</p>
             <p class="ai-recommend-view__item-reason">{{ item.reason }}</p>
+            <div class="ai-recommend-view__item-foot">
+              <span v-if="item.price != null" class="ai-recommend-view__price">¥{{ Number(item.price).toFixed(2) }}</span>
+              <el-button type="text" @click="$router.push(item.targetPath)">查看详情</el-button>
+            </div>
+            </div>
           </li>
         </ul>
         <p v-if="result.boundaryNotice" class="ai-recommend-view__boundary" data-testid="recommend-boundary">
@@ -112,6 +120,8 @@
 import { getAiStatus, withdrawAiConsent, recommendAi } from '@/api/ai'
 import StatusPanel from '@/components/StatusPanel.vue'
 import AiConsentDialog from '@/components/AiConsentDialog.vue'
+import petFallback from '@/assets/placeholders/pet-dog.png'
+import serviceFallback from '@/assets/placeholders/service-boarding.png'
 
 /**
  * AI 推荐视图（API-AI-007，路由 /ai/recommend）。
@@ -201,6 +211,11 @@ export default {
       if (type === 'GOODS') return '商品'
       if (type === 'SERVICE') return '服务'
       return type
+    },
+    fallbackImage(type) {
+      if (type === 'SERVICE') return serviceFallback
+      if (type === 'GOODS') return '/demo/cards/goods-toy.webp'
+      return petFallback
     }
   }
 }
@@ -215,10 +230,14 @@ export default {
 .ai-recommend-view__loading { padding: 40px 0; text-align: center; color: #909399; }
 .ai-recommend-view__empty { padding: 32px 0; text-align: center; color: #909399; }
 .ai-recommend-view__items { list-style: none; margin: 16px 0 0; padding: 0; }
-.ai-recommend-view__item { padding: 12px 16px; margin-bottom: 10px; border: 1px solid #e4e7ed; border-radius: 8px; }
+.ai-recommend-view__item { display: flex; gap: 16px; padding: 12px 16px; margin-bottom: 10px; border: 1px solid #e4e7ed; border-radius: 8px; }
+.ai-recommend-view__item-image { width: 112px; height: 84px; border-radius: 8px; object-fit: cover; background: #f5f7fa; }
+.ai-recommend-view__item-content { flex: 1; min-width: 0; }
 .ai-recommend-view__item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .ai-recommend-view__item-type { padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #fff; background: #409eff; }
-.ai-recommend-view__item-id { color: #909399; font-size: 12px; }
+.ai-recommend-view__item-subtitle { margin: 4px 0; color: #909399; font-size: 13px; }
 .ai-recommend-view__item-reason { margin: 0; color: #24313d; font-size: 14px; line-height: 1.5; }
+.ai-recommend-view__item-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.ai-recommend-view__price { color: #f56c6c; font-weight: 700; }
 .ai-recommend-view__boundary { margin-top: 16px; padding: 8px 12px; background: #fdf6ec; border: 1px solid #faecd8; border-radius: 6px; color: #e6a23c; font-size: 13px; }
 </style>
