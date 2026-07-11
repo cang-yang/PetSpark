@@ -54,3 +54,7 @@ npm run build
 ```
 
 执行后端 `verify` 前需要确认本机 MySQL 可连接。环境变量示例见 `.env.example`。`docker-compose.yml` 仅作为其他机器缺少 MySQL 时的备用方案。
+
+## 生产部署
+
+生产环境使用 GitHub Actions 构建 GHCR 镜像，并通过 SSH 发布到 1Panel 管理的 Linux VPS。Docker Compose、生产环境变量、HTTPS、首次发布和回滚步骤见 [`deploy/README.md`](deploy/README.md)。真实生产密钥只保存在 GitHub Secrets 与 VPS `/opt/petspark/.env`，不得提交到仓库。

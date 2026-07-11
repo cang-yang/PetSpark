@@ -1,0 +1,126 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: petspark-production
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: >-
+      vars.CD_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'))
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.release.outputs.sha }}
+      owner: ${{ steps.release.outputs.owner }}
+    steps:
+      - id: release
+        name: Resolve immutable release metadata
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ github.sha }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_run" ]]; then
+            sha="$WORKFLOW_SHA"
+          else
+            sha="$DISPATCH_SHA"
+          fi
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid release SHA: $sha" >&2
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "owner=${REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+  build-backend:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: petspark-server/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ needs.prepare.outputs.owner }}/petspark-server:${{ needs.prepare.outputs.sha }}
+            ghcr.io/${{ needs.prepare.outputs.owner }}/petspark-server:latest
+          cache-from: type=gha,scope=petspark-server
+          cache-to: type=gha,mode=max,scope=petspark-server
+
+  build-frontend:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: petspark-web
+          file: petspark-web/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ needs.prepare.outputs.owner }}/petspark-web:${{ needs.prepare.outputs.sha }}
+            ghcr.io/${{ needs.prepare.outputs.owner }}/petspark-web:latest
+          cache-from: type=gha,scope=petspark-web
+          cache-to: type=gha,mode=max,scope=petspark-web
+
+  deploy:
+    needs: [prepare, build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - name: Configure verified SSH identity
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/petspark_deploy"
+          printf '%s\n' "$DEPLOY_HOST_KEY" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/petspark_deploy" "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/petspark_deploy" >/dev/null
+          ssh-keygen -F "[${{ secrets.DEPLOY_HOST }}]:${{ secrets.DEPLOY_PORT }}" -f "$HOME/.ssh/known_hosts" >/dev/null
+      - name: Upload deployment definition
+        run: |
+          scp -P "${{ secrets.DEPLOY_PORT }}" -i "$HOME/.ssh/petspark_deploy" \
+            docker-compose.prod.yml deploy/deploy.sh \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/petspark/"
+      - name: Deploy immutable release
+        run: |
+          ssh -p "${{ secrets.DEPLOY_PORT }}" -i "$HOME/.ssh/petspark_deploy" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "chmod 750 /opt/petspark/deploy.sh && /opt/petspark/deploy.sh '${{ needs.prepare.outputs.sha }}'"
