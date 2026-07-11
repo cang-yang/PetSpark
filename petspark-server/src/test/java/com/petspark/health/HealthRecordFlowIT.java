@@ -125,6 +125,16 @@ class HealthRecordFlowIT extends AbstractControllerTest {
     }
 
     @Test
+    void adminCanListHealthRecordsForOwnerlessAdoptablePet() throws Exception {
+        String petId = pet("IT-HEALTH-Ownerless", null, "PUBLISHED");
+
+        mockMvc.perform(get("/api/v1/pets/{petId}/health-records", petId)
+                        .header("Authorization", bearer(adminToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items").isArray());
+    }
+
+    @Test
     void revisionCreatesNewRowAndLeavesOriginalUntouched() throws Exception {
         String petId = pet("IT-HEALTH-Revise", ownerId, "PUBLISHED");
         String created = mockMvc.perform(post("/api/v1/pets/{petId}/health-records", petId)

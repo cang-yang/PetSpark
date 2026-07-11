@@ -44,6 +44,13 @@ http.interceptors.response.use(
         await store.dispatch('logout')
       }
     }
+    const authenticationRequired = error.response && error.response.status === 401 &&
+      original && !original.url.startsWith('/api/v1/auth/')
+    if (authenticationRequired && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('petspark:auth-required', {
+        detail: { redirect: `${window.location.pathname}${window.location.search}` }
+      }))
+    }
     const body = error.response && error.response.data
     const message = body && body.message ? body.message : '请求失败，请稍后重试'
     return Promise.reject(new Error(message))

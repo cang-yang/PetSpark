@@ -142,6 +142,7 @@ public class SparkAiChatGateway implements AiChatGateway {
                 0.4,
                 1024,
                 false,
+                new ThinkingConfig("disabled"),
                 responseFormat);
     }
 
@@ -167,6 +168,7 @@ public class SparkAiChatGateway implements AiChatGateway {
                 temperature,
                 maxTokens,
                 false,
+                new ThinkingConfig("disabled"),
                 responseFormat);
     }
 
@@ -221,6 +223,7 @@ public class SparkAiChatGateway implements AiChatGateway {
             double temperature,
             @JsonProperty("max_tokens") int maxTokens,
             boolean stream,
+            ThinkingConfig thinking,
             @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonProperty("response_format") ResponseFormat responseFormat) {
     }
@@ -229,6 +232,9 @@ public class SparkAiChatGateway implements AiChatGateway {
     }
 
     private record ResponseFormat(String type) {
+    }
+
+    private record ThinkingConfig(String type) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

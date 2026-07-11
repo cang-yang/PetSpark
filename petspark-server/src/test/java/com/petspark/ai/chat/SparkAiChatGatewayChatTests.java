@@ -45,6 +45,7 @@ class SparkAiChatGatewayChatTests {
                 .withRequestBody(containing("\"role\":\"assistant\""))
                 .withRequestBody(containing("\"content\":\"hi\""))
                 .withRequestBody(containing("\"max_tokens\":1024"))
+                .withRequestBody(containing("\"thinking\":{\"type\":\"disabled\"}"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("""
