@@ -107,7 +107,12 @@ public final class AiChatDtos {
     public record AiRecommendItemView(
             String id,
             String type,
-            String reason) {}
+            String reason,
+            String displayName,
+            String imageUrl,
+            String subtitle,
+            java.math.BigDecimal price,
+            String targetPath) {}
 
     /** POST /ai/recommend 响应。items 已通过服务端再校验，boundaryNotice 为边界提示。 */
     public record AiRecommendReplyView(

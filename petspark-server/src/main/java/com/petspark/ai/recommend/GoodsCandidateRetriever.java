@@ -38,7 +38,7 @@ public class GoodsCandidateRetriever implements CandidateRetriever {
     @Override
     public List<Candidate> retrieve(String species, int age, String userId) {
         String sql = """
-                SELECT g.id, g.name, g.description, g.price, g.stock, c.name AS category_name
+                SELECT g.id, g.name, g.description, g.cover_file_id, g.price, g.stock, c.name AS category_name
                 FROM goods g
                 JOIN goods_category c ON g.category_id = c.id
                 WHERE g.status = 'ACTIVE' AND c.status = 'ACTIVE' AND g.deleted_at IS NULL
@@ -68,7 +68,10 @@ public class GoodsCandidateRetriever implements CandidateRetriever {
 
             String summary = truncate(name + "（" + (categoryName == null ? "" : categoryName) + "）"
                     + (description == null ? "" : " " + description), 120);
-            return new Candidate(id, "GOODS", summary, facts);
+            String coverFileId = rs.getString("cover_file_id");
+            return new Candidate(id, "GOODS", summary, facts, name,
+                    coverFileId == null ? null : "/api/v1/files/" + coverFileId,
+                    categoryName, price, "/goods/" + id);
         }, MAX_CANDIDATES);
     }
 

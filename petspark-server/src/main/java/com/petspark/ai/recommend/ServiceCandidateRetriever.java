@@ -67,7 +67,8 @@ public class ServiceCandidateRetriever implements CandidateRetriever {
 
             String summary = truncate(name + "（" + (kind == null ? "" : kind) + "）"
                     + (description == null ? "" : " " + description), 120);
-            return new Candidate(id, "SERVICE", summary, facts);
+            return new Candidate(id, "SERVICE", summary, facts, name, null,
+                    kind, basePrice, "/services/" + id);
         }, MAX_CANDIDATES);
     }
 
