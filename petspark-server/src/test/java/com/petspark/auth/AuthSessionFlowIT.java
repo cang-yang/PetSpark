@@ -39,9 +39,13 @@ class AuthSessionFlowIT extends AbstractControllerTest {
     @MockitoBean
     private PasswordResetNotifier passwordResetNotifier;
 
+    @MockitoBean
+    private RegistrationEmailNotifier registrationEmailNotifier;
+
     @BeforeEach
     void configurePasswordResetNotifier() {
         given(passwordResetNotifier.isAvailable()).willReturn(true);
+        given(registrationEmailNotifier.isAvailable()).willReturn(true);
     }
 
     @AfterEach
@@ -51,8 +55,8 @@ class AuthSessionFlowIT extends AbstractControllerTest {
                 + "(SELECT id FROM sys_user WHERE username LIKE 'session_it_%')");
         jdbcTemplate.update("DELETE FROM auth_captcha WHERE client_hash LIKE 'session-auth-%'");
         jdbcTemplate.update("DELETE FROM sys_user_role WHERE user_id IN "
-                + "(SELECT id FROM sys_user WHERE username LIKE 'session_it_%')");
-        jdbcTemplate.update("DELETE FROM sys_user WHERE username LIKE 'session_it_%'");
+                + "(SELECT id FROM sys_user WHERE email LIKE 'session_it_%@example.com')");
+        jdbcTemplate.update("DELETE FROM sys_user WHERE email LIKE 'session_it_%@example.com'");
     }
 
     @Test
@@ -158,6 +162,17 @@ class AuthSessionFlowIT extends AbstractControllerTest {
         assertThat(stored.get("code_hash").toString()).startsWith("$2");
         assertThat(stored.get("consumed_at")).isNull();
 
+        Captcha repeatCaptcha = issueCaptcha("session-auth-reset-code-repeat");
+        mockMvc.perform(post("/api/v1/auth/password-reset-codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "email", credentials.email(),
+                                "captchaId", repeatCaptcha.id(),
+                                "captchaAnswer", repeatCaptcha.answer()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("OK"));
+        verify(passwordResetNotifier).sendCode(eq(credentials.email()), org.mockito.ArgumentMatchers.anyString());
+
         Captcha unknownCaptcha = issueCaptcha("session-auth-reset-code-unknown");
         mockMvc.perform(post("/api/v1/auth/password-reset-codes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -245,15 +260,23 @@ class AuthSessionFlowIT extends AbstractControllerTest {
         String username = "session_it_" + System.nanoTime();
         String email = username + "@example.com";
         Captcha captcha = issueCaptcha("session-auth-register-" + username);
+        mockMvc.perform(post("/api/v1/auth/registration-codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "email", email,
+                                "captchaId", captcha.id(),
+                                "captchaAnswer", captcha.answer()))))
+                .andExpect(status().isOk());
+        ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
+        verify(registrationEmailNotifier).sendCode(eq(email), codeCaptor.capture());
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of(
                                 "username", username,
                                 "email", email,
+                                "emailCode", codeCaptor.getValue(),
                                 "password", "Str0ngPass!",
-                                "nickname", "Session",
-                                "captchaId", captcha.id(),
-                                "captchaAnswer", captcha.answer()))))
+                                "nickname", "Session"))))
                 .andExpect(status().isOk());
         return new Credentials(username, email, "Str0ngPass!");
     }

@@ -4,6 +4,7 @@ import com.petspark.common.error.BusinessException;
 import com.petspark.common.error.ErrorCode;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +28,14 @@ public class PasswordResetService {
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
     private final long ttlSeconds;
+    private final Duration resendCooldown;
 
     public PasswordResetService(CaptchaService captchaService, UserRepository userRepository,
             VerificationCodeRepository codeRepository, PasswordResetNotifier notifier,
             PasswordEncoder passwordEncoder, PasswordPolicy passwordPolicy,
             RefreshTokenService refreshTokenService, Clock clock,
-            @Value("${petspark.auth.password-reset.ttl-seconds:600}") long ttlSeconds) {
+            @Value("${petspark.auth.password-reset.ttl-seconds:600}") long ttlSeconds,
+            @Value("${petspark.auth.password-reset.resend-cooldown-seconds:60}") long resendCooldownSeconds) {
         this.captchaService = captchaService;
         this.userRepository = userRepository;
         this.codeRepository = codeRepository;
@@ -42,6 +45,7 @@ public class PasswordResetService {
         this.refreshTokenService = refreshTokenService;
         this.clock = clock;
         this.ttlSeconds = ttlSeconds;
+        this.resendCooldown = Duration.ofSeconds(Math.max(1, resendCooldownSeconds));
     }
 
     public void requestCode(PasswordResetCodeRequest request) {
@@ -49,12 +53,16 @@ public class PasswordResetService {
         if (!notifier.isAvailable()) {
             throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_001, "密码重置邮件服务暂不可用");
         }
-        userRepository.findByEmail(request.email()).ifPresent(user -> {
+        String email = AuthEmail.normalize(request.email());
+        if (codeRepository.issuedSince("PASSWORD_RESET", email, clock.instant().minus(resendCooldown))) {
+            return;
+        }
+        userRepository.findByEmail(email).ifPresent(user -> {
             String code = "%06d".formatted(random.nextInt(1_000_000));
-            codeRepository.insert(UUID.randomUUID().toString(), request.email(), passwordEncoder.encode(code),
+            codeRepository.insert(UUID.randomUUID().toString(), email, passwordEncoder.encode(code),
                     clock.instant().plusSeconds(ttlSeconds));
             try {
-                notifier.sendCode(request.email(), code);
+                notifier.sendCode(email, code);
             } catch (RuntimeException ex) {
                 // The public response remains indistinguishable from an unknown account.
                 log.warn("Password reset delivery failed; request accepted without exposing account existence");

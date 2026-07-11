@@ -40,6 +40,8 @@ npm run serve
 
 演示账号和演示业务数据同样默认关闭。需要本地展示时，在被 Git 忽略的 `.env.local` 中同时设置 `PETSPARK_DEMO_USERS_ENABLED=true`、两组演示账号密码以及 `PETSPARK_DEMO_DATA_ENABLED=true`；可用 `PETSPARK_DEMO_DATA_FUTURE_DAYS` 控制补齐的未来预约天数。演示填充使用稳定标识并重复执行安全，不会覆盖或删除自行创建的数据；不得把真实密码写入仓库。
 
+用户注册继续保留用户名与邮箱，登录支持用户名或邮箱。注册确认和找回密码验证码可通过真实 SMTP 邮件发送；需要启用时，在 `.env.local` 中配置 `MAIL_HOST`、`MAIL_PORT`、`MAIL_USERNAME`、`MAIL_PASSWORD` 和对应发件地址，并设置 `REGISTRATION_MAIL_ENABLED=true`、`PASSWORD_RESET_MAIL_ENABLED=true`。网易 163 等使用 465 端口的服务应启用 `MAIL_SSL_ENABLED=true` 并关闭 STARTTLS。未配置或投递失败时不会在响应或日志中输出验证码。
+
 ## 验证命令
 
 ```powershell

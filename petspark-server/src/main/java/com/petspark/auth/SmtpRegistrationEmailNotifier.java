@@ -2,12 +2,12 @@ package com.petspark.auth;
 
 import org.springframework.mail.javamail.JavaMailSender;
 
-public class SmtpPasswordResetNotifier implements PasswordResetNotifier {
+public class SmtpRegistrationEmailNotifier implements RegistrationEmailNotifier {
 
     private final JavaMailSender mailSender;
     private final String from;
 
-    public SmtpPasswordResetNotifier(JavaMailSender mailSender, String from) {
+    public SmtpRegistrationEmailNotifier(JavaMailSender mailSender, String from) {
         this.mailSender = mailSender;
         this.from = from;
     }
@@ -20,6 +20,6 @@ public class SmtpPasswordResetNotifier implements PasswordResetNotifier {
     @Override
     public void sendCode(String email, String code) {
         VerificationEmailComposer.send(mailSender, from, email,
-                "PetSpark 密码重置验证码", "重置 PetSpark 登录密码", code);
+                "PetSpark 注册验证码", "注册 PetSpark 账号", code);
     }
 }

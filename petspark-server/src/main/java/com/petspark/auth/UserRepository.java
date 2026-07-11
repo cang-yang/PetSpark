@@ -69,6 +69,12 @@ public class UserRepository {
         return findOne("email = ?", email);
     }
 
+    public boolean existsByEmail(String email) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM sys_user WHERE email = ?", Integer.class, email);
+        return count != null && count > 0;
+    }
+
     public List<String> findAuthorities(String userId) {
         return jdbcTemplate.queryForList("""
                 SELECT p.code

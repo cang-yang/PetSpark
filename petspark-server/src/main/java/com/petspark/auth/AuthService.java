@@ -18,6 +18,7 @@ public class AuthService {
     private final PasswordPolicy passwordPolicy;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final RegistrationService registrationService;
 
     public AuthService(
             CaptchaService captchaService,
@@ -25,26 +26,28 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             PasswordPolicy passwordPolicy,
             JwtService jwtService,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService,
+            RegistrationService registrationService) {
         this.captchaService = captchaService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordPolicy = passwordPolicy;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.registrationService = registrationService;
     }
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         passwordPolicy.validate(request.password());
-        captchaService.verify(request.captchaId(), request.captchaAnswer());
-        if (userRepository.existsByUsernameOrEmail(request.username(), request.email())) {
+        String email = registrationService.verifyAndConsume(request.email(), request.emailCode());
+        if (userRepository.existsByUsernameOrEmail(request.username(), email)) {
             throw new BusinessException(ErrorCode.USER_DUPLICATE_001);
         }
         SysUser user = new SysUser(
                 UUID.randomUUID().toString(),
                 request.username(),
-                request.email(),
+                email,
                 passwordEncoder.encode(request.password()),
                 request.nickname(),
                 "ACTIVE",

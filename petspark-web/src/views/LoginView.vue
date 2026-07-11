@@ -7,7 +7,7 @@
   >
     <el-form class="auth-form" label-position="top" @submit.native.prevent>
       <el-form-item label="用户名或邮箱">
-        <el-input v-model.trim="form.principal" autocomplete="username" />
+        <el-input v-model.trim="form.principal" autocomplete="username" placeholder="请输入用户名或邮箱" />
       </el-form-item>
       <el-form-item label="密码">
         <el-input v-model="form.password" type="password" autocomplete="current-password" show-password />

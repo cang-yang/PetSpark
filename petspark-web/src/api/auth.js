@@ -8,6 +8,10 @@ export function register(payload) {
   return http.post('/api/v1/auth/register', payload)
 }
 
+export function requestRegistrationCode(payload) {
+  return http.post('/api/v1/auth/registration-codes', payload)
+}
+
 export function login(payload) {
   return http.post('/api/v1/auth/login', payload)
 }
