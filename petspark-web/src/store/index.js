@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import { decodeJwtAuthorities, hasManagementAccess } from '@/auth/authorities'
 
 Vue.use(Vuex)
 
@@ -29,6 +30,8 @@ export default new Vuex.Store({
   },
   getters: {
     isAuthenticated: (state) => Boolean(state.accessToken),
+    authorities: (state) => decodeJwtAuthorities(state.accessToken),
+    hasManagementAccess: (state, getters) => hasManagementAccess(getters.authorities),
     notificationUnreadCount: (state) => state.notificationUnreadCount
   },
   mutations: {

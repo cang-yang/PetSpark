@@ -156,7 +156,7 @@ describe('AiChatView', () => {
     wrapper.find('[data-testid="new-conversation"]').vm.$emit('click')
     await flushPromises()
 
-    wrapper.setData({ text: '嗨' })
+    wrapper.setData({ text: '嗨', streamMode: false })
     wrapper.find('[data-testid="message-input"]').vm.$emit('input', '嗨')
     await flushPromises()
 
@@ -190,6 +190,23 @@ describe('AiChatView', () => {
     wrapper.find('[data-testid="stop-stream"]').vm.$emit('click')
     expect(abort).toHaveBeenCalled()
     expect(wrapper.vm.streaming).toBe(false)
+  })
+
+  it('uses real streaming by default', async () => {
+    getAiStatus.mockResolvedValue({ data: { enabled: true, consentGranted: true, degradationReason: '' } })
+    createAiConversation.mockResolvedValue({ data: { id: 'c-default-stream', scene: 'PET_CHAT', title: '流式话题', status: 'ACTIVE' } })
+    listAiMessages.mockResolvedValue({ data: [] })
+    streamAiMessage.mockReturnValue({ abort: jest.fn() })
+
+    const wrapper = mountView()
+    await flushPromises()
+    wrapper.find('[data-testid="new-conversation"]').vm.$emit('click')
+    await flushPromises()
+    await wrapper.setData({ text: '默认流式回答' })
+    wrapper.find('[data-testid="send-message"]').vm.$emit('click')
+    await wrapper.vm.$nextTick()
+
+    expect(streamAiMessage).toHaveBeenCalledWith('c-default-stream', '默认流式回答', expect.any(Object))
   })
 
   it('deletes a conversation', async () => {

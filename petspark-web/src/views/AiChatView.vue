@@ -119,7 +119,7 @@
                 :data-testid="`message-${msg.id}`"
               >
                 <span class="ai-chat-view__role">{{ roleLabel(msg.role) }}</span>
-                <span class="ai-chat-view__text">{{ msg.content }}</span>
+                <SafeMarkdown class="ai-chat-view__text" :content="msg.content" />
               </li>
             </ul>
             <ai-stream-message v-if="streaming" ref="streamRenderer" test-id="stream-renderer" />
@@ -178,6 +178,7 @@ import {
 import StatusPanel from '@/components/StatusPanel.vue'
 import AiConsentDialog from '@/components/AiConsentDialog.vue'
 import AiStreamMessage from '@/components/AiStreamMessage.vue'
+import SafeMarkdown from '@/components/ui/SafeMarkdown.vue'
 import assistantAvatar from '@/assets/brand/ai-assistant-avatar.webp'
 import emptyChatArtwork from '@/assets/illustrations/ai-empty-chat.webp'
 
@@ -188,7 +189,7 @@ import emptyChatArtwork from '@/assets/illustrations/ai-empty-chat.webp'
  */
 export default {
   name: 'AiChatView',
-  components: { StatusPanel, AiConsentDialog, AiStreamMessage },
+  components: { StatusPanel, AiConsentDialog, AiStreamMessage, SafeMarkdown },
   data() {
     return {
       enabled: false,
@@ -203,7 +204,7 @@ export default {
       deletingId: '',
       showConsent: false,
       abortController: null,
-      streamMode: false,
+      streamMode: true,
       assistantAvatar,
       emptyChatArtwork,
       examplePrompts: [
