@@ -34,6 +34,9 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -173,7 +176,7 @@ public class AiChatService {
 
     @Transactional
     public AiChatReplyView send(String conversationId, AiMessageRequest req, String userId) {
-        return doChat(conversationId, req, userId);
+        return doChat(conversationId, req, userId, null);
     }
 
     /** 返回当前用户最近的未删除会话，供页面刷新或重新登录后恢复历史入口。 */
@@ -211,8 +214,11 @@ public class AiChatService {
      */
     public SseEmitter stream(String conversationId, AiMessageRequest req, String userId) {
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MS);
-        emitter.onTimeout(emitter::complete);
+        AtomicReference<CompletableFuture<Void>> task = new AtomicReference<>();
+        emitter.onTimeout(() -> { if (task.get() != null) task.get().cancel(true); emitter.complete(); });
+        emitter.onCompletion(() -> { if (task.get() != null) task.get().cancel(true); });
         emitter.onError(ex -> log.debug("ai stream emitter error userId={} reason={}", userId, ex.toString()));
+        task.set(CompletableFuture.runAsync(() -> {
         try {
             AiConvRow conv = repository.findConversation(conversationId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND_001));
@@ -235,12 +241,13 @@ public class AiChatService {
                         "totalTokens", reply.usage().totalTokens()));
                 emit(emitter, "done", java.util.Map.of());
             } else {
-                AiChatReplyView reply = doChat(conversationId, req, userId);
+                emit(emitter, "meta", java.util.Map.of("model", properties.model(), "scene", conv.scene()));
+                AiChatReplyView reply = doChat(conversationId, req, userId,
+                        delta -> emit(emitter, "delta", java.util.Map.of("content", delta)));
                 emit(emitter, "meta", java.util.Map.of(
                         "requestId", reply.requestId(),
                         "model", properties.model(),
                         "scene", conv.scene()));
-                emit(emitter, "delta", java.util.Map.of("content", reply.content()));
                 emit(emitter, "usage", java.util.Map.of(
                         "promptTokens", reply.usage().promptTokens(),
                         "completionTokens", reply.usage().completionTokens(),
@@ -256,6 +263,7 @@ public class AiChatService {
             emitError(emitter, ErrorCode.INTERNAL_ERROR_001.code(), ErrorCode.INTERNAL_ERROR_001.defaultMessage());
             emitter.complete();
         }
+        }));
         return emitter;
     }
 
@@ -288,7 +296,7 @@ public class AiChatService {
 
     // ---- 内部：核心对话流程（send 与 stream 共用）----
 
-    private AiChatReplyView doChat(String conversationId, AiMessageRequest req, String userId) {
+    private AiChatReplyView doChat(String conversationId, AiMessageRequest req, String userId, Consumer<String> onDelta) {
         AiConvRow conv = repository.findConversation(conversationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND_001));
         if (!conv.userId().equals(userId)) {
@@ -366,7 +374,7 @@ public class AiChatService {
         long started = System.currentTimeMillis();
         AiChatResult result;
         try {
-            result = gateway.chat(request);
+            result = onDelta == null ? gateway.chat(request) : gateway.stream(request, onDelta);
         } catch (BusinessException ex) {
             // 失败也要落调用记录（不含内容，便于审计与限流统计）；用户消息仍持久化。
             // 走独立事务，确保外层回滚后审计仍提交。

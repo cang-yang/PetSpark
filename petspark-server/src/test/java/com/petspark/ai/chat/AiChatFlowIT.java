@@ -219,7 +219,7 @@ class AiChatFlowIT extends AbstractControllerTest {
         String convId = insertConversationDirect(ownerId, "PET_CHAT", null, "IT-stream");
         // AI 未启用，stream 走 doChat 会抛 AI_DISABLED_001，转成 SSE error 事件。
         // 仍应返回 text/event-stream，且包含 error 事件。
-        String body = mockMvc.perform(post("/api/v1/ai/conversations/{id}/messages:stream", convId)
+        var streamResult = mockMvc.perform(post("/api/v1/ai/conversations/{id}/messages:stream", convId)
                         .header("Authorization", bearer(ownerToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -227,6 +227,10 @@ class AiChatFlowIT extends AbstractControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.request().asyncStarted())
+                .andReturn();
+        String body = mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch(streamResult))
                 .andReturn().getResponse().getContentAsString();
         // SSE body 至少包含 error 事件名（因为 enabled=false）。
         assertThat(body).contains("event:error").contains("AI_DISABLED_001");
