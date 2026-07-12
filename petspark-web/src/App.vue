@@ -54,7 +54,7 @@ export default {
       return {
         publicNav: this.publicNav,
         memberNav: this.memberNav,
-        adminNav: this.adminNav,
+        adminNav: this.hasManagementAccess ? this.adminNav : [],
         isAuthenticated: this.isAuthenticated,
         userNickname: this.userNickname,
         notificationUnreadCount: this.notificationUnreadCount,
@@ -70,6 +70,13 @@ export default {
     },
     isAuthenticated() {
       return Boolean(this.$store && this.$store.getters && this.$store.getters.isAuthenticated)
+    },
+    hasManagementAccess() {
+      const getters = this.$store && this.$store.getters
+      if (!getters || !this.isAuthenticated) return false
+      if (typeof getters.hasManagementAccess === 'boolean') return getters.hasManagementAccess
+      const authorities = Array.isArray(getters.authorities) ? getters.authorities : []
+      return authorities.some((authority) => !['pet:read', 'file:upload', 'user:profile'].includes(authority))
     },
     userNickname() {
       return this.$store && this.$store.state && this.$store.state.user

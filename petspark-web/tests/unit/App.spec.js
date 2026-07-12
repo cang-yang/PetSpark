@@ -55,6 +55,31 @@ describe('App', () => {
   })
 
   it.each([
+    ['guest', false, [], 0],
+    ['member', true, ['pet:read', 'file:upload', 'user:profile'], 0],
+    ['administrator', true, ['role:read', 'user:update'], 16]
+  ])('filters the admin entry for %s', (label, authenticated, authorities, expectedLength) => {
+    jest.useFakeTimers()
+    const localVue = createLocalVue()
+    localVue.use(VueRouter)
+    const wrapper = shallowMount(App, {
+      localVue,
+      router: new VueRouter(),
+      mocks: {
+        $store: {
+          getters: { isAuthenticated: authenticated, authorities },
+          state: { user: authenticated ? { nickname: label } : null, notificationUnreadCount: 0 },
+          dispatch: jest.fn().mockResolvedValue(0)
+        }
+      }
+    })
+
+    expect(wrapper.findComponent(PublicLayout).props('adminNav')).toHaveLength(expectedLength)
+    wrapper.destroy()
+    jest.useRealTimers()
+  })
+
+  it.each([
     ['/login', AuthLayout],
     ['/admin/users', AdminLayout],
     ['/pets', PublicLayout]
