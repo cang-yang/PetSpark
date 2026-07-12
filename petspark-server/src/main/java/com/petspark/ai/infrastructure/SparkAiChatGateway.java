@@ -9,6 +9,12 @@ import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +32,7 @@ public class SparkAiChatGateway implements AiChatGateway {
 
     private final SparkAiProperties properties;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public SparkAiChatGateway(SparkAiProperties properties, RestClient.Builder restClientBuilder) {
         this.properties = properties;
@@ -121,6 +128,60 @@ public class SparkAiChatGateway implements AiChatGateway {
         return new AiChatResult(providerRequestId, content, usage, properties.model());
     }
 
+    @Override
+    public AiChatResult stream(AiChatRequest request, Consumer<String> onDelta) {
+        ensureAvailable();
+        try {
+            return restClient.post()
+                    .uri("/chat/completions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.TEXT_EVENT_STREAM)
+                    .body(toSparkRequest(request, true))
+                    .exchange((httpRequest, response) -> {
+                        if (response.getStatusCode().isError()) {
+                            throw new BusinessException(ErrorCode.AI_PROVIDER_001,
+                                    "AI 服务返回异常状态：" + response.getStatusCode().value());
+                        }
+                        StringBuilder content = new StringBuilder();
+                        AiUsage usage = AiUsage.empty();
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                                response.getBody(), StandardCharsets.UTF_8))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                if (Thread.currentThread().isInterrupted()) {
+                                    throw new BusinessException(ErrorCode.AI_PROVIDER_001, "AI 流式请求已取消");
+                                }
+                                if (!line.startsWith("data:")) continue;
+                                String data = line.substring(5).trim();
+                                if (data.isEmpty() || "[DONE]".equals(data)) continue;
+                                JsonNode root = objectMapper.readTree(data);
+                                if (root.path("code").asInt(0) != 0) {
+                                    throw new BusinessException(ErrorCode.AI_PROVIDER_001);
+                                }
+                                String delta = root.path("choices").path(0).path("delta").path("content").asText("");
+                                if (!delta.isEmpty()) {
+                                    content.append(delta);
+                                    onDelta.accept(delta);
+                                }
+                                JsonNode usageNode = root.path("usage");
+                                if (!usageNode.isMissingNode() && !usageNode.isNull()) {
+                                    usage = new AiUsage(usageNode.path("prompt_tokens").asInt(0),
+                                            usageNode.path("completion_tokens").asInt(0),
+                                            usageNode.path("total_tokens").asInt(0));
+                                }
+                            }
+                        }
+                        if (content.isEmpty()) throw new BusinessException(ErrorCode.AI_OUTPUT_001);
+                        return new AiChatResult(null, content.toString(), usage, properties.model());
+                    });
+        } catch (BusinessException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.warn("spark ai native stream failed model={} reason={}", properties.model(), ex.toString());
+            throw new BusinessException(ErrorCode.AI_PROVIDER_001);
+        }
+    }
+
     private void ensureAvailable() {
         if (properties.enabled() && properties.apiPassword().isBlank()) {
             throw new BusinessException(ErrorCode.AI_DISABLED_001, "AI 服务未配置密钥");
@@ -147,6 +208,10 @@ public class SparkAiChatGateway implements AiChatGateway {
     }
 
     private SparkChatRequest toSparkRequest(AiChatRequest request) {
+        return toSparkRequest(request, false);
+    }
+
+    private SparkChatRequest toSparkRequest(AiChatRequest request, boolean stream) {
         List<SparkMessage> messages = new ArrayList<>();
         String system = request.systemPrompt() == null || request.systemPrompt().isBlank()
                 ? "You are a PetSpark AI assistant."
@@ -167,7 +232,7 @@ public class SparkAiChatGateway implements AiChatGateway {
                 messages,
                 temperature,
                 maxTokens,
-                false,
+                stream,
                 new ThinkingConfig("disabled"),
                 responseFormat);
     }

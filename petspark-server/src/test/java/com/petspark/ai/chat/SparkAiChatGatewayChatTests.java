@@ -21,6 +21,7 @@ import com.petspark.common.error.BusinessException;
 import com.petspark.common.error.ErrorCode;
 import java.time.Duration;
 import java.util.List;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 
@@ -33,6 +34,34 @@ import org.springframework.web.client.RestClient;
  */
 @WireMockTest
 class SparkAiChatGatewayChatTests {
+
+    @Test
+    void nativeStreamForwardsProviderDeltasBeforeReturning(WireMockRuntimeInfo wireMock) {
+        wireMock.getWireMock().register(post(urlEqualTo("/v2/chat/completions"))
+                .withRequestBody(containing("\"stream\":true"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "text/event-stream")
+                        .withChunkedDribbleDelay(3, 90)
+                        .withBody("""
+                                data: {"choices":[{"delta":{"content":"第一段"}}]}
+
+                                data: {"choices":[{"delta":{"content":"第二段"}}]}
+
+                                data: {"choices":[],"usage":{"prompt_tokens":3,"completion_tokens":4,"total_tokens":7}}
+
+                                data: [DONE]
+
+                                """)));
+        AiChatGateway gateway = gateway(wireMock.getHttpBaseUrl());
+        List<String> deltas = new ArrayList<>();
+
+        AiChatResult result = gateway.stream(new AiChatRequest("req-stream", "sys",
+                List.of(new AiMessage("user", "hello")), 128, 0.4, false), deltas::add);
+
+        assertThat(deltas).containsExactly("第一段", "第二段");
+        assertThat(result.content()).isEqualTo("第一段第二段");
+        assertThat(result.usage().totalTokens()).isEqualTo(7);
+    }
 
     @Test
     void chatSendsSystemPromptAndHistoryAndMapsResult(WireMockRuntimeInfo wireMock) {
